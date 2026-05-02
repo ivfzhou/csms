@@ -1,0 +1,53 @@
+base:
+  # 服务地址，必填。
+  serverAddress: https://127.0.0.1
+  # 应用 ID，必填。
+  appId: 2c67a70dc650487aa7336cdac77c22d8
+  # 请求凭证 ID，必填。
+  accountId: apple_api_account
+  # 请求凭证密钥，必填。
+  secret: Ak0K(v^x4I75eWJPpl(.B'R"nFc#ZNf:)f8Mi-*~s$#]zBN9gxKpmQ$T8-a{e$AdPRzCb*uJpn9k9(0Z]-43a4_m[VY*.]MXEzBfcpzWqi'nk1^/+~zm]v9\0X;qX&W)
+  # 待签名文件，必填。
+  inFile: ..\testdata\file\VansonMod_v2.1.ipa
+  # 签名结果文件，必填。
+  outFile: ..\testdata\file\VansonMod_v2.1_signed.ipa
+  # 任务类型，必填。windows、whql、android、apple。
+  jobType: apple
+
+signConfig:
+  # Windows 签名。
+  windows:
+    # 任务类型，必填。pe、attestation、peAndAttestation。
+    signingType: pe
+    # 证书 ID，必填。
+    certificateId: 8abc97bed31d43d4ba0b7b364dc6fe02
+  # WHQL 认证。
+  whql:
+    # 任务类型，必填。hlk、testAndHlk。
+    type: testAndHlk
+    # 测试系统，必填。
+    testSystem: Windows 10 22H2_64
+    # 服务进程名。
+    serviceName: KMDFDriver
+    # 测试标的。
+    testTarget: KMDFDriver.sys
+    # 测试配置文件路径。配置文件中，0 为默认值，1 为 关闭，2 为开启。
+    testConfigFilePath: ./default_hlk_test_config.json
+  # 安卓签名。
+  android:
+    # 类型，必填。apk、aab、patch。
+    type: apk
+    # 签名方案，必填。
+    signatureSchema:
+      - 1
+      - 2
+      - 3
+      - 4
+    # 证书 ID，必填.
+    certificateId: 1c5cf472a8bb4ef689e968fc80e8f8ae
+    # Android API 版本。
+    minimumSDKVersion: 19
+  # Apple 签名配置。
+  apple:
+    # 描述文件 ID，必填。
+    provisionId: 6e80885e077647c7a84b0ab72ba30ea8
