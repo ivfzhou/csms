@@ -1,0 +1,506 @@
+# Copyright (c) 2024 ivfzhou
+# csms is licensed under Mulan PSL v2.
+# You can use this software according to the terms and conditions of the Mulan PSL v2.
+# You may obtain a copy of Mulan PSL v2 at:
+#          http://license.coscl.org.cn/MulanPSL2
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+# EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+# MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+# See the Mulan PSL v2 for more details.
+
+
+import upload_avatar.http
+
+
+### 测试 User -- 注册张三
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+    request.variables.set("clients", [
+        {
+            case: '正常测试',
+            req: {
+                nameZh: '张三',
+                nameEn: 'zhangsan',
+                password: '123456',
+                passwordConfirmation: '123456',
+                department: '/技术部/后台'
+            },
+            rsp: {
+                code: -200001
+            }
+        },
+        {
+            case: '英文名已被占用',
+            req: {
+                nameZh: '张三',
+                nameEn: 'zhangsan',
+                password: '123456',
+                passwordConfirmation: '123456',
+                department: '/技术部/后台'
+            },
+            rsp: {
+                code: 200009
+            }
+        }
+    ])
+%}
+POST https://127.0.0.1/backend/web/user/register?language={{language}}
+Date: {{date}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="nameZh"
+Content-Type: text/plain
+
+{{$.clients..req.nameZh}}
+--WebAppBoundary
+Content-Disposition: form-data; name="nameEn"
+Content-Type: text/plain
+
+{{$.clients..req.nameEn}}
+--WebAppBoundary
+Content-Disposition: form-data; name="password"
+Content-Type: text/plain
+
+{{$.clients..req.password}}
+--WebAppBoundary
+Content-Disposition: form-data; name="passwordConfirmation"
+Content-Type: text/plain
+
+{{$.clients..req.passwordConfirmation}}
+--WebAppBoundary
+Content-Disposition: form-data; name="department"
+Content-Type: text/plain
+
+{{$.clients..req.department}}
+--WebAppBoundary
+Content-Disposition: form-data; name="avatar"; filename="zhangsan_avatar.jpg"
+Content-Type: image/jpeg
+
+< ../file/zhangsan_avatar.jpg
+--WebAppBoundary--
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    let current = request.variables.get("clients")[request.iteration()]
+    client.test(`测试响应结果 -- ${current.case}`, () => {
+        checkAPIResult(200, current.rsp.code)
+    })
+%}
+
+
+### 测试 User -- 注册李四
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/user/register?language={{language}}
+Date: {{date}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="nameZh"
+Content-Type: text/plain
+
+李四
+--WebAppBoundary
+Content-Disposition: form-data; name="nameEn"
+Content-Type: text/plain
+
+lisisi
+--WebAppBoundary
+Content-Disposition: form-data; name="password"
+Content-Type: text/plain
+
+123456
+--WebAppBoundary
+Content-Disposition: form-data; name="passwordConfirmation"
+Content-Type: text/plain
+
+123456
+--WebAppBoundary
+Content-Disposition: form-data; name="department"
+Content-Type: text/plain
+
+/技术部/后台
+--WebAppBoundary
+Content-Disposition: form-data; name="avatar"; filename="lisi_avatar.jpg"
+Content-Type: image/jpg
+
+< ../file/lisi_avatar.jpg
+--WebAppBoundary--
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 注册李四', () => {
+        checkAPIResult(200, -200001)
+    })
+%}
+
+
+### 测试 User -- 注册王五
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/user/register?language={{language}}
+Date: {{date}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="nameZh"
+Content-Type: text/plain
+
+王五
+--WebAppBoundary
+Content-Disposition: form-data; name="nameEn"
+Content-Type: text/plain
+
+wangwu
+--WebAppBoundary
+Content-Disposition: form-data; name="password"
+Content-Type: text/plain
+
+123456
+--WebAppBoundary
+Content-Disposition: form-data; name="passwordConfirmation"
+Content-Type: text/plain
+
+123456
+--WebAppBoundary
+Content-Disposition: form-data; name="department"
+Content-Type: text/plain
+
+/技术部/前台
+--WebAppBoundary
+Content-Disposition: form-data; name="avatar"; filename="wangwu_avatar.jpg"
+Content-Type: image/jpg
+
+< ../file/wangwu_avatar.jpg
+--WebAppBoundary--
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 注册王五', () => {
+        checkAPIResult(200, -200001)
+    })
+%}
+
+
+### 测试 User -- 注册赵六
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/user/register?language={{language}}
+Date: {{date}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="nameZh"
+Content-Type: text/plain
+
+赵六
+--WebAppBoundary
+Content-Disposition: form-data; name="nameEn"
+Content-Type: text/plain
+
+zhaoliu
+--WebAppBoundary
+Content-Disposition: form-data; name="password"
+Content-Type: text/plain
+
+123456
+--WebAppBoundary
+Content-Disposition: form-data; name="passwordConfirmation"
+Content-Type: text/plain
+
+123456
+--WebAppBoundary
+Content-Disposition: form-data; name="department"
+Content-Type: text/plain
+
+/技术部/产品
+--WebAppBoundary
+Content-Disposition: form-data; name="avatar"; filename="zhaoliu_avatar.jpg"
+Content-Type: image/jpg
+
+< ../file/zhaoliu_avatar.jpg
+--WebAppBoundary--
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 注册赵六', () => {
+        checkAPIResult(200, -200001)
+    })
+%}
+
+
+### 测试 User -- 注册田七
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/user/register?language={{language}}
+Date: {{date}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="nameZh"
+Content-Type: text/plain
+
+田七
+--WebAppBoundary
+Content-Disposition: form-data; name="nameEn"
+Content-Type: text/plain
+
+tianqi
+--WebAppBoundary
+Content-Disposition: form-data; name="password"
+Content-Type: text/plain
+
+123456
+--WebAppBoundary
+Content-Disposition: form-data; name="passwordConfirmation"
+Content-Type: text/plain
+
+123456
+--WebAppBoundary
+Content-Disposition: form-data; name="department"
+Content-Type: text/plain
+
+/技术部/测试
+--WebAppBoundary
+Content-Disposition: form-data; name="avatar"; filename="tianqi_avatar.jpg"
+Content-Type: image/jpg
+
+< ../file/tianqi_avatar.jpg
+--WebAppBoundary--
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 注册田七', () => {
+        checkAPIResult(200, -200001)
+    })
+%}
+
+
+### 测试 User -- 登录
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+    request.variables.set("clients", [
+        {
+            case: 'admin 登陆',
+            req: {
+                nameEn: 'admin',
+                password: 'admin'
+            },
+            rsp: {
+                code: -200002
+            }
+        },
+        {
+            case: '田七登陆',
+            req: {
+                nameEn: 'tianqi',
+                password: '123456'
+            },
+            rsp: {
+                code: -200002
+            }
+        },
+        {
+            case: '赵六登陆',
+            req: {
+                nameEn: 'zhaoliu',
+                password: '123456'
+            },
+            rsp: {
+                code: -200002
+            }
+        },
+        {
+            case: '王五登陆',
+            req: {
+                nameEn: 'wangwu',
+                password: '123456'
+            },
+            rsp: {
+                code: -200002
+            }
+        },
+        {
+            case: '李四登陆',
+            req: {
+                nameEn: 'lisisi',
+                password: '123456'
+            },
+            rsp: {
+                code: -200002
+            }
+        },
+        {
+            case: '张三登陆',
+            req: {
+                nameEn: 'zhangsan',
+                password: '123456'
+            },
+            rsp: {
+                code: -200002
+            }
+        }
+    ])
+%}
+POST https://127.0.0.1/backend/web/user/login?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+
+{
+  "nameEn": "{{$.clients..req.nameEn}}",
+  "password": "{{$.clients..req.password}}"
+}
+
+> {%
+    import {checkAPIResult, parseAndSaveWebAuthorization} from './http_util.js'
+
+    let current = request.variables.get("clients")[request.iteration()]
+    const [name, session] = parseAndSaveWebAuthorization(response)
+    client.test(`测试响应结果 -- 登录 -- ${current.case}`, () => {
+        checkAPIResult(200, current.rsp.code)
+        client.assert(name && session, 'name or session not found')
+    })
+    client.global.set(`csms_session_${name}`, session)
+%}
+
+
+### 测试 User -- 获取用户信息
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/user/getInformation?language={{language}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const info = response.body.data
+    client.test('测试响应结果 -- 获取用户信息', () => {
+        checkAPIResult(200, undefined)
+        client.assert(info, "info is empty")
+    })
+%}
+
+
+### 上传新的张三头像
+run upload_avatar.http
+
+
+### 测试 User -- 更新个人信息
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/user/update?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+{
+  "nameZh": "张三",
+  "avatarFileId": "{{zhangsanNewAvatarFileId}}",
+  "password": "123456",
+  "passwordConfirmation": "123456",
+  "department": "/技术部/后台"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 更新个人信息', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 User -- 搜索用户
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/user/search?language={{language}}&name=zhangsan
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const result = response.body.data.users
+    client.test('测试响应结果 -- 搜索用户', () => {
+        checkAPIResult(200, undefined)
+        client.assert(result, 'result is empty')
+    })
+%}
+
+
+### 测试 User -- 登出
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+DELETE https://127.0.0.1/backend/web/user/logout?language={{language}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const exist = response.headers.valueOf('Set-Cookie')
+    client.test('测试响应结果 -- 登出', () => {
+        checkAPIResult(200, -200003)
+        client.assert(exist, 'session is empty')
+    })
+%}
+
+
+### 设置 zhangsan 会话
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/user/login?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+
+{
+  "nameEn": "zhangsan",
+  "password": "123456"
+}
+
+> {%
+    import {checkAPIResult, parseAndSaveWebAuthorization} from './http_util.js'
+
+    const [name, session] = parseAndSaveWebAuthorization(response)
+    checkAPIResult(200, -200002)
+    client.assert(name && session, 'name or session not found')
+    client.global.set(`csms_session_zhangsan`, session)
+%}

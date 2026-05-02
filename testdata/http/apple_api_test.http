@@ -1,0 +1,799 @@
+# Copyright (c) 2024 ivfzhou
+# csms is licensed under Mulan PSL v2.
+# You can use this software according to the terms and conditions of the Mulan PSL v2.
+# You may obtain a copy of Mulan PSL v2 at:
+#          http://license.coscl.org.cn/MulanPSL2
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+# EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+# MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+# See the Mulan PSL v2 for more details.
+
+
+import upload_ipa.http
+import approve_device_register.http
+
+
+### 测试 Apple -- 申请 Bundle ID
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+    request.variables.set('clients', [
+        {
+            'bundleId': 'cn.ivfzhou.test',
+            'type': 1
+        },
+        {
+            'bundleId': 'cn.ivfzhou.test.db',
+            'type': 2
+        }
+    ])
+%}
+POST https://127.0.0.1/backend/web/apple/applyBundleID/{{appleAppId}}?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+{
+  "bundleId": "{{$.clients..bundleId}}",
+  "type": {{$.clients..type}}
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 申请 Bundle ID', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 Apple -- 修改 Bundle ID 能力项
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+    request.variables.set('clients', [
+        {
+            'bundleId': 'cn.ivfzhou.test',
+            'capabilities': ['wallet', 'icloud']
+        },
+        {
+            'bundleId': 'cn.ivfzhou.test.db',
+            'capabilities': ['wallet', 'icloud']
+        }
+    ])
+%}
+POST https://127.0.0.1/backend/web/apple/modifyBundleID/{{appleAppId}}?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+{
+  "bundleId": "{{$.clients..bundleId}}",
+  "capabilities": {{$.clients..capabilities}}
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 修改 Bundle ID 能力项', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 Apple -- 申请苹果签名证书
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+    request.variables.set('clients', [
+        {'type': 'DEVELOPMENT'},
+        {'type': 'DISTRIBUTION'},
+        {'type': 'IOS_DEVELOPMENT'},
+        {'type': 'IOS_DISTRIBUTION'},
+        {'type': 'MAC_APP_DISTRIBUTION'},
+        {'type': 'MAC_APP_DEVELOPMENT'},
+    ])
+%}
+POST https://127.0.0.1/backend/web/apple/applyCertificate?language={{language}}&type={{$.clients..type}}
+Date: {{date}}
+Cookie: csms_user=admin; csms_session={{csms_session_admin}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 申请苹果签名证书', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 Apple -- 获取 Bundle ID 列表
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/apple/listBundleIDs/{{appleAppId}}?language={{language}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const list = response.body.data.list
+    const bundleId = list[1].id
+    const inHouseBundleId = list[0].id
+    client.test('测试响应结果 -- 获取 Bundle ID 列表', () => {
+        checkAPIResult(200, undefined)
+        client.assert(bundleId, 'bundleId is empty')
+        client.assert(inHouseBundleId, 'inHouseBundleId is empty')
+    })
+    client.global.set('bundleId', bundleId)
+    client.global.set('inHouseBundleId', inHouseBundleId)
+%}
+
+
+### 测试 Apple -- 获取苹果证书信息列表
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/apple/listCertificates?language={{language}}
+Date: {{date}}
+Cookie: csms_user=admin; csms_session={{csms_session_admin}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const list = response.body.data.list
+    client.test('测试响应结果 -- 获取 Bundle ID 列表', () => {
+        checkAPIResult(200, undefined)
+        client.assert(list, 'list is empty')
+    })
+%}
+
+
+### 测试 - Apple -- 注册测试设备
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/apple/registerDevice/{{appleAppId}}?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+{
+  "udid": "12345678-123456-123456-123456-123456789012",
+  "device": "MAC",
+  "remark": "测试"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 注册测试设备', () => {
+        checkAPIResult(200, -200009)
+    })
+%}
+
+
+### 审批设备注册
+run approve_device_register.http
+
+
+### 测试 Apple -- 申请描述文件
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+    request.variables.set('clients', [
+        {
+            'type': 'MAC_APP_DEVELOPMENT',
+            'platform': 'MAC_OS'
+        },
+        {
+            'type': 'MAC_APP_STORE',
+            'platform': 'MAC_OS'
+        },
+        {
+            'type': 'IOS_APP_DEVELOPMENT',
+            'platform': 'IOS'
+        },
+        {
+            'type': 'IOS_APP_ADHOC',
+            'platform': 'IOS'
+        },
+        {
+            'type': 'IOS_APP_STORE',
+            'platform': 'IOS'
+        }
+    ])
+%}
+POST https://127.0.0.1/backend/web/apple/applyProfile/{{appleAppId}}?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+{
+  "bundleId": "{{bundleId}}",
+  "type": "{{$.clients..type}}",
+  "platform": "{{$.clients..platform}}"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 申请 Bundle ID', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 Apple -- 设备列表
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/apple/listDevices/{{appleAppId}}?language={{language}}&pageNumber=1&pageSize=10
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const list = response.body.data.list
+    client.test('测试响应结果 -- 获取应用证书和描述文件列表', () => {
+        checkAPIResult(200, undefined)
+        client.assert(list, 'list is empty')
+    })
+%}
+
+
+### 测试 Apple -- 申请企业内测描述文件
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/apple/applyInHouseProfile/{{appleAppId}}?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+{
+  "bundleId": "{{inHouseBundleId}}"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 申请企业内测描述文件', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 Apple -- 申请企业内测通配符描述文件
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/apple/applyCommonProfile/{{appleAppId}}?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 申请企业内测描述文件', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 Apple -- 申请 Push 证书
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/apple/applyPushCertificate/{{appleAppId}}?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+{
+  "bundleId": "{{bundleId}}",
+  "environment": 2
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 申请 Push 证书', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 申请 Bundle ID
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+    request.variables.set('clients', [
+        {
+            'bundleId': 'cn.ivfzhou.test.tobedeleted',
+            'type': 1
+        },
+        {
+            'bundleId': 'cn.ivfzhou.test.db.tobedeleted',
+            'type': 2
+        }
+    ])
+%}
+POST https://127.0.0.1/backend/web/apple/applyBundleID/{{appleAppId}}?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+{
+  "bundleId": "{{$.clients..bundleId}}",
+  "type": {{$.clients..type}}
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    checkAPIResult(200, -200004)
+%}
+
+
+### 测试 Apple -- 删除 Bundle ID
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+    request.variables.set('clients', [
+        {
+            'bundleId': 'cn.ivfzhou.test.tobedeleted'
+        },
+        {
+            'bundleId': 'cn.ivfzhou.test.db.tobedeleted'
+        }
+    ])
+%}
+DELETE https://127.0.0.1/backend/web/apple/deleteBundleID/{{appleAppId}}?language={{language}}&
+    bundleId={{$.clients..bundleId}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 删除 Bundle ID', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 申请苹果签名证书
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/apple/applyCertificate?language={{language}}&type=DEVELOPMENT
+Date: {{date}}
+Cookie: csms_user=admin; csms_session={{csms_session_admin}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    checkAPIResult(200, -200004)
+%}
+
+
+### 获取苹果证书信息列表
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/apple/listCertificates?language={{language}}
+Date: {{date}}
+Cookie: csms_user=admin; csms_session={{csms_session_admin}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const appleCertificateIdToBeDeleted = response.body.data.list[0].id
+    checkAPIResult(200, undefined)
+    client.assert(appleCertificateIdToBeDeleted, 'appleCertificateIdToBeDeleted is empty')
+    client.global.set('appleCertificateIdToBeDeleted', appleCertificateIdToBeDeleted)
+%}
+
+
+### 测试 Apple -- 删除苹果证书
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+DELETE https://127.0.0.1/backend/web/apple/removeCertificate?language={{language}}&
+    certificateId={{appleCertificateIdToBeDeleted}}
+Date: {{date}}
+Cookie: csms_user=admin; csms_session={{csms_session_admin}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 删除苹果证书', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 Apple -- 获取应用证书和描述文件列表
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/apple/listAppCertificates/{{appleAppId}}?language={{language}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const list = response.body.data.list
+    const profileId = list.find(v => {
+        return v.category === 2
+    }).id
+    const signingCertificateId = list.find(v => {
+        return v.category === 1
+    }).id
+    const pushCertificateId = list.find(v => {
+        return v.category === 3
+    }).id
+    client.test('测试响应结果 -- 获取应用证书和描述文件列表', () => {
+        checkAPIResult(200, undefined)
+        client.assert(profileId, 'profileId is empty')
+        client.assert(signingCertificateId, 'signingCertificateId is empty')
+        client.assert(pushCertificateId, 'pushCertificateId is empty')
+    })
+    client.global.set('profileId', profileId)
+    client.global.set('pushCertificateId', pushCertificateId)
+    client.global.set('signingCertificateId', signingCertificateId)
+%}
+
+
+### 测试 Apple -- 下载证书和描述文件
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+    const profileId = client.global.get('profileId')
+    const pushCertificateId = client.global.get('pushCertificateId')
+    const signingCertificateId = client.global.get('signingCertificateId')
+    request.variables.set('clients', [
+        {
+            'certificateId': profileId,
+            'type': 2
+        },
+        {
+            'certificateId': pushCertificateId,
+            'type': 3
+        },
+        {
+            'certificateId': signingCertificateId,
+            'type': 1
+        }
+    ])
+%}
+GET https://127.0.0.1/backend/web/apple/downloadCertificate/{{appleAppId}}?language={{language}}&
+    certificateId={{$.clients..certificateId}}&type={{$.clients..type}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 下载证书和描述文件', () => {
+        checkAPIResult(200, undefined)
+        client.assert(response.body !== undefined, 'body is empty')
+    })
+%}
+
+
+### 测试 Apple OpenAPI -- 下载证书和描述文件
+< {%
+    import {createAuthorization} from './http_util.js'
+
+    const appId = client.global.get('appleAppId')
+    const apiAccountId = 'apple_api_account';
+    const secret = client.global.get(apiAccountId)
+    client.log(appId, apiAccountId, secret)
+    const token = createAuthorization(appId, apiAccountId, secret)
+    request.variables.set('token', token)
+    const profileId = client.global.get('profileId')
+    const pushCertificateId = client.global.get('pushCertificateId')
+    const signingCertificateId = client.global.get('signingCertificateId')
+    request.variables.set('clients', [
+        {
+            'certificateId': profileId,
+            'type': 2
+        },
+        {
+            'certificateId': pushCertificateId,
+            'type': 3
+        },
+        {
+            'certificateId': signingCertificateId,
+            'type': 1
+        }
+    ])
+%}
+GET https://127.0.0.1/backend/api/apple/downloadCertificate?certificateId={{$.clients..certificateId}}&
+    type={{$.clients..type}}
+Authorization: Bearer {{token}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 下载证书和描述文件', () => {
+        checkAPIResult(200, undefined)
+        client.assert(response.body !== undefined, 'body is empty')
+    })
+%}
+
+
+### 上传 ipa 文件
+run upload_ipa.http
+
+
+### 测试 Apple -- 提交签名任务
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/apple/submitSigningJob/{{appleAppId}}?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+{
+  "profileId": "{{profileId}}",
+  "fileId": "{{ipaFileId}}"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 提交签名任务', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 Apple OpenAPI -- 提交签名任务
+< {%
+    import {createAuthorization} from './http_util.js'
+
+    const appId = client.global.get('appleAppId')
+    const apiAccountId = 'apple_api_account';
+    const secret = client.global.get(apiAccountId)
+    client.log(appId, apiAccountId, secret)
+    const token = createAuthorization(appId, apiAccountId, secret)
+    request.variables.set('token', token)
+%}
+POST https://127.0.0.1/backend/api/apple/submitSigningJob
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "profileId": "{{profileId}}",
+  "fileId": "{{ipaFileId}}"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const jobId = response.body.data.jobId
+    client.test('测试响应结果 -- 提交签名任务', () => {
+        checkAPIResult(200, undefined)
+        client.assert(jobId, 'jobId is empty')
+    })
+    client.global.set('appleJobId', jobId)
+%}
+
+
+### 测试 Apple OpenAPI -- 获取签名任务信息
+< {%
+    import {createAuthorization} from './http_util.js'
+
+    const appId = client.global.get('appleAppId')
+    const apiAccountId = 'apple_api_account';
+    const secret = client.global.get(apiAccountId)
+    client.log(appId, apiAccountId, secret)
+    const token = createAuthorization(appId, apiAccountId, secret)
+    request.variables.set('token', token)
+%}
+GET https://127.0.0.1/backend/api/apple/getSigningJobInformation?jobId={{appleJobId}}
+Authorization: Bearer {{token}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const info = response.body.data
+    client.test('测试响应结果 -- 获取签名任务信息', () => {
+        checkAPIResult(200, undefined)
+        client.assert(info, 'info is empty')
+    })
+%}
+
+
+### 测试 Apple -- 获取签名任务信息列表
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/apple/listSigningJobs/{{appleAppId}}?language={{language}}&pageNumber=1&pageSize=10
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const list = response.body.data.list
+    client.test('测试响应结果 -- 获取签名任务信息列表', () => {
+        checkAPIResult(200, undefined)
+        client.assert(list, 'list is empty')
+    })
+%}
+
+
+### 申请描述文件
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/apple/applyProfile/{{appleAppId}}?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+{
+  "bundleId": "{{bundleId}}",
+  "type": "IOS_APP_DEVELOPMENT",
+  "platform": "IOS"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    checkAPIResult(200, -200004)
+%}
+
+
+### 获取应用证书和描述文件列表
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/apple/listAppCertificates/{{appleAppId}}?language={{language}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const list = response.body.data.list
+    const profileId = list.find(v => {
+        return v.category === 2
+    }).id
+    checkAPIResult(200, undefined)
+    client.assert(profileId, 'profileId is empty')
+    client.global.set('profileIdToBeDeleted', profileId)
+%}
+
+
+### 测试 Apple -- 删除描述文件
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+DELETE https://127.0.0.1/backend/web/apple/removeProfile/{{appleAppId}}?language={{language}}&
+    profileId={{profileIdToBeDeleted}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 删除描述文件', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 申请 Push 证书
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/apple/applyPushCertificate/{{appleAppId}}?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+{
+  "bundleId": "{{bundleId}}",
+  "environment": 2
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    checkAPIResult(200, -200004)
+%}
+
+
+### 获取应用证书和描述文件列表
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/apple/listAppCertificates/{{appleAppId}}?language={{language}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const list = response.body.data.list
+    const certificateId = list.find(v => {
+        return v.category === 3
+    }).id
+    checkAPIResult(200, undefined)
+    client.assert(certificateId, 'certificateId is empty')
+    client.global.set('pushCertificateIdToBeDeleted', certificateId)
+%}
+
+
+### 测试 Apple -- 删除 Push 证书
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+DELETE https://127.0.0.1/backend/web/apple/removePushCertificate/{{appleAppId}}?language={{language}}&
+    certificateId={{pushCertificateIdToBeDeleted}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 删除 Push 证书', () => {
+        checkAPIResult(200, -200004)
+    })
+%}

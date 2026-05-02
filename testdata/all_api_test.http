@@ -1,0 +1,56 @@
+# Copyright (c) 2024 ivfzhou
+# csms is licensed under Mulan PSL v2.
+# You can use this software according to the terms and conditions of the Mulan PSL v2.
+# You may obtain a copy of Mulan PSL v2 at:
+#          http://license.coscl.org.cn/MulanPSL2
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+# EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+# MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+# See the Mulan PSL v2 for more details.
+
+
+import ./http/user_api_test.http
+import ./http/app_api_test.http
+import ./http/file_api_test.http
+import ./http/event_api_test.http
+import ./http/todo_api_test.http
+import ./http/open_api_test.http
+import ./http/android_api_test.http
+import ./http/windows_api_test.http
+import ./http/apple_api_test.http
+
+
+### 测试用户模块
+run ./http/user_api_test.http
+
+
+### 测试 App 模块
+run ./http/app_api_test.http
+
+
+### 测试 Event 模块
+run ./http/event_api_test.http
+
+
+### 测试 Todo 模块
+run ./http/todo_api_test.http
+
+
+### 测试 OpenAPI 模块
+run ./http/open_api_test.http
+
+
+### 测试 File 模块
+run ./http/file_api_test.http
+
+
+### 测试 Android 模块
+run ./http/android_api_test.http
+
+
+### 测试 Windows 模块
+run ./http/windows_api_test.http
+
+
+### 测试 Apple 模块
+run ./http/apple_api_test.http

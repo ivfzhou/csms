@@ -1,0 +1,59 @@
+# Copyright (c) 2024 ivfzhou
+# csms is licensed under Mulan PSL v2.
+# You can use this software according to the terms and conditions of the Mulan PSL v2.
+# You may obtain a copy of Mulan PSL v2 at:
+#          http://license.coscl.org.cn/MulanPSL2
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+# EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+# MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+# See the Mulan PSL v2 for more details.
+
+
+###
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/todo/list?language={{language}}&pageNumber=1&pageSize=100
+Date: {{date}}
+Cookie: csms_user=admin; csms_session={{csms_session_admin}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const list = response.body.data.list
+    checkAPIResult(200, undefined)
+    client.assert(list, 'list is empty')
+    client.global.set('todoList', list)
+%}
+
+
+###
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+    const list = client.global.get('todoList')
+    let requestParameters = []
+    for (const v of list) {
+        if (v.type === 4) requestParameters.push({'id': v.id})
+    }
+    request.variables.set('clients', requestParameters)
+%}
+POST https://127.0.0.1/backend/web/todo/deal?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=admin; csms_session={{csms_session_admin}}
+
+{
+  "id": {{$.clients..id}},
+  "isPass": true,
+  "approveMessage": "同意注册"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    checkAPIResult(200, -200004)
+%}

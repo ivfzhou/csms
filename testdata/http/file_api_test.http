@@ -1,0 +1,239 @@
+# Copyright (c) 2024 ivfzhou
+# csms is licensed under Mulan PSL v2.
+# You can use this software according to the terms and conditions of the Mulan PSL v2.
+# You may obtain a copy of Mulan PSL v2 at:
+#          http://license.coscl.org.cn/MulanPSL2
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+# EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+# MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+# See the Mulan PSL v2 for more details.
+
+
+### 测试 File -- 下载
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/file/download?language={{language}}&fileId={{zhangsanNewAvatarFileId}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 下载', () => {
+        checkAPIResult(200, undefined)
+        client.assert(response.body !== undefined, 'http body does not exist')
+    })
+%}
+
+
+### 测试 File -- 初始化上传
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/file/initial?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+{
+  "name": "avatar.jpg",
+  "size": 60421,
+  "md5": "78078fb62619ff5f47290aac47a67eec",
+  "type": 1
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const data = response.body.data
+    client.test('测试响应结果 -- 初始化上传', () => {
+        checkAPIResult(200, undefined)
+        client.assert(data.exist === undefined, "file existing does not meet expectation")
+        client.assert(data.fileId.length === 38, "file id does not meet expectation")
+    })
+    client.global.set('uploadingFileId', data.fileId)
+%}
+
+
+### 测试 File -- 上传分片
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/file/uploadPart?language={{language}}
+Date: {{date}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+--WebAppBoundary
+Content-Disposition: form-data; name="fileId"
+Content-Type: text/plain
+
+{{uploadingFileId}}
+--WebAppBoundary
+Content-Disposition: form-data; name="chunkNumber"
+Content-Type: text/plain
+
+1
+--WebAppBoundary
+Content-Disposition: form-data; name="chunk"; filename="avatar.jpg"
+Content-Type: image/jpg
+
+< ../file/avatar.jpg
+--WebAppBoundary--
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 上传文件分片', () => {
+        checkAPIResult(200, undefined)
+    })
+%}
+
+
+### 测试 File -- 合并分片
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/file/mergeParts?language={{language}}&fileId={{uploadingFileId}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 合并分片', () => {
+        checkAPIResult(200, -200007)
+    })
+%}
+
+
+### 测试 File OpenAPI -- 初始化上传
+< {%
+    import {createAuthorization} from './http_util.js'
+
+    const appId = client.global.get('windowsAppId')
+    const apiAccountId = 'windows_api_account';
+    const secret = client.global.get(apiAccountId)
+    client.log(appId, apiAccountId, secret)
+    const token = createAuthorization(appId, apiAccountId, secret)
+    request.variables.set('token', token)
+%}
+POST https://127.0.0.1/backend/api/file/initial
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "HelloConsole.exe",
+  "size": 12800,
+  "md5": "430ce5bff62ccb87cb43ccde5aae6052",
+  "type": 4
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const data = response.body.data
+    client.test('测试响应结果 -- 初始化上传', () => {
+        checkAPIResult(200, undefined)
+        client.assert(data.exist === undefined, "file existing does not meet expectation")
+        client.assert(data.fileId.length === 38, "file id does not meet expectation")
+    })
+    client.global.set('uploadingFileId', data.fileId)
+%}
+
+
+### 测试 File OpenAPI -- 上传分片
+< {%
+    import {createAuthorization} from './http_util.js'
+
+    const appId = client.global.get('windowsAppId')
+    const apiAccountId = 'windows_api_account';
+    const secret = client.global.get(apiAccountId)
+    client.log(appId, apiAccountId, secret)
+    const token = createAuthorization(appId, apiAccountId, secret)
+    request.variables.set('token', token)
+%}
+POST https://127.0.0.1/backend/api/file/uploadPart
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="fileId"
+Content-Type: text/plain
+
+{{uploadingFileId}}
+--WebAppBoundary
+Content-Disposition: form-data; name="chunkNumber"
+Content-Type: text/plain
+
+1
+--WebAppBoundary
+Content-Disposition: form-data; name="chunk"; filename="avatar.jpg"
+Content-Type: application/octet-stream
+
+< ../file/HelloConsole.exe
+--WebAppBoundary--
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 上传文件分片', () => {
+        checkAPIResult(204, undefined)
+    })
+%}
+
+
+### 测试 File OpenAPI -- 合并分片
+< {%
+    import {createAuthorization} from './http_util.js'
+
+    const appId = client.global.get('windowsAppId')
+    const apiAccountId = 'windows_api_account';
+    const secret = client.global.get(apiAccountId)
+    client.log(appId, apiAccountId, secret)
+    const token = createAuthorization(appId, apiAccountId, secret)
+    request.variables.set('token', token)
+%}
+GET https://127.0.0.1/backend/api/file/mergeParts?fileId={{uploadingFileId}}
+Authorization: Bearer {{token}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 合并分片', () => {
+        checkAPIResult(204, undefined)
+    })
+%}
+
+
+### 测试 File OpenAPI -- 下载
+< {%
+    import {createAuthorization} from './http_util.js'
+
+    const appId = client.global.get('windowsAppId')
+    const apiAccountId = 'windows_api_account';
+    const secret = client.global.get(apiAccountId)
+    client.log(appId, apiAccountId, secret)
+    const token = createAuthorization(appId, apiAccountId, secret)
+    request.variables.set('token', token)
+%}
+GET https://127.0.0.1/backend/api/file/download?fileId={{uploadingFileId}}
+Authorization: Bearer {{token}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 下载', () => {
+        checkAPIResult(200, undefined)
+        client.assert(response.body !== undefined, 'http body does not exist')
+    })
+%}

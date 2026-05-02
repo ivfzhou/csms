@@ -1,0 +1,90 @@
+# Copyright (c) 2024 ivfzhou
+# csms is licensed under Mulan PSL v2.
+# You can use this software according to the terms and conditions of the Mulan PSL v2.
+# You may obtain a copy of Mulan PSL v2 at:
+#          http://license.coscl.org.cn/MulanPSL2
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+# EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+# MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+# See the Mulan PSL v2 for more details.
+
+
+###
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/file/initial?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+{
+  "appId": "{{windowsAppId}}",
+  "name": "HelloConsole.exe",
+  "size": 12800,
+  "md5": "430ce5bff62ccb87cb43ccde5aae6052",
+  "type": 4
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const fileId = response.body.data.fileId
+    checkAPIResult(200, undefined)
+    client.assert(fileId, 'file id not found')
+    client.global.set('exeFileId', fileId)
+%}
+
+
+###
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/file/uploadPart?language={{language}}
+Date: {{date}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+--WebAppBoundary
+Content-Disposition: form-data; name="fileId"
+Content-Type: text/plain
+
+{{exeFileId}}
+--WebAppBoundary
+Content-Disposition: form-data; name="chunkNumber"
+Content-Type: text/plain
+
+1
+--WebAppBoundary
+Content-Disposition: form-data; name="chunk"; filename="chunk"
+Content-Type: application/octet-stream
+
+< ../file/HelloConsole.exe
+--WebAppBoundary--
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    checkAPIResult(200, undefined)
+%}
+
+
+###
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/file/mergeParts?language={{language}}&fileId={{exeFileId}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    checkAPIResult(200, -200007)
+%}

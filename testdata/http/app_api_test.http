@@ -1,0 +1,403 @@
+# Copyright (c) 2024 ivfzhou
+# csms is licensed under Mulan PSL v2.
+# You can use this software according to the terms and conditions of the Mulan PSL v2.
+# You may obtain a copy of Mulan PSL v2 at:
+#          http://license.coscl.org.cn/MulanPSL2
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+# EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+# MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+# See the Mulan PSL v2 for more details.
+
+
+import approve_app_register.http
+import upload_logo.http
+import approve_app_enable.http
+
+
+### 测试 App -- 注册 Windows
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/app/register?language={{language}}
+Date: {{date}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+--WebAppBoundary
+Content-Disposition: form-data; name="name"
+Content-Type: text/plain
+
+Windows应用
+--WebAppBoundary
+Content-Disposition: form-data; name="platform"
+Content-Type: text/plain
+
+1
+--WebAppBoundary
+Content-Disposition: form-data; name="admins"
+Content-Type: text/plain
+
+zhangsan
+--WebAppBoundary
+Content-Disposition: form-data; name="members"
+Content-Type: text/plain
+
+lisisi
+--WebAppBoundary
+Content-Disposition: form-data; name="logo"; filename="windows_logo.png"
+Content-Type: image/png
+
+< ../file/windows_logo.png
+--WebAppBoundary--
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 注册 Windows', () => {
+        checkAPIResult(200, -200006)
+    })
+%}
+
+
+### 测试 App -- 注册 Apple
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/app/register?language={{language}}
+Date: {{date}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+--WebAppBoundary
+Content-Disposition: form-data; name="name"
+Content-Type: text/plain
+
+Apple应用
+--WebAppBoundary
+Content-Disposition: form-data; name="platform"
+Content-Type: text/plain
+
+2
+--WebAppBoundary
+Content-Disposition: form-data; name="admins"
+Content-Type: text/plain
+
+zhangsan
+--WebAppBoundary
+Content-Disposition: form-data; name="members"
+Content-Type: text/plain
+
+wangwu
+--WebAppBoundary
+Content-Disposition: form-data; name="logo"; filename="apple_logo.jpg"
+Content-Type: image/jpg
+
+< ../file/apple_logo.jpg
+--WebAppBoundary--
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 注册 Apple', () => {
+        checkAPIResult(200, -200006)
+    })
+%}
+
+
+### 测试 App -- 注册 Android
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/app/register?language={{language}}
+Date: {{date}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+--WebAppBoundary
+Content-Disposition: form-data; name="name"
+Content-Type: text/plain
+
+Android应用
+--WebAppBoundary
+Content-Disposition: form-data; name="platform"
+Content-Type: text/plain
+
+3
+--WebAppBoundary
+Content-Disposition: form-data; name="admins"
+Content-Type: text/plain
+
+zhangsan
+--WebAppBoundary
+Content-Disposition: form-data; name="members"
+Content-Type: text/plain
+
+zhaoliu
+--WebAppBoundary
+Content-Disposition: form-data; name="logo"; filename="android_logo.jpg"
+Content-Type: image/jpg
+
+< ../file/android_logo.jpg
+--WebAppBoundary--
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 注册 Android', () => {
+        checkAPIResult(200, -200006)
+    })
+%}
+
+
+### 审批注册的应用
+run approve_app_register.http
+
+
+### 测试 App -- 查询 - 设置 Windows 应用 ID
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/app/search?language={{language}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+Content-Type: application/json
+
+{
+  "platform": [
+    1
+  ],
+  "status": [
+    1
+  ]
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const appId = response.body.data.list.pop().id
+    checkAPIResult(200, undefined)
+    client.assert(appId, 'windows app id not found')
+    client.global.set('windowsAppId', appId)
+%}
+
+
+### 测试 App -- 查询 - 设置 Adnroid 应用 ID
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/app/search?language={{language}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+Content-Type: application/json
+
+{
+  "platform": [
+    3
+  ],
+  "status": [
+    1
+  ]
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const appId = response.body.data.list.pop().id
+    checkAPIResult(200, undefined)
+    client.assert(appId, 'android app id not found')
+    client.global.set('androidAppId', appId)
+%}
+
+
+### 测试 App -- 查询 - 设置 Apple 应用 ID
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/app/search?language={{language}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+Content-Type: application/json
+
+{
+  "platform": [
+    2
+  ],
+  "status": [
+    1
+  ]
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const appId = response.body.data.list.pop().id
+    checkAPIResult(200, undefined)
+    client.assert(appId, 'apple app id not found')
+    client.global.set('appleAppId', appId)
+%}
+
+
+### 上传新的 Windows 应用图标
+run upload_logo.http
+
+
+### 测试 App -- 更新
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/app/update/{{windowsAppId}}?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+{
+  "name": "Windows应用新名",
+  "logoFileId": "{{windowsNewLogoFileId}}",
+  "admins": [
+    "zhangsan",
+    "wangwu"
+  ],
+  "members": [
+    "zhaoliu",
+    "lisisi"
+  ]
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 更新', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 App -- 获取应用信息
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/app/getInformation/{{windowsAppId}}?language={{language}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const info = response.body.data
+    client.test('测试响应结果 -- 获取应用信息', () => {
+        checkAPIResult(200, undefined)
+        client.assert(info, 'info is empty')
+    })
+%}
+
+
+### 测试 App -- 无效化
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/app/invalidate/{{windowsAppId}}?language={{language}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 无效化', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 App -- 启用
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/app/enable/{{windowsAppId}}?language={{language}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 启用', () => {
+        checkAPIResult(200, -200005)
+    })
+%}
+
+
+### 审批应用启用
+run approve_app_enable.http
+
+
+### 测试 App -- 获取用户具有权限的应用个数
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/app/count?language={{language}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const count = response.body.data.count
+    client.test('测试响应结果 -- 获取用户具有权限的应用个数', () => {
+        checkAPIResult(200, undefined)
+        client.assert(count, "count does not meet expectation")
+    })
+%}
+
+
+### 测试 App -- 查询
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/app/search?language={{language}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+Content-Type: application/json
+
+{
+  "name": "Windows",
+  "platform": [
+    1
+  ],
+  "status": [
+    1
+  ]
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const info = response.body.data
+    client.test('测试响应结果 -- 查询', () => {
+        checkAPIResult(200, undefined)
+        client.assert(info, "info is empty")
+    })
+%}

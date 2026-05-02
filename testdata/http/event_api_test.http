@@ -1,0 +1,32 @@
+# Copyright (c) 2024 ivfzhou
+# csms is licensed under Mulan PSL v2.
+# You can use this software according to the terms and conditions of the Mulan PSL v2.
+# You may obtain a copy of Mulan PSL v2 at:
+#          http://license.coscl.org.cn/MulanPSL2
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+# EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+# MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+# See the Mulan PSL v2 for more details.
+
+
+### 测试 Event -- 获取应用事件列表
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/event/list?language={{language}}&pageNumber=1&pageSize=10&app=w&platform=1&source=1&
+    type=1
+    &user=zh&beginTime=2024-01-01 00:00:00&endTime=2029-01-01 00:00:00
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const list = response.body.data.list
+    client.test('测试响应结果 -- 获取应用事件列表', () => {
+        checkAPIResult(200, undefined)
+        client.assert(list, 'list is empty')
+    })
+%}

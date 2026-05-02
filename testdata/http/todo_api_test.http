@@ -1,0 +1,232 @@
+# Copyright (c) 2024 ivfzhou
+# csms is licensed under Mulan PSL v2.
+# You can use this software according to the terms and conditions of the Mulan PSL v2.
+# You may obtain a copy of Mulan PSL v2 at:
+#          http://license.coscl.org.cn/MulanPSL2
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+# EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+# MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+# See the Mulan PSL v2 for more details.
+
+
+### 测试 Todo -- 获取用户待办、已办数量
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/todo/count?language={{language}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 获取用户待办、已办数量', () => {
+        checkAPIResult(200, undefined)
+    })
+%}
+
+
+### 测试 Todo -- 获取需要处理的待办
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/todo/list?language={{language}}&pageNumber=1&pageSize=10
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 获取需要处理的待办', () => {
+        checkAPIResult(200, undefined)
+    })
+%}
+
+
+### 测试 Todo -- 获取已处理的待办列表
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/todo/listDealt?language={{language}}&pageNumber=1&pageSize=10&appId={{windowsAppId}}&
+    types=1&types=2&status=2&status=3
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 获取已处理的待办列表', () => {
+        checkAPIResult(200, undefined)
+    })
+%}
+
+
+### 测试 Todo -- 创建 - 加入应用
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/todo/create?language={{language}}
+Content-Type: application/json
+Date: {{date}}
+Cookie: csms_user=tianqi; csms_session={{csms_session_tianqi}}
+
+{
+  "type": 2,
+  "appId": "{{windowsAppId}}",
+  "applyReason": "申请加入应用"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 创建 - 加入应用', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 获取需要处理的待办
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/todo/list?language={{language}}&pageNumber=1&pageSize=10
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const id = response.body.data.list.pop().id
+    checkAPIResult(200, undefined)
+    client.assert(id, 'todo id not found')
+    client.global.set('todoId', id)
+%}
+
+
+### 测试 Todo -- 获取待办详情
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/todo/getDetail?language={{language}}&id={{todoId}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const info = response.body.data
+    client.test('测试响应结果 -- 获取待办详情', () => {
+        checkAPIResult(200, undefined)
+        client.assert(info, 'info is empty')
+    })
+%}
+
+
+### 测试 Todo -- 审批 - 加入应用
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/todo/deal?language={{language}}
+Content-Type: application/json
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+{
+  "id": {{todoId}},
+  "isPass": true,
+  "approveMessage": "同意"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 审批 - 加入应用', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 Todo -- 创建- 申请签名权限
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/todo/create?language={{language}}
+Content-Type: application/json
+Date: {{date}}
+Cookie: csms_user=tianqi; csms_session={{csms_session_tianqi}}
+
+{
+  "type": 3,
+  "appId": "{{windowsAppId}}",
+  "applyReason": "申请签名权限"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 创建 - 申请签名权限', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 获取需要处理的待办
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/todo/list?language={{language}}&pageNumber=1&pageSize=10
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const id = response.body.data.list.pop().id
+    checkAPIResult(200, undefined)
+    client.assert(id, 'todo id not found')
+    client.global.set('todoId', id)
+%}
+
+
+### 测试 Todo -- 审批 - 申请签名权限
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/todo/deal?language={{language}}
+Content-Type: application/json
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+{
+  "id": {{todoId}},
+  "isPass": true,
+  "approveMessage": "同意"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 审批 - 申请签名权限', () => {
+        checkAPIResult(200, -200004)
+    })
+%}

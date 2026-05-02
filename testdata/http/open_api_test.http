@@ -1,0 +1,244 @@
+# Copyright (c) 2024 ivfzhou
+# csms is licensed under Mulan PSL v2.
+# You can use this software according to the terms and conditions of the Mulan PSL v2.
+# You may obtain a copy of Mulan PSL v2 at:
+#          http://license.coscl.org.cn/MulanPSL2
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+# EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+# MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+# See the Mulan PSL v2 for more details.
+
+
+### 测试 Open API -- 申请
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+    const windowsAppId = client.global.get('windowsAppId')
+    const androidAppId = client.global.get('androidAppId')
+    const appleAppId = client.global.get('appleAppId')
+    const windowsApiAccountId = 'windows_api_account'
+    const androidApiAccountId = 'android_api_account'
+    const appleApiAccountId = 'apple_api_account'
+    client.global.set('windowsApiAccountId', windowsApiAccountId)
+    client.global.set('androidApiAccountId', androidApiAccountId)
+    client.global.set('appleApiAccountId', appleApiAccountId)
+    request.variables.set("clients", [
+        {
+            case: 'Windows 请求凭证账号',
+            req: {
+                accountId: windowsApiAccountId,
+                authorities: [1, 2, 3, 4, 9, 10, 11],
+                appId: windowsAppId
+            },
+            rsp: {}
+        },
+        {
+            case: 'Android 请求凭证账号',
+            req: {
+                accountId: androidApiAccountId,
+                authorities: [5, 6, 9, 10, 11],
+                appId: androidAppId
+            },
+            rsp: {}
+        },
+        {
+            case: 'Apple 请求凭证账号',
+            req: {
+                accountId: appleApiAccountId,
+                authorities: [7, 8, 9, 10, 11],
+                appId: appleAppId
+            },
+            rsp: {}
+        },
+    ])
+%}
+POST https://127.0.0.1/backend/web/open/apply/{{$.clients..req.appId}}?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+{
+  "accountId": "{{$.clients..req.accountId}}",
+  "authorities": {{$.clients..req.authorities}},
+  "requestIp": "*",
+  "frequency": 500
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    let current = request.variables.get("clients")[request.iteration()]
+    const password = response.body.data.password
+    client.test(`测试响应结果 -- 申请 -- ${current.case}`, () => {
+        checkAPIResult(200, current.rsp.code)
+        client.assert(password, 'password is empty')
+    })
+    client.global.set(current.req.accountId, password)
+%}
+
+
+### 测试 Open API -- 修改
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/open/update/{{windowsAppId}}?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+{
+  "accountId": "{{windowsApiAccountId}}",
+  "authorities": [1, 2, 3, 4, 9, 10, 11],
+  "requestIp": "*,127.0.0.1",
+  "frequency": 500
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 修改', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 Open API -- 获取请求凭证信息
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/open/getInformation/{{windowsAppId}}?language={{language}}&
+    accountId={{windowsApiAccountId}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const info = response.body.data
+    client.test('测试响应结果 -- 获取请求凭证信息', () => {
+        checkAPIResult(200, undefined)
+        client.assert(info, `info is empty`)
+    })
+%}
+
+
+### 测试 Open API -- 获取请求凭证信息列表
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/open/list/{{windowsAppId}}?language={{language}}&pageNumber=1&pageSize=10
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const list = response.body.data.list
+    client.test('测试响应结果 -- 获取请求凭证信息列表', () => {
+        checkAPIResult(200, undefined)
+        client.assert(list, `list is empty`)
+    })
+%}
+
+
+### 测试 Open API -- 续期
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/open/renewal/{{windowsAppId}}?language={{language}}&accountId={{windowsApiAccountId}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 续期', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 Open API -- 重置密钥
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/open/reset/{{windowsAppId}}?language={{language}}&accountId={{windowsApiAccountId}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const password = response.body.data.password
+    client.test('测试响应结果 -- 重置密钥', () => {
+        checkAPIResult(200, undefined)
+        client.assert(password, `password is empty`)
+    })
+    client.global.set('windows_api_account', password)
+%}
+
+
+### 申请请求凭证账号
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/open/apply/{{windowsAppId}}?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+{
+  "accountId": "windows_api_account_to_be_delete",
+  "authorities": [
+    1,
+    2,
+    3,
+    4,
+    9,
+    10,
+    11
+  ],
+  "requestIp": "*",
+  "frequency": 500
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const password = response.body.data.password
+    checkAPIResult(200, undefined)
+    client.assert(password, `password is empty`)
+%}
+
+
+### 测试 Open API -- 删除
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+DELETE https://127.0.0.1/backend/web/open/remove/{{windowsAppId}}?language={{language}}&
+    accountId=windows_api_account_to_be_delete
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 删除', () => {
+        checkAPIResult(200, -200004)
+    })
+%}

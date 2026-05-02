@@ -1,0 +1,726 @@
+# Copyright (c) 2024 ivfzhou
+# csms is licensed under Mulan PSL v2.
+# You can use this software according to the terms and conditions of the Mulan PSL v2.
+# You may obtain a copy of Mulan PSL v2 at:
+#          http://license.coscl.org.cn/MulanPSL2
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+# EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+# MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+# See the Mulan PSL v2 for more details.
+
+
+import upload_apk.http
+import upload_aab.http
+
+
+### 测试 Android -- 添加证书主体
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/android/addOrganization?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=admin; csms_session={{csms_session_admin}}
+
+{
+  "commonName": "company certificate",
+  "dName": "C=CN,ST=Hunan,L=Changsha,CN=company_android_cert"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 添加证书主体', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 Android -- 获取安卓主体信息列表
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/android/listOrganizations?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=admin; csms_session={{csms_session_admin}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const id = response.body.data.list.pop().id
+    client.test('测试响应结果 -- 获取安卓主体信息列表', () => {
+        checkAPIResult(200, undefined)
+        client.assert(id, `organization id is empty`)
+    })
+    client.global.set('androidOrganizationId', id)
+%}
+
+
+### 测试 Android -- 申请安卓证书 - 调试
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/android/applyCertificate/{{androidAppId}}?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+{
+  "type": 1,
+  "alias": "debug_android_cert",
+  "ownerId": {{androidOrganizationId}}
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 申请安卓证书 - 调试', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 Android -- 申请安卓证书 - 发布
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/android/applyCertificate/{{androidAppId}}?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+{
+  "type": 2,
+  "alias": "release_android_cert",
+  "ownerId": {{androidOrganizationId}}
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 申请安卓证书 - 发布', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 Android -- 上传安卓证书
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/android/uploadCertificate/{{androidAppId}}?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+{
+  "type": 1,
+  "alias": "android_uploading_certificate",
+  "keypass": "123456",
+  "storepass": "123456",
+  "certificate": "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"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 上传安卓证书', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 Android -- 获取安卓证书列表
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/android/listCertificates/{{androidAppId}}?language={{language}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const list = response.body.data.list
+    client.test('测试响应结果 -- 获取安卓证书列表', () => {
+        checkAPIResult(200, undefined)
+        client.assert(list, 'list is empty')
+    })
+    client.global.set('uploadAndroidCertificateId', list[0].id)
+    client.global.set('releaseAndroidCertificateId', list[1].id)
+    client.global.set('debugAndroidCertificateId', list[2].id)
+%}
+
+
+### 测试 Android -- 下载安卓证书
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/android/downloadCertificate/{{androidAppId}}?language={{language}}&
+    certificateId={{debugAndroidCertificateId}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 下载安卓证书', () => {
+        checkAPIResult(200, undefined)
+        client.assert(response.body !== undefined, `http body is empty`)
+    })
+%}
+
+
+### 测试 Android -- 获取谷歌 Play 上传证书
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/android/getGooglePlayCertificate/{{androidAppId}}?language={{language}}&
+    certificateId={{releaseAndroidCertificateId}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 获取谷歌 Play 上传证书', () => {
+        checkAPIResult(200, undefined)
+        client.assert(response.body !== undefined, `http body is empty`)
+    })
+%}
+
+
+### 测试 Android -- 获取谷歌 Play 部署证书
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/android/getGooglePlayDeployCertificate/{{androidAppId}}?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+{
+  "certificateId": "{{releaseAndroidCertificateId}}",
+  "publicKey": "-----BEGIN PUBLIC KEY-----\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAr8NM+jrKRBTAqMlm53dw\nduVUlKLkRU3CvTzJINxkFccnyE2OBsl0hWBmq+KQ8rA9RqQbM+I+DnBfCIm1DlYl\nQDz85KIA3fMyER9gm47z6SV8xSL1ZnQO2s5fgMDdcg6dfKoCF/XC5gdkonnES9rL\nseWu3aPv6cCprhR0BH8tvdZEa7CQ3eWrBhAYkzaPQ62b2GsyKbhwqVq3kk2lIjS3\nOFnmoXfJufsry2kCtAM+OyH0Vhu2lLFseIJAuN4+aL4k8fTEnQMGA6VM2sqQctDM\naPRYBXqcgsXXhglfmfvOcfEIo1WlRHDgPX7tK2K1ZeeCVk0vCXrAgn/lqdBY/R2x\n4Gq1yNNRC6WIwA5jPIx4XQSv1/f/fB2T3zPVWu3BdrJUuWB/VFp3UiP8Je2a5q+A\n5suze8XMO1iG5CW49RkssrRNpiLQLI46RWDeYx4LM4a78cimyncDFJx3VkFvdA1v\nzdidfBHWQNcwtCg854+EQpAMcI+ItV9d5sohVoJW4F4fusDjgKr1vt29jW4cI+jK\nZVETLQGsS76iIWyot8IQYQKQVgHpcAmktsVCh9YzYrRTJm4NtBNQHljCfKX64/a/\n6HACMQvt4CedSMEJsWPs4oonBlPD/lrv5GU3mkguyJosl4SngP4Oc60Dtu4JQqQB\nQucFHwnA8UXgF4zgutWKdA0CAwEAAQ==\n-----END PUBLIC KEY-----"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 获取谷歌 Play 部署证书', () => {
+        checkAPIResult(200, undefined)
+        client.assert(response.body !== undefined, `http body is empty`)
+    })
+%}
+
+
+### 测试 Android -- 获取谷歌 Play 升级签名密钥
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/android/getGooglePlayUpgradeCertificate/{{androidAppId}}?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+{
+  "deployCertificateId": "{{releaseAndroidCertificateId}}",
+  "uploadCertificateId": "{{debugAndroidCertificateId}}",
+  "publicKey": "-----BEGIN PUBLIC KEY-----\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAr8NM+jrKRBTAqMlm53dw\nduVUlKLkRU3CvTzJINxkFccnyE2OBsl0hWBmq+KQ8rA9RqQbM+I+DnBfCIm1DlYl\nQDz85KIA3fMyER9gm47z6SV8xSL1ZnQO2s5fgMDdcg6dfKoCF/XC5gdkonnES9rL\nseWu3aPv6cCprhR0BH8tvdZEa7CQ3eWrBhAYkzaPQ62b2GsyKbhwqVq3kk2lIjS3\nOFnmoXfJufsry2kCtAM+OyH0Vhu2lLFseIJAuN4+aL4k8fTEnQMGA6VM2sqQctDM\naPRYBXqcgsXXhglfmfvOcfEIo1WlRHDgPX7tK2K1ZeeCVk0vCXrAgn/lqdBY/R2x\n4Gq1yNNRC6WIwA5jPIx4XQSv1/f/fB2T3zPVWu3BdrJUuWB/VFp3UiP8Je2a5q+A\n5suze8XMO1iG5CW49RkssrRNpiLQLI46RWDeYx4LM4a78cimyncDFJx3VkFvdA1v\nzdidfBHWQNcwtCg854+EQpAMcI+ItV9d5sohVoJW4F4fusDjgKr1vt29jW4cI+jK\nZVETLQGsS76iIWyot8IQYQKQVgHpcAmktsVCh9YzYrRTJm4NtBNQHljCfKX64/a/\n6HACMQvt4CedSMEJsWPs4oonBlPD/lrv5GU3mkguyJosl4SngP4Oc60Dtu4JQqQB\nQucFHwnA8UXgF4zgutWKdA0CAwEAAQ==\n-----END PUBLIC KEY-----"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 获取谷歌 Play 升级签名密钥', () => {
+        checkAPIResult(200, undefined)
+        client.assert(response.body !== undefined, `http body is empty`)
+    })
+%}
+
+
+### 测试 Android -- 获取证书的脸书摘要
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/android/getCertificateFacebookDigest/{{androidAppId}}?language={{language}}&
+    certificateId={{releaseAndroidCertificateId}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const digest = response.body.data.digest
+    client.test('测试响应结果 -- 获取证书的脸书摘要', () => {
+        checkAPIResult(200, undefined)
+        client.assert(digest, `digest is empty`)
+    })
+%}
+
+
+### 上传 APK 文件
+run upload_apk.http
+
+
+### 测试 Android -- 提交 APK 文件签名任务
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/android/submitAPKSigningJob/{{androidAppId}}?language={{language}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+Content-Type: application/json
+
+{
+  "signatureSchema": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "certificateId": "{{releaseAndroidCertificateId}}",
+  "fileId": "{{apkFileId}}"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 提交 APK 文件签名任务', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 上传 AAB 文件
+run upload_aab.http
+
+
+### 测试 Android -- 提交 AAB 文件签名任务
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/android/submitAABSigningJob/{{androidAppId}}?language={{language}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+Content-Type: application/json
+
+{
+  "certificateId": "{{releaseAndroidCertificateId}}",
+  "fileId": "{{aabFileId}}"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 提交 AAB 文件签名任务', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 Android -- 提交 APK 补丁包文件签名任务
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/android/submitAPKPatchSigningJob/{{androidAppId}}?language={{language}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+Content-Type: application/json
+
+{
+  "signatureSchema": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "certificateId": "{{releaseAndroidCertificateId}}",
+  "fileId": "{{apkFileId}}",
+  "minimumSdkVersion": 1
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 提交 APK 补丁包文件签名任务', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 Android -- 获取签名任务列表信息
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/android/listSigningJobs/{{androidAppId}}?language={{language}}&keyWord=zhang&status=1&
+    certificateAlias=cert&pageNumber=1&pageSize=10
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const list = response.body.data.list
+    client.test('测试响应结果 -- 获取签名任务列表信息', () => {
+        checkAPIResult(200, undefined)
+        client.assert(list, 'list is empty')
+    })
+%}
+
+
+### 添加证书主体
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/android/addOrganization?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=admin; csms_session={{csms_session_admin}}
+
+{
+  "commonName": "company certificate to be del",
+  "dName": "C=CN,ST=Hunan,L=Changsha,CN=company_android_cert_to_del"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    checkAPIResult(200, -200004)
+%}
+
+
+### 获取安卓主体信息列表
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/android/listOrganizations?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=admin; csms_session={{csms_session_admin}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const id = response.body.data.list[0].id
+    checkAPIResult(200, undefined)
+    client.assert(id, `organization id is empty`)
+    client.global.set('androidOrganizationToBeDeletedId', id)
+%}
+
+
+### 测试 Android -- 删除证书主体
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+DELETE https://127.0.0.1/backend/web/android/removeOrganization?language={{language}}&
+    id={{androidOrganizationToBeDeletedId}}
+Date: {{date}}
+Cookie: csms_user=admin; csms_session={{csms_session_admin}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 删除证书主体', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 上传安卓证书
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/android/uploadCertificate/{{androidAppId}}?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+{
+  "type": 1,
+  "alias": "android_uploading_certificate",
+  "keypass": "123456",
+  "storepass": "123456",
+  "certificate": "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"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    checkAPIResult(200, -200004)
+%}
+
+
+### 获取安卓证书列表
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/android/listCertificates/{{androidAppId}}?language={{language}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const list = response.body.data.list
+    checkAPIResult(200, undefined)
+    client.assert(list, 'list is empty')
+    client.global.set('uploadAndroidCertificateToBeDeletedId', list[0].id)
+%}
+
+
+### 测试 Android -- 删除安卓证书
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+DELETE https://127.0.0.1/backend/web/android/deleteCertificate/{{androidAppId}}?language={{language}}&
+    certificateId={{uploadAndroidCertificateToBeDeletedId}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 删除安卓证书', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 Android OpenAPI -- 下载安卓证书
+< {%
+    import {createAuthorization} from './http_util.js'
+
+    const appId = client.global.get('androidAppId')
+    const apiAccountId = 'android_api_account';
+    const secret = client.global.get(apiAccountId)
+    client.log(appId, apiAccountId, secret)
+    const token = createAuthorization(appId, apiAccountId, secret)
+    request.variables.set('token', token)
+%}
+GET https://127.0.0.1/backend/api/android/downloadCertificate?certificateId={{debugAndroidCertificateId}}
+Authorization: Bearer {{token}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 下载安卓证书', () => {
+        checkAPIResult(200, undefined)
+        client.assert(response.body !== undefined, `http body is empty`)
+    })
+%}
+
+
+### 测试 Android OpenAPI -- 提交 APK 文件签名任务
+< {%
+    import {createAuthorization} from './http_util.js'
+
+    const appId = client.global.get('androidAppId')
+    const apiAccountId = 'android_api_account';
+    const secret = client.global.get(apiAccountId)
+    client.log(appId, apiAccountId, secret)
+    const token = createAuthorization(appId, apiAccountId, secret)
+    request.variables.set('token', token)
+%}
+POST https://127.0.0.1/backend/api/android/submitAPKSigningJob
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "signatureSchema": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "certificateId": "{{releaseAndroidCertificateId}}",
+  "fileId": "{{apkFileId}}"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const jobId = response.body.data.jobId
+    client.test('测试响应结果 -- 提交 APK 文件签名任务', () => {
+        checkAPIResult(200, undefined)
+        client.assert(jobId, 'jobId is empty')
+    })
+    client.global.set('apkJobId', jobId)
+%}
+
+
+### 测试 Android OpenAPI -- 提交 AAB 文件签名任务
+< {%
+    import {createAuthorization} from './http_util.js'
+
+    const appId = client.global.get('androidAppId')
+    const apiAccountId = 'android_api_account';
+    const secret = client.global.get(apiAccountId)
+    client.log(appId, apiAccountId, secret)
+    const token = createAuthorization(appId, apiAccountId, secret)
+    request.variables.set('token', token)
+%}
+POST https://127.0.0.1/backend/api/android/submitAABSigningJob
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "certificateId": "{{releaseAndroidCertificateId}}",
+  "fileId": "{{aabFileId}}"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const jobId = response.body.data.jobId
+    client.test('测试响应结果 -- 提交 AAB 文件签名任务', () => {
+        checkAPIResult(200, undefined)
+        client.assert(jobId, 'jobId is empty')
+    })
+    client.global.set('aabJobId', jobId)
+%}
+
+
+### 测试 Android OpenAPI -- 提交 APK 补丁包文件签名任务
+< {%
+    import {createAuthorization} from './http_util.js'
+
+    const appId = client.global.get('androidAppId')
+    const apiAccountId = 'android_api_account';
+    const secret = client.global.get(apiAccountId)
+    client.log(appId, apiAccountId, secret)
+    const token = createAuthorization(appId, apiAccountId, secret)
+    request.variables.set('token', token)
+%}
+POST https://127.0.0.1/backend/api/android/submitAPKPatchSigningJob
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "signatureSchema": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "certificateId": "{{releaseAndroidCertificateId}}",
+  "fileId": "{{apkFileId}}",
+  "minimumSdkVersion": 1
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const jobId = response.body.data.jobId
+    client.test('测试响应结果 -- 提交 APK 补丁包文件签名任务', () => {
+        checkAPIResult(200, undefined)
+        client.assert(jobId, 'jobId is empty')
+    })
+    client.global.set('apkPatchJobId', jobId)
+%}
+
+
+### 测试 Android OpenAPI -- 获取任务信息
+< {%
+    import {createAuthorization} from './http_util.js'
+
+    const appId = client.global.get('androidAppId')
+    const apiAccountId = 'android_api_account';
+    const secret = client.global.get(apiAccountId)
+    client.log(appId, apiAccountId, secret)
+    const token = createAuthorization(appId, apiAccountId, secret)
+    request.variables.set('token', token)
+
+    request.variables.set('clients', [
+        {
+            'jobId': client.global.get('apkPatchJobId')
+        },
+        {
+            'jobId': client.global.get('apkJobId')
+        },
+        {
+            'jobId': client.global.get('aabJobId')
+        }
+    ])
+%}
+GET https://127.0.0.1/backend/api/android/getSigningJobInformation?jobId={{$.clients..jobId}}
+Authorization: Bearer {{token}}
+
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const info = response.body.data
+    client.test('测试响应结果 -- 获取任务信息', () => {
+        checkAPIResult(200, undefined)
+        client.assert(info, 'info is empty')
+    })
+%}
+
+
+### 测试 Android OpenAPI -- 获取安卓证书列表
+< {%
+    import {createAuthorization} from './http_util.js'
+
+    const appId = client.global.get('androidAppId')
+    const apiAccountId = 'android_api_account';
+    const secret = client.global.get(apiAccountId)
+    client.log(appId, apiAccountId, secret)
+    const token = createAuthorization(appId, apiAccountId, secret)
+    request.variables.set('token', token)
+%}
+GET https://127.0.0.1/backend/api/android/listCertificates
+Authorization: Bearer {{token}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const list = response.body.data.list
+    client.test('测试响应结果 -- 获取安卓证书列表', () => {
+        checkAPIResult(200, undefined)
+        client.assert(list, 'list is empty')
+    })
+%}

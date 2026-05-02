@@ -1,0 +1,80 @@
+;
+; KMDF Driver Installation INF
+;
+; HLK???????INF??
+;
+
+[Version]
+Signature="$WINDOWS NT$"
+Class=Sample ; ???????????,?:Net?Display?Image?
+ClassGuid={78A1C341-4539-11d3-B88D-00C04FAD5171} ; ??GUID,???????
+Provider=%ManufacturerName%
+CatalogFile=kmdfdriver.cat
+DriverVer=10/21/2024,1.0.0.0 ; ??:?????????DriverVer,??:MM/DD/YYYY,version
+PnpLockdown=1
+
+[DestinationDirs]
+DefaultDestDir = 12
+
+; ?????
+[SourceDisksNames]
+1 = %DiskName%,,,""
+
+[SourceDisksFiles]
+kmdfdriver.sys = 1,,
+
+; ??64????????(????NTAMD64??)
+[Manufacturer]
+%ManufacturerName%=Standard,NTamd64,NTarm64
+
+; ?????? - ?????
+[Standard.NTamd64]  ; ??64?x86??
+%DeviceDesc% = DriverInstall, PCI\VEN_XXXX&DEV_XXXX&SUBSYS_XXXXXXXX&REV_XX  ; ????????ID
+
+[Standard.NTarm64]  ; ??ARM64??(??)
+%DeviceDesc% = DriverInstall, PCI\VEN_XXXX&DEV_XXXX&SUBSYS_XXXXXXXX&REV_XX
+
+; ????????
+[DriverInstall.NTamd64]  ; 64?x86??
+CopyFiles = DriverCopyFiles.NTamd64
+
+[DriverInstall.NTarm64]  ; ARM64??(??)
+CopyFiles = DriverCopyFiles.NTarm64
+
+[DriverCopyFiles.NTamd64]  ; 64?x86????
+kmdfdriver.sys,,,0x00000040
+
+[DriverCopyFiles.NTarm64]  ; ARM64????(??)
+kmdfdriver.sys,,,0x00000040
+
+; ??????
+[DriverInstall.NTamd64.Services]  ; 64?x86??
+AddService = kmdfdriver,0x00000002,DriverServiceInstall
+
+[DriverInstall.NTarm64.Services]  ; ARM64??
+AddService = kmdfdriver,0x00000002,DriverServiceInstall
+
+[DriverServiceInstall]
+DisplayName    = %ServiceName%
+ServiceType    = 1                  ; SERVICE_KERNEL_DRIVER
+StartType      = 3                  ; SERVICE_DEMAND_START
+ErrorControl   = 1                  ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\kmdfdriver.sys
+LoadOrderGroup = Base
+
+; WDF?????(??:??KMDF????)
+[DriverInstall.NTamd64.Wdf]
+KmdfService = kmdfdriver, DriverWdfInstall
+
+[DriverInstall.NTarm64.Wdf]
+KmdfService = kmdfdriver, DriverWdfInstall
+
+[DriverWdfInstall]
+KmdfLibraryVersion = 1.27  ; ????????KMDF????
+
+; ???????
+[Strings]
+ManufacturerName = "Your Company Name"
+DeviceDesc = "Your KMDF Driver Description"
+ServiceName = "KMDFDriverService"
+DiskName = "KMDF Driver Installation Disk"

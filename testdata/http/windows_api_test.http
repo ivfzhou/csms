@@ -1,0 +1,963 @@
+# Copyright (c) 2024 ivfzhou
+# csms is licensed under Mulan PSL v2.
+# You can use this software according to the terms and conditions of the Mulan PSL v2.
+# You may obtain a copy of Mulan PSL v2 at:
+#          http://license.coscl.org.cn/MulanPSL2
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+# EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+# MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+# See the Mulan PSL v2 for more details.
+
+
+import upload_cab.http
+import upload_exe.http
+import upload_sys.http
+import upload_zip.http
+import upload_hlkx.http
+
+
+### 测试 Windows -- 上传个人 OV 证书
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/windows/uploadCertificate/{{windowsAppId}}?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+{
+  "certificate": "MIIRfwIBAzCCETUGCSqGSIb3DQEHAaCCESYEghEiMIIRHjCCBwoGCSqGSIb3DQEHBqCCBvswggb3AgEAMIIG8AYJKoZIhvcNAQcBMF8GCSqGSIb3DQEFDTBSMDEGCSqGSIb3DQEFDDAkBBD0WCBdcwHwX+s594oeq9pPAgIIADAMBggqhkiG9w0CCQUAMB0GCWCGSAFlAwQBKgQQ/4tQOmaPI00uauAhvyTheoCCBoBeCbOwdN3Pxx7GA2nvC+rvowg5Af2xqNOonvNSohZD9M4fWZ0VyNcSsoxWXvxWuEao9vcrYPlxVsoEP3Jy/qGA6i6Vmak7Q6lYu8I75dN+/xdiMakiTUvph96oy36HcvBfj3kkUxi94NFzJVrY1brd7JqA5rB9FGyrIIwnX79gg4Z+HPfE3Avi1rbuj0KCWkbBFsYE3Z8AUCcLpZj1Gvra0+1PziZjUKfmQQHiiRc4MuuNxNGpgEzrb8Ad5HUVPzkZ0d3lCAeHWNAo6G9S8VzOacNsukYzbeh7Hotuyry/EzBb5QKZ1x1PIC66UImECVx7w3t1SWfsNMKDrTpSfY06cQY1UDI5WAxfyQz2s6CkIUwToxhSy6R62S/PQ0KSllquTIA8dY53zGDn4Lf8tKJYEXDLyqPc7E2HweFd7ODuM7uN8YEG1VjjnOsJwYfK/KhKNEPxJZ9E691hlEeoQ62PwlOxrt8jP2/KFMBnsplc8F5x5DAs3LzmpxBPLL6LgoSDzyvTDt0xse8PJb8TZnNSaS1pWEbkpLjGoA4iAB52fLA1RLfcZ6qG7CBznmtpArmjg9sAyc7qMEpa3VDnP1pbmWAJRE8cS6lZmFlmZIiRPqIHxQ9/3kKzj9MdNldtlP2Vdswp+JJX6zsNMQpsLBnIFvCngBuVBgJTOu0Zrk514iiDkFlPlubnbR/1qEqs2nFAI/3s32ib2GFqZCVtDKeJkL+0FZEGvt0loF7MVGC23HFs4l0i2LNigIwjMIeWGcNC6ABgEb24iARkLxBhjqz1xcgC+gl9Pdcu/us1KA+LiSqDTH6MoYuyXWZR21ScNYxTb2cvqR4/7wsR8whjPsWfngfS4JIL7/4zHMiYu4UynFQmvAs/JGPDtjgjzoFQzDCWWXfqIBrmkG25LSie5Ki13UNe23Uguq88w1dv7okLr8PbnGlLGG/HFFwjLnYTdA6R20kIzZj9hWdsi1PZM4k7OtBsKluXpdWcPxVO3foM2R01Tts2yCY6wo8Yqf/PQSfZhlBuura/xf94FjF2Scaa/SXvQXA5DX1+d/MLOkBsEABjnK3d0RI2JyZbFQ9YZ5AEmSYdDcmo/eKxFllhl1f/VYZOEFDK0kjGydJkMDpuovveAbisM6NjdMmT/PxJR+0jJ9sqBvA6OIaP1iJGCSBPoNf3hy6fU2hmM+mkYJzCMP4ngp138Vy7p0lsSESD+r8nDMC44GRsdDHXUXjpWvM94NpoANFSbdbliWn9t8GEPdapGhox6R0AMJXT6ImOSkkB4idW6S6PeC5WD1TXz4AuPMiFblEqSprglqXWRCucJnpmFhTObUeW00S+0mqoMPfRnxhJpvIWljxhhomRzJBozslysfE3QdqCXjcrLo1auij4W7mF1BT4eSKSNq4LpIwQ0zYacG803lUlU/wIE3TMlGU7jErxQnLYf/lzdfNcIML34b8D+q+lL6a5YHyD2Yiu3jzKGc6wDG6tGSgRb3n/ddmmvLA/+WArgCkzIgzhl6YT2CMVzDOuo0TX0EbFTs6x2dWYwQeCbhHtwFBmNn7sJYFyVnfXplPByE7QymboamgvZIK8FuOesPswH6cyY41aAK3DpAmne5qP1AFgIL+BgOR4PlamHRaLYLMVraDegauZxpld4psdAwOO/cNS4GMPFWE1KJg584FQsaiaTtj1sEjbG860DsTkT6iozTyB21/ggFOQ8Z9IzdO00gaPmfkQL+RWRgIPTSUC/2OKlCjazXW6nMlm7/8YOpmT77m0FAvMCoxvWX8bPifD7O4DJJky+genrPM+raZX/bl/hsdNqcE57HZETvxQddGufC2+mbN/uMYPT8Ey7glGsdeWD+oq4hjJehSybY8y9hg4pDtph8EyKa/NVFP13umh//235/q7s4vMfPJhWBFZTjxkXWk3+lmcoprefgrJeXH/kWcFLkmz078x7CJqO6zQCNwTXEvbv4VqaJo+8D4BfoIBePrclRCpVe8/fL/CfvTyAPbfDrDiiwDZAySkZRAMbgJAy1NRwxabCWamfS/9JOkPMOayfiMOf7fq4kZB98XsFrzUITqdMVxMNFr312rR3BbzWMf0D9xfNn0e21f0QEBdVKL1HFwnQulR52brm4V/ADF6LuHqa3g+oWP+KP0VL13Nah/aZB/badqA6fJl+znghyVql0pGaIWF4pr8IZhnOlb5rgHYMiHO6qHOUOn0JmiacDCCCgwGCSqGSIb3DQEHAaCCCf0Eggn5MIIJ9TCCCfEGCyqGSIb3DQEMCgECoIIJuTCCCbUwXwYJKoZIhvcNAQUNMFIwMQYJKoZIhvcNAQUMMCQEENflaKczG8iLUKl8MiRhZggCAggAMAwGCCqGSIb3DQIJBQAwHQYJYIZIAWUDBAEqBBCwKYr1SOg34mZ4mkrgl8fVBIIJUBUkjKQ/u/JJhk/q8OtH1EkOAOyJvJwnKnCQWL44JAPbywcT4ZgMcX832Y3jo3uDRML+/Nq8Lu8B1S5QtxQb6u8W8d9fY/bHJDeuSH3KmDGcNXiN5HWGJFpcD1iYfpW+pvL+CGqyb4Zw3+WkIbGumfi6VwgKzm8yZZXP5gBnTPeQq94g1GkcuU0e+zUV+9cX2QqNoRUtQnJ8khI74O5soEEAKIHbXtCxBPHTtBU5uaWEtpATSRYPUbU2C+eGHIuQ1yJMnc1Oxgeg3WJRELAK4pV/0cXYGbn7bya62wK0JBr09yLupKMuo99TA42XVlcz7mtegr4J2bG/5dS+i9ujyCGMamLw/ldeMZtRMiHRIVWxV4x9CqJxsdI5On5T+f/yEyJpLvfTNPm2YSzDFFOxIQ7G/WIaj8UFvbpMOLKr1UkeGlSTf2L+raR2J6U0+Va57vXNdnMxP8exnB5wgnfLfbFK+YgNqI5O3haDHYTBeLXnAtBWrKwq4cR/yTBAs6dnPp3kBms4iLaxgr8G7xT3YdC6PrUE1yj7zFxPkMj+MTuL2IRyi3BOC8CB0qSCY5GHr8CYzR1wlHcADAXvjwMqL03tau0pJBBWT2OQ/8bvLCbjtamJT40MXq7Kit0o9i3rY3oqu78bOZ1CTl7oDVqge9ysJjBpKQyhJGb9hJM7qAey/NfslT8jbBDBAeEIywD4AM+gOGMmHHl74M8HeKUz7S8icPZ+gqPCOipqMiLNHgHbzFhKX10XO6HyeV/MrgIx/u/plFN3hqtNvbb6Ndt5XtyZcP3S4juVoQP8zBiZdlzfGX6xDdt18U/qJwbphhbOFYqCkJGX0jBz3alSv5e8UYnEAFtOLCo788vqgwOfBzsgY25SbZSQdbNCdrhZBLMJ6cHHHCNMHmdw/O5pw++ufFWkmdYLTjDnRO6QZ9G+kW8d+63tqvzjMQ9iUoFN3Kxs5Cz5JcvcKjn7aLXKoJOnog07tvgvGJ4cq8IwOsgFCGHn9b6Jxo0KNBvf53fybutIOuEDUXqqW28uGhVw2OGb3xcIQWsPoWBtOmF1mhGwZjO3UvgzyjuFkk1xFtuQJTXCMKFASclhKItQGgfBksM8aLiRaZ+gGD8H35xkDbwRE38kai5UTA7WKfvMMESflfLYkUcLAo/MMJipYb3RTuDVGVj1vGc7qbQLZmsu8qqLtESTjSGg9wFTQrChAetOE9cdiJpPiKn4Lq8n8AiIgk03EcCTqF8z5aSi67/9kCpmuBYvWKyZvbP311gcjK3m3NZRrGi8GAd6LtCWphX9B0ktpZMpXXOtPbnAfpjU8ANouMZWZIOnWSi44+PMnEcEqa/SL6ELlsn+l21QIy6ZFjMPkO5A/8/mkZ/UCj+j7AltFGX3DAYbvmVMnzyJirY3i/eIuh5A9h1IlBF3LCEfEC277Y2Vi7qVUQ8fLXoRFuSf+Obz1YBSfvqM/tn09khZLdpVcxEb9m/myd2SLEMZtAMO3d1CNoUku7x9Vvw/8tS4W8EB7duVYClorF6yDpXTrx3QA0PU2CVor4/N3533FKYImF6uB0YQn58MhNs26s2TNgYI60BBfohlTYwbgX2wbOZklqx2dTfxy5dRgydGB3H4SVpECV+GVUWfRnvMGubIoX5YsASu1eoC+ccKJtDpApLhUgdJ0kIGy9eWDhxU/eFTrdSIeD9tZfgzdOkWSXQy/7+olH/Pt2yFUnm5u65K4MY/gxeLjh0UQfyBYOjwPznU8Jzne7tANFDG7LSA8SuEGUcm2D8LVSQhGyBCLQb37qeLjriYEXyuNLuNyh09Pb0L7BY90ukDAnzGFeOwzjptOruxD54Q87b4z3dETCrUxcAn13BBWzC/JA+sFqTQBStxXH9SlFZnKPtOK/HLDjG7QrOEIYpy1a0upyXy9yHwtRfpfLEjQRDZp5FjVS+MB/ht7NEEeqcdwRdLbpLrUa6EHn6EBswozeq/u+c1KkFuEkvr74RNcZSBJHlcVMKPwM9aaVfyaCwErQvs7pnVfTm+3W0aCf1EvEzaUp+SKCvYEAsYPCNV7bU0cSvFORsI+ZfCpinafH/q58i1/mwNw7iobKHsRO7HdKGka4yiGn46JblI36W6KlfYOsLabMv8e0VLWqx8Kvocb6T3s3gbnnR8u2UQoGey3n5fba9X4kY8DVflO3Q2wG71/7GJbtYI/HNIQIwTfl+a7ae7Qe7qju4cwkARrRiLDKcAUk0u0jZZcgNj7CUZiVJob57z0j8S5QxNc9Vy0acv+Bw6HTkz8lijjfYNAD9PwvkMtaTbxS2Dx53dlTwAzEVsFadUNFXkKV+dDuQoW9fz7fGSkUNozdkO82qFyCWq5ditHbnBlXvAKte43cJZ37VAI/4FbYgEWvSKjuQIfdpN8pibMefQcIUqRSemGsqfhMx8WWShY3Dn6OYBcoD9CQoG0eyfvstHo3do2m+x1DrBypEiHCtyjOtwOJ8epWvdHuYZjG3Olr0yA+R3+vasxiUFHVMm1besfyzxjYUJNPN4DXpuWgo6rlYG46G4sVb2TWajS4JgDQsEf3j/iGigaZoywO8k0DMtix35iW7XmWeUc/7jdfi3KuAhMLOJ317MZeAjx7oPq2ObBK7Eu3DDTl9m51jPOSu6EyvWCxmPysVaUMsREUWLmZ7yj5aWTxqMhi7YA050CluR9Jfb1epinEUOgRGfYujIeytjzdzNbl/M6++q0vHkZFzdNGUtdLX046X5WjunB5e3agRO2xQ6K7tFhPwgn9t5S1EGotKX/yKJnBN2USW5np1eVb57L7WNa3qGoWCmJ5fPGELpK/Dp4qAwcziYwq3EKg3BB+Na62hC8BuTER8SShKCvw/7emYBXQB0w+FpcVlZDfF4JwwDNLGi7Ry2WlkhxlB2xoxpf58ICONRmNo2JCL33I8iYsgNzy5syzmf9N+tb0klMeRrc2aqSuMDsHbtAcPb8qOttFUMPXkpNc8mCIgL1zkEMty9rTpZKXLf6ugmk7ufsJCO43FVrv79/QVFaqQc2lYueeBm7ZeQSGu5E1UtPrZDbWec6D7gtTY4wZG2U3H+uIIguJ5SWW0vvmMkNEOxKF7cZ7ITRIj/AQxW6Gd7Al8BWSqROSCnUZSJ9g86nN7D0lHGuHAefKX0ohmJygyk5zGRDJKLKfyDoKozNk5AICK8MSUwIwYJKoZIhvcNAQkVMRYEFJR5nzVWxLGVt73k3qT1ZXf9nsvxMEEwMTANBglghkgBZQMEAgEFAAQg4pRBH2H7oZspApAfL/9N5qQsfxQaZZg35DnQOY/erDUECN8l3lfizbIwAgIIAA==",
+  "password": "123456"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 上传个人 OV 证书', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 Windows -- 证书列表
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/windows/listCertificates/{{windowsAppId}}?language={{language}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const id = response.body.data.list.pop().id
+    client.test('测试响应结果 -- 证书列表', () => {
+        checkAPIResult(200, undefined)
+        client.assert(id, 'certificate id is empty')
+    })
+    client.global.set('uploadWindowsCertificateId', id)
+%}
+
+
+### 测试 Windows -- 下载证书
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/windows/downloadCertificate/{{windowsAppId}}?language={{language}}&
+    certificateId={{uploadWindowsCertificateId}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 下载证书', () => {
+        checkAPIResult(200, undefined)
+        client.assert(response.body !== undefined, `http body is empty`)
+    })
+%}
+
+
+### 测试 Windows -- 添加 EV 证书
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+    request.variables.set('clients', [
+        {
+            "sha1": "3050762623C5FCADB879258983E758A2F9559AD2",
+            "owner": "C=CN, ST=HuNan, L=Changsha, O=ivfzhou, OU=ivfzhou, CN=windows personal ev certificate, emailAddress=ivfzhou@126.com",
+            "publisher": "C=CN, ST=HuNan, L=Changsha, O=ivfzhou, OU=ivfzhou, CN=windows personal ev certificate, emailAddress=ivfzhou@126.com",
+            "signatureAlgorithm": "sha256WithRSAEncryption",
+            "publicKeyAlgorithm": "rsaEncryption",
+            "password": "123456",
+            "machineIp": "127.0.0.1",
+            "notBefore": "2026-01-20 09:48:00",
+            "notAfter": "2125-12-27 09:48:00",
+            "serialNumber": "6e4314c191e2fe571b60818914982e53e03e7a20",
+            "version": 3,
+            "isMicrosoftVerifyCertificate": false,
+            "type": 3
+        },
+        {
+            "sha1": "BAD3E567F1ABB53A21351B7074026E692769F676",
+            "owner": "C=CN, ST=HuNan, L=Changsha, O=ivfzhou, OU=ivfzhou, CN=windows company ev certificate, emailAddress=ivfzhou@126.com",
+            "publisher": "C=CN, ST=HuNan, L=Changsha, O=ivfzhou, OU=ivfzhou, CN=windows company ev certificate, emailAddress=ivfzhou@126.com",
+            "signatureAlgorithm": "sha256WithRSAEncryption",
+            "publicKeyAlgorithm": "rsaEncryption",
+            "password": "123456",
+            "machineIp": "127.0.0.1",
+            "notBefore": "2026-01-20 09:49:56",
+            "notAfter": "2125-12-27 09:49:56",
+            "serialNumber": "090262d40484509cddc182253aabacf69bff21d2",
+            "version": 3,
+            "isMicrosoftVerifyCertificate": true,
+            "type": 1
+        }
+    ])
+%}
+POST https://127.0.0.1/backend/web/windows/addEVCertificate?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=admin; csms_session={{csms_session_admin}}
+
+{
+  "sha1": "{{$.clients..sha1}}",
+  "owner": "{{$.clients..owner}}",
+  "publisher": "{{$.clients..publisher}}",
+  "signatureAlgorithm": "{{$.clients..signatureAlgorithm}}",
+  "publicKeyAlgorithm": "{{$.clients..publicKeyAlgorithm}}",
+  "password": "{{$.clients..password}}",
+  "machineIp": "{{$.clients..machineIp}}",
+  "notBefore": "{{$.clients..notBefore}}",
+  "notAfter": "{{$.clients..notAfter}}",
+  "serialNumber": "{{$.clients..serialNumber}}",
+  "version": {{$.clients..version}},
+  "isMicrosoftVerifyCertificate": {{$.clients..isMicrosoftVerifyCertificate}},
+  "type": {{$.clients..type}}
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 添加 EV 证书', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 Windows -- 上传公司 OV 证书
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/windows/uploadCompanyCertificate?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=admin; csms_session={{csms_session_admin}}
+
+{
+  "certificate": "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",
+  "password": "123456"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 上传公司 OV 证书', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 Windows -- 获取后台管理中的 Windows 证书
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/windows/listCompanyCertificates?language={{language}}
+Date: {{date}}
+Cookie: csms_user=admin; csms_session={{csms_session_admin}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const list = response.body.data.list
+    const windowsCompanyOVCertificate = list.find(v => {
+        return v.type === 2
+    })
+    const windowsPersonalEVCertificate = list.find(v => {
+        return v.type === 3
+    })
+    const windowsCompanyEVCertificate = list.find(v => {
+        return v.type === 1
+    })
+    client.test('测试响应结果 -- 获取后台管理中的 Windows 证书', () => {
+        checkAPIResult(200, undefined)
+        client.assert(windowsCompanyOVCertificate, 'certificate is empty')
+        client.assert(windowsPersonalEVCertificate, 'certificate is empty')
+        client.assert(windowsCompanyEVCertificate, 'certificate is empty')
+    })
+
+    client.global.set('windowsCompanyOVCertificateId', windowsCompanyOVCertificate.id)
+    client.global.set('windowsPersonalEVCertificateId', windowsPersonalEVCertificate.id)
+    client.global.set('windowsCompanyEVCertificateId', windowsCompanyEVCertificate.id)
+%}
+
+
+### 测试 Windows -- 授权应用使用个人 EV 证书
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/windows/grantAppEVCertificate?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=admin; csms_session={{csms_session_admin}}
+
+{
+  "appId": "{{windowsAppId}}",
+  "certificateId": "{{windowsPersonalEVCertificateId}}"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 授权应用使用个人 EV 证书', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 Windows -- 查看证书密码
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/windows/getCertificatePassword/{{windowsAppId}}?language={{language}}&
+    certificateId={{windowsPersonalEVCertificateId}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const password = response.body.data.password
+    client.test('测试响应结果 -- 查看证书密码', () => {
+        checkAPIResult(200, undefined)
+        client.assert(password, 'password is empty')
+    })
+%}
+
+
+### 测试 Windows -- 下载公司证书
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/windows/downloadCompanyCertificate?language={{language}}&
+    certificateId={{windowsCompanyOVCertificateId}}
+Date: {{date}}
+Cookie: csms_user=admin; csms_session={{csms_session_admin}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 下载证书', () => {
+        checkAPIResult(200, undefined)
+        client.assert(response.body !== undefined, `http body is empty`)
+    })
+%}
+
+
+### 测试 Windows -- 获取授权 Windows EV 证书应用列表
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/windows/listGrantCertificateApps?language={{language}}&pageSize=10&pageNumber=1
+Date: {{date}}
+Cookie: csms_user=admin; csms_session={{csms_session_admin}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const list = response.body.data.list
+    client.test('测试响应结果 -- 获取授权 Windows EV 证书应用列表', () => {
+        checkAPIResult(200, undefined)
+        client.assert(list, 'list is empty')
+    })
+%}
+
+
+### 上传 exe 文件
+run upload_exe.http
+
+
+### 上传 cab 文件
+run upload_cab.http
+
+
+### 上传 sys 文件
+run upload_sys.http
+
+
+### 测试 Windows -- 提交签名任务
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+    const exeFileId = client.global.get('exeFileId')
+    const cabFileId = client.global.get('cabFileId')
+    const sysFileId = client.global.get('sysFileId')
+    const uploadWindowsCertificateId = client.global.get('uploadWindowsCertificateId')
+    const windowsCompanyOVCertificateId = client.global.get('windowsCompanyOVCertificateId')
+    const windowsPersonalEVCertificateId = client.global.get('windowsPersonalEVCertificateId')
+    const windowsCompanyEVCertificateId = client.global.get('windowsCompanyEVCertificateId')
+    request.variables.set('clients', [
+        {
+            'signingType': 1,
+            'fileId': exeFileId,
+            'certificateId': uploadWindowsCertificateId
+        },
+        {
+            'signingType': 1,
+            'fileId': exeFileId,
+            'certificateId': windowsCompanyOVCertificateId
+        },
+        {
+            'signingType': 1,
+            'fileId': exeFileId,
+            'certificateId': windowsPersonalEVCertificateId
+        },
+        {
+            'signingType': 1,
+            'fileId': exeFileId,
+            'certificateId': windowsCompanyEVCertificateId
+        },
+        {
+            'signingType': 2,
+            'fileId': cabFileId,
+            'certificateId': ''
+        },
+        {
+            'signingType': 2,
+            'fileId': sysFileId,
+            'certificateId': ''
+        },
+        {
+            'signingType': 3,
+            'fileId': sysFileId,
+            'certificateId': uploadWindowsCertificateId
+        },
+        {
+            'signingType': 3,
+            'fileId': cabFileId,
+            'certificateId': windowsCompanyOVCertificateId
+        },
+        {
+            'signingType': 3,
+            'fileId': sysFileId,
+            'certificateId': windowsPersonalEVCertificateId
+        },
+        {
+            'signingType': 3,
+            'fileId': cabFileId,
+            'certificateId': windowsCompanyEVCertificateId
+        }
+    ])
+%}
+POST https://127.0.0.1/backend/web/windows/submitSigningJob/{{windowsAppId}}?language={{language}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+Content-Type: application/json
+
+{
+  "signingType": {{$.clients..signingType}},
+  "certificateId": "{{$.clients..certificateId}}",
+  "fileId": "{{$.clients..fileId}}"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 提交签名任务', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 Windows -- 获取签名任务列表
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/windows/listSigningJobs/{{windowsAppId}}?language={{language}}&pageNumber=1&
+    pageSize=10&
+    keyWord=zhangsan
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+Date: {{date}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const list = response.body.data.list
+    client.test('测试响应结果 -- 获取签名任务列表', () => {
+        checkAPIResult(200, undefined)
+        client.assert(list, 'list is empty')
+    })
+%}
+
+
+### 上传 zip 文件
+run upload_zip.http
+
+
+### 上传 hlkx 文件
+run upload_hlkx.http
+
+
+### 测试 Windows -- 提交 WHQL 任务
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+    const sysFileId = client.global.get('sysFileId')
+    const zipFileId = client.global.get('zipFileId')
+    const hlkxFileId = client.global.get('hlkxFileId')
+    request.variables.set('clients', [
+        {
+            'signingType': 1,
+            'fileId': sysFileId,
+            'serviceName': '',
+            'testTarget': '',
+            'testSystem': 'Windows 10 22H2_64'
+        },
+        {
+            'signingType': 1,
+            'fileId': zipFileId,
+            'serviceName': 'KMDFDriver',
+            'testTarget': 'KMDFDriver.sys',
+            'testSystem': 'Windows 10 22H2_64'
+        },
+        {
+            'signingType': 2,
+            'fileId': hlkxFileId,
+            'serviceName': '',
+            'testTarget': '',
+            'testSystem': ''
+        }
+    ])
+%}
+POST https://127.0.0.1/backend/web/windows/submitWHQLJob/{{windowsAppId}}?language={{language}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+Content-Type: application/json
+
+{
+  "signingType": {{$.clients..signingType}},
+  "testSystem": "{{$.clients..testSystem}}",
+  "serviceName": "{{$.clients..serviceName}}",
+  "testTarget": "{{$.clients..testTarget}}",
+  "testConfig": "{}",
+  "fileId": "{{$.clients..fileId}}"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 提交 WHQL 任务', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 Windows -- 获取 WHQL 任务列表
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/windows/listWHQLJobs/{{windowsAppId}}?language={{language}}&pageSize=10&pageNumber=1
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+Date: {{date}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const list = response.body.data.list
+    client.test('测试响应结果 -- 获取 WHQL 任务列表', () => {
+        checkAPIResult(200, undefined)
+        client.assert(list, 'list is empty')
+    })
+%}
+
+
+### 上传公司 OV 证书
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/windows/uploadCompanyCertificate?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=admin; csms_session={{csms_session_admin}}
+
+{
+  "certificate": "MIIRfwIBAzCCETUGCSqGSIb3DQEHAaCCESYEghEiMIIRHjCCBwoGCSqGSIb3DQEHBqCCBvswggb3AgEAMIIG8AYJKoZIhvcNAQcBMF8GCSqGSIb3DQEFDTBSMDEGCSqGSIb3DQEFDDAkBBCEcU2EnzoECIqZPmYRz3j3AgIIADAMBggqhkiG9w0CCQUAMB0GCWCGSAFlAwQBKgQQAYIT68TRQTjqd6RXy98QyoCCBoBFfI8O8VqiBwTIHI0qJzUoWcErX3N0kFAjc4QhE8Kpjcjw1lJZ57b0/24qbNDiusAd2LzAo0snfysdfD2puHRcenDifTLu/+C87lLVSNSdFyL1hLGc/SHIRuvVGjDn/FIYvHeHPuhMQgEb/151LDbvukXGjNIZKqf4+WQdRq+TosY+R4E8NXpvHxCxGFrG9rGRb30hm3okbyuII74ve9822NFFrfr0G3h5BJLDImY83QD4stEFPRqrh5kC7W7oSDCnGOFoH7bE6EG8Ub9k/LvYhAfPyfzDAR0eFUf4L72W/o3+pJ+OY5psC4rU+jt97v8+H0VVV0XWZUATaeC3d3YZwr1FpUB2GuqAiwJ6U4uBCzkvIjwxWb3MZ/9MwQt3OJCnrTH5LfybjD7gKyUE0yohlrbfnnoQUMScCto9qMxH/neAp//jN+I4AyKpdQWoYOk3IIp+TgaYVYJ5XJN52zoBjmMO/6CFFUWE3aqsFoARwM2v01EZMPEuCd07Bdp8ZqT3mj0dmqmYeJxVHQwrMxfKgQZE+cOdi7X26Jv1artTsyzhIG4/NiHUs+sk7e4H5TbjHfl7IKPMWDBjAO+SmxHnsojbwz1niVCIef5Z3akoxAIDnxr24MAzjPC6q/CcSfgWmoBUdxZxwrOwr6HLf4hl8l3U/QEAtykJYgjgnofX09Yx8YixbOfadT2HeuWprZFAv+PpYrwsYp9qGFBToKi26QFy88PyItp5CtNAp1pjQ0gBixgYKs1npqun78pOcstXhDJPQXeAFDGY+/piA5LUalj4dwsIAZ89Fa0GvzolfHL3s84+y8G2Arph3m9rSo1V/eV56ij1xq+gENCt0V4AHnCkQ5WhjInJIEJucTDYuYHVm9IqXIOwaRT+W5yEiip+vjHMG9F7K3Q84O8a1/XOT53si6186wfBmYHibQLOb3Sjgyd3HPGR5zyQxG/IDLRJJG4fJ0a5nkKoAg4fjMInPEawCmc3OggEWjvak+cnxjOCWjCghyIU2U0Eq2iDHFb/WWGoEjV+x1N8vRCd+s9ByiGtvsAqUwwOb1Cj3Fiuy7AljSPU9qxO6yxI1KleZTswKuBRWtHrnEYhu3bVK378SM6brLswWZr0lwhrXK+a8HISi6Dx5np/14A0j6UKae5W7EGeFihyRWhcAh7ixMiobx7gqy3rO+j1oYJ8GWt56mgnd5KDPOcsTEyCk5UzTWKWpm/oVZpakCQCGwlF0Yo9ZOvyIhD/MezSJIlNnwRAnz0wQ39jWCAhu7R88Y5OHuWOz79X0Qne3bWZZpIjUupaFLNqZASlCcMwUZJFHTrjSkCTmMG2uqf2Rd6UDH4O58eb7VwKG1vnEG/ntVZ5B6lLagJdcxdIw66oUkQghjh/e3OxV8Tnz+UZH816keBcWOeQwfkyaJVOZfEsTv+3i7KjxOswN+SkmIeKlaZ9n1K6OmYXyFo5heBsTuiT5NxxL3eg0uC6A9kz87ON0fFS3hEWITooBLE5I7l3ZcX6LP5gmiPpLkJB7sLkUjbqr1SRn+0lsIrH92Gs7ZxYCIHvbyL2si5w6Njx6HbS7CN6Z67hZ01E7km+iVYdNH1GkFTCyYA9+L7kqYGyeZoHJ/N2GkYMRxf9PlmUbnnmzHLxH+Qft7UJIMP3aOOiifdM+X5g7+XsLhammH6+bqVpk9DdK87EOX6r89z+s8GgW/DtMmZ+VC2Q76unw1FKmksdw3noqYLxLyIZB7grINtBdOlLYV8mWubqvT01YqGriad7mZMsy84LpnJgJ7bx/0lHQRj5TH2WZrrOFdjkL+6ZbQOzNfuY3Ea2mE4615XNwFZed26J5S0ukuQzVDxJe9uKkLBmFQfgjlZe18w1AceHM17hvYW7yJpVFDUXtRdR+y0guxdvBZcP1MkkJuIN2V6nV4wQDby0UILYs2As1elmTL4YRqS111EhZBFm5i1dyL4MAkNs43k8dWhIoxnxojJ/zYmEx5nt0ckUsa+bVmZdBTg0ajQq77G52LxZWOvnWR+Iyen166JMjVqS4tb34mEvhbqKi5NFBabtcuSwmqOIK88ug4JSY8xRdbVChkjzyF49WZkM3IvoLoidvdC9cFmWQuZIHyNN+89LKpFYCmUled8LttKg1V5FAo9TjujJrOUdJ7piCBWDeMDNB2K/klRLijQWhwtgAzZ1W9rZehrPy2mHL+ZMG7Sbs1oC50F20SaWQRpzFDCCCgwGCSqGSIb3DQEHAaCCCf0Eggn5MIIJ9TCCCfEGCyqGSIb3DQEMCgECoIIJuTCCCbUwXwYJKoZIhvcNAQUNMFIwMQYJKoZIhvcNAQUMMCQEELxTloYM+TTOVRtXC20AHLECAggAMAwGCCqGSIb3DQIJBQAwHQYJYIZIAWUDBAEqBBBwgbzrwEBMezhrP1Z8wc2SBIIJUNXa1OpxIlTWFd5RfJi5yoopibgzaIVEwmZqY0tvzpz3OnoTTZpcUMwKtCiiNLrPRg3vYbH5aja/Yq+IGsZuau85tOlIuDsZ24yy4wVcRReEB3AGaXk4hx0cH8Pbfa3Qhy6GoLJJVYUSU9+xVFNmL0zId8HeEub7k8IbVCRklo7mefomaE6NVBOsrgPIzJORxIh+xl3pLhFOca5idorJmp2kkOqj8oqS7UgcJwJEoRMYnztORfkJXAzE2+SA6+JWzXIT7Bn2HKhWvIIxNZD1M1oBmGvbZcJ2TqpeatLtHD8ZTCKHM0HkjMsagAUFwryPGeKChiwVOJmef+QTcqL+4dhGH5S/RDKhOnJYJVFztPAjXyW7CHJltwCGCGIQ0C71i7xvRtUVC/+GBwF2eDgmGCbYX4P2iq5BoeIj5SFp7NYdGrJ3o7qhtwHq6YOdwHgduysEW/vggYFGzunK8OoAm+7KZkGhmKlHox/J0pZW0CYZe0vgI6QCQ0MTJcznvugbLEm76UaKmhjZEohNpvNWLnhpvPNEJZexIJJfXd5NIl+p4Y+hc5TauMfLTw3XQCUypI069R8CUKGtbjbZPIRAHzNE4i5qlE4fplkz6O5fWUhqGQVCD6c0u66AAF9Gj9OoeQL+WloVkLbpTgNeC/PmKwWafH18xwlqH8ZNhid4mv0fEczLULukTyZi8nx/Qw0m6pQOQOwb1WuIIGP/vXT8Inu4wqM4/3sweGWg8NVaspTdNpzyJu5IIqJEjgPiojRd4TibiPFS0KzX1cg3elFDJ/INkJd/kXbUUb3NIBr0Gaaf2mxkr7OiD7PFerhbVdd+vDtq3EijpW/b+Mf944aqAN5HdxBQtSbmgOKeQyyRH0DteM9u8IlXwkp6YLrE639lGPO1ljBz4AEY9ZpYt/g8QHVG7U0WzvnfaoFCt1+zf8tQXlEe/nbuBVTCtFf3xZMLiz/tSdEXbpFYpFnEZ4krfFvvIvYqXKkpP+EXagR7+LDG0XWc/obtP/GoKeF2r25LtRTPH3QjJ6f3SAeTkPSn5CVUf9/Xk6/4VtukqQLtGb+LNG2+bAcsUG616+L4jmo1HEKHzaiqVltdh9bqR4A5ukCjIAIWS/o1vizMAunWR1q3PPYo5YE2eQNlqtl2ESYzN//iXfTZvla0xwZ3wt1ZuU5wC2rGxC/OEUKBI9ph4xuSH3W61ei9WV5iyrAQmWKYpv0WidgcfC9NkDb36zBvrySOSn/h9ieeHOUKGqPsN8OCpPjDZrhoenarSpdVlCPw2+x7YT2fMbBYau0Eco5ttsR+bS6ulAB6TdCRI4lbK/AWalJwm+U1xPb9j8cakbK5jpKKSZG7O8ZoDht0sxO0fX+DXHrdevOPfpT4wYVGOh4Xwv3qCqcIDkNSnyzad+OhQqvX8Qe8c6qg5SBMQ78XijecnPdBi1Pdy1mHWIBAcKTAp73BpqVhgsLSmWd8qA+D1rSTNfIXxTLEHlNEgEPJzmo2SRGmbCaM+Y0MdvOCzhNKaP6qT1mIuNhNgecKT68SYY07x/ruRDzku7J7PWcqdqVMhRlLq7cd8IICIbfJ/HHja11LAXcy83Bqb+FiP1N3b8btRp98Ov75rarK3xf03HNu6C67yF6iF3kNnlAGKIgZFd055XMhQLJWeF1I/YvI9bizS54uMfD/4w+XNi9Tfk+MziQZt58g86TNid5yC/qWgazQxQjg8MC5w7SR3aW2/hC5EYbyhIPzC2eyEq8DgrhNe64xS7RRcPbcoajTnODN3UXbyGBZRSZQG03GA3U2lsVNod6oV3ov4AlTU6mlVqyZ+kyl7xpLsswWEHAMmk7cUfiha2On0KtohBHEZJ85Tfcez/1m3uem5N9kPTzRz8JFsMibk1+Mf6QKRWmA5cIPilQDpM+enOOconjiQDXlAza4KxwxyQoMtW2zJxVKjiW4kZ0DFZtpUhi8ORr5QE0yVgPKj9EBISeayOVGcmwV7sbLHP/HtM0/XhHRBrRUANW+g6WGluy41RDXMfGAgtykLb+QVPz+aVDAHCmegd0a9ojhkrZMmR2CQoC75lTLHL1PnX73opZyKHr2b9l1vD5UJaDSYex85OXP7jvoVv9zEISj2geoX14oF+feld9N4Z7IRt1n9oCuXCnluuF+n0hqLeKe/i+1QjFTiAk1O5zwcUFDJPJZBm2sdlzBq2oebYIgF8+BVKTjqtjrdQHYKpZS+KZO1CkCvpjiHkKSwmPqi1JfLDyFLgmNIDy+dRBmS8I8mYbcWs8UwbpDjfTTqYYhVjK8BZr62G23O0M2R1ka9Kd0PL5xHOUBA0dRPqDWmLzPYVhoy4gzQQ8PpXtB/JuhE5lq5Ufxiiw7yZtCGNKl+KGdA+1Qp4Xt5YvQC7TEbg+/9Kr5vpHst5Ok0BfeZxEvX4e/SkK6qFWjirqHYSSWcDYI1Fm7zXdBYScMY4Yh7NYhSQqwy6Ir/uFfYusMy7geHJx51HJgrYQXjlKhd1Nxk1uA46WyTrunApTQ+/xHMmp4RdYJcOWr30Czhmr5kb30h3+/853Sx5NFb0mA5hv27aEJ+h2mI4pAgk7F+R5OkdI3eTzB+v0jsZ3QCYM7FDd08w2rxUUIOvWUKNalcgEwpAsPmrsDNmc1kNBCyFnmuiKJg3GCOXchzeKmhNHcDk/vX0AtQMH03cC/jLs9Vm7nrRqsHaRyByCKhOUXn2vdL8H5BWf1voyZFFBNTFvICRmuK0pIjec+N8Kz1ZbBjL4VTYBBwO+YJZ75MUs4dIVucAhIDunXQJT3EvzmEuD5dVqYX2Iwt9CYdvq92eE3zqEiLZHiKqZ8W9h62iMB/JgtxVtsRUk7BG8E5SQ6WrFHGM5ZxdY8DIVjTfCuTQ5WxpOO0gVLE/A6zT5hIN1D4yByG7Ec++2N+6Y6P3sjbNuYgr+u+PRE+MbvK/IZUHS+U78wbLFqT0LWeoJl64Jit9TYTIFd8h1tGESnrfKxW51vAqeLCSwbHfs1QobLTsKFWqGYq5r46LvrbHyTbaiko2M/Mv1AT4MJXlrWyoalJbwNab2fTYAnAbDgIE0wnGpJ8wMnc3zW1VMXEGbA88ZLlda9K8psuoUzovySj3cu0wCRyUWoDq1nXYbJF8suuOVeHIzDCOB/NJDBpbkasgyiNEQ3sZ0g30lFyeWHKwiic7ViFjvIMSUwIwYJKoZIhvcNAQkVMRYEFD4M6TrRbR/vD4BtGmzFATybixbVMEEwMTANBglghkgBZQMEAgEFAAQght3Th+L6CcClJe+JSkqBQ1jIy7dURvlfr8kut2QQdwwECFd3gpkju15VAgIIAA==",
+  "password": "123456"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    checkAPIResult(200, -200004)
+%}
+
+
+### 获取后台管理中的 Windows 证书
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/windows/listCompanyCertificates?language={{language}}
+Date: {{date}}
+Cookie: csms_user=admin; csms_session={{csms_session_admin}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const list = response.body.data.list
+    checkAPIResult(200, undefined)
+
+    client.global.set('windowsCompanyOVCertificateIdToBeDeleted', list[0].id)
+%}
+
+
+### 测试 Windows -- 删除公司证书
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+DELETE https://127.0.0.1/backend/web/windows/removeCompanyCertificate?language={{language}}&
+    certificateId={{windowsCompanyOVCertificateIdToBeDeleted}}
+Date: {{date}}
+Cookie: csms_user=admin; csms_session={{csms_session_admin}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 删除公司证书', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 Windows -- 删除证书 - 授权证书
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+DELETE https://127.0.0.1/backend/web/windows/deleteCertificate/{{windowsAppId}}?language={{language}}&
+    certificateId={{windowsPersonalEVCertificateId}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 删除证书 - 授权证书', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 授权应用使用个人 EV 证书
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/windows/grantAppEVCertificate?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=admin; csms_session={{csms_session_admin}}
+
+{
+  "appId": "{{windowsAppId}}",
+  "certificateId": "{{windowsPersonalEVCertificateId}}"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    checkAPIResult(200, -200004)
+%}
+
+
+### 上传个人 OV 证书
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+POST https://127.0.0.1/backend/web/windows/uploadCertificate/{{windowsAppId}}?language={{language}}
+Date: {{date}}
+Content-Type: application/json
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+{
+  "certificate": "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",
+  "password": "123456"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    checkAPIResult(200, -200004)
+%}
+
+
+### 证书列表
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/windows/listCertificates/{{windowsAppId}}?language={{language}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const id = response.body.data.list[0].id
+    checkAPIResult(200, undefined)
+    client.assert(id, 'certificate id is empty')
+    client.global.set('uploadWindowsCertificateIdToBeDeleted', id)
+%}
+
+
+### 测试 Windows -- 删除证书 - 自有证书
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+DELETE https://127.0.0.1/backend/web/windows/deleteCertificate/{{windowsAppId}}?language={{language}}&
+    certificateId={{uploadWindowsCertificateIdToBeDeleted}}
+Date: {{date}}
+Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 删除证书 - 自有证书', () => {
+        checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 Windows OpenAPI -- 下载证书
+< {%
+    import {createAuthorization} from './http_util.js'
+
+    const appId = client.global.get('windowsAppId')
+    const apiAccountId = 'windows_api_account';
+    const secret = client.global.get(apiAccountId)
+    client.log(appId, apiAccountId, secret)
+    const token = createAuthorization(appId, apiAccountId, secret)
+    request.variables.set('token', token)
+%}
+GET https://127.0.0.1/backend/api/windows/downloadCertificate?certificateId={{uploadWindowsCertificateId}}
+Authorization: Bearer {{token}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 下载证书', () => {
+        checkAPIResult(200, undefined)
+        client.assert(response.headers.valueOf('Content-Length'), `http body is empty`)
+    })
+%}
+
+
+### 测试 Windows OpenAPI -- 查看证书密码
+< {%
+    import {createAuthorization} from './http_util.js'
+
+    const appId = client.global.get('windowsAppId')
+    const apiAccountId = 'windows_api_account';
+    const secret = client.global.get(apiAccountId)
+    client.log(appId, apiAccountId, secret)
+    const token = createAuthorization(appId, apiAccountId, secret)
+    request.variables.set('token', token)
+%}
+GET https://127.0.0.1/backend/api/windows/getCertificatePassword?certificateId={{windowsPersonalEVCertificateId}}
+Authorization: Bearer {{token}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const password = response.body.data.password
+    client.test('测试响应结果 -- 查看证书密码', () => {
+        checkAPIResult(200, undefined)
+        client.assert(password, 'password is empty')
+    })
+%}
+
+
+### 测试 Windows OpenAPI -- 提交签名任务
+< {%
+    import {createAuthorization} from './http_util.js'
+
+    const appId = client.global.get('windowsAppId')
+    const apiAccountId = 'windows_api_account';
+    const secret = client.global.get(apiAccountId)
+    client.log(appId, apiAccountId, secret)
+    const token = createAuthorization(appId, apiAccountId, secret)
+    request.variables.set('token', token)
+
+    const exeFileId = client.global.get('exeFileId')
+    const cabFileId = client.global.get('cabFileId')
+    const sysFileId = client.global.get('sysFileId')
+    const uploadWindowsCertificateId = client.global.get('uploadWindowsCertificateId')
+    const windowsCompanyOVCertificateId = client.global.get('windowsCompanyOVCertificateId')
+    const windowsPersonalEVCertificateId = client.global.get('windowsPersonalEVCertificateId')
+    const windowsCompanyEVCertificateId = client.global.get('windowsCompanyEVCertificateId')
+    request.variables.set('clients', [
+        {
+            'signingType': 1,
+            'fileId': exeFileId,
+            'certificateId': uploadWindowsCertificateId
+        },
+        {
+            'signingType': 1,
+            'fileId': exeFileId,
+            'certificateId': windowsCompanyOVCertificateId
+        },
+        {
+            'signingType': 1,
+            'fileId': exeFileId,
+            'certificateId': windowsPersonalEVCertificateId
+        },
+        {
+            'signingType': 1,
+            'fileId': exeFileId,
+            'certificateId': windowsCompanyEVCertificateId
+        },
+        {
+            'signingType': 2,
+            'fileId': cabFileId,
+            'certificateId': uploadWindowsCertificateId
+        },
+        {
+            'signingType': 2,
+            'fileId': cabFileId,
+            'certificateId': windowsCompanyOVCertificateId
+        },
+        {
+            'signingType': 2,
+            'fileId': cabFileId,
+            'certificateId': windowsPersonalEVCertificateId
+        },
+        {
+            'signingType': 2,
+            'fileId': cabFileId,
+            'certificateId': windowsCompanyEVCertificateId
+        },
+        {
+            'signingType': 3,
+            'fileId': sysFileId,
+            'certificateId': uploadWindowsCertificateId
+        },
+        {
+            'signingType': 3,
+            'fileId': cabFileId,
+            'certificateId': windowsCompanyOVCertificateId
+        },
+        {
+            'signingType': 3,
+            'fileId': sysFileId,
+            'certificateId': windowsPersonalEVCertificateId
+        },
+        {
+            'signingType': 3,
+            'fileId': cabFileId,
+            'certificateId': windowsCompanyEVCertificateId
+        }
+    ])
+%}
+POST https://127.0.0.1/backend/api/windows/submitSigningJob
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "signingType": {{$.clients..signingType}},
+  "certificateId": "{{$.clients..certificateId}}",
+  "fileId": "{{$.clients..fileId}}"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const jobId = response.body.data.jobId
+    client.test('测试响应结果 -- 提交签名任务', () => {
+        checkAPIResult(200, undefined)
+        client.assert(jobId, 'jobId is empty')
+    })
+    client.global.set('windowsSigningJobId', jobId)
+%}
+
+
+### 测试 Windows OpenAPI -- 提交 WHQL 任务
+< {%
+    import {createAuthorization} from './http_util.js'
+
+    const appId = client.global.get('windowsAppId')
+    const apiAccountId = 'windows_api_account';
+    const secret = client.global.get(apiAccountId)
+    client.log(appId, apiAccountId, secret)
+    const token = createAuthorization(appId, apiAccountId, secret)
+    request.variables.set('token', token)
+
+    const sysFileId = client.global.get('sysFileId')
+    const zipFileId = client.global.get('zipFileId')
+    const hlkxFileId = client.global.get('hlkxFileId')
+    request.variables.set('clients', [
+        {
+            'signingType': 1,
+            'fileId': sysFileId,
+            'serviceName': '',
+            'testSystem': 'Windows 10 22H2_64'
+        },
+        {
+            'signingType': 1,
+            'fileId': zipFileId,
+            'serviceName': 'KMDFDriver',
+            'testSystem': 'Windows 10 22H2_64'
+        },
+        {
+            'signingType': 2,
+            'fileId': hlkxFileId,
+            'serviceName': '',
+            'testSystem': ''
+        }
+    ])
+%}
+POST https://127.0.0.1/backend/api/windows/submitWHQLJob
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "signingType": {{$.clients..signingType}},
+  "testSystem": "{{$.clients..testSystem}}",
+  "serviceName": "{{$.clients..serviceName}}",
+  "testTarget": "",
+  "testConfig": "",
+  "fileId": "{{$.clients..fileId}}"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const jobId = response.body.data.jobId
+    client.test('测试响应结果 -- 提交 WHQL 任务', () => {
+        checkAPIResult(200, undefined)
+        client.assert(jobId, 'jobId is empty')
+    })
+    client.global.set('whqlJobId', jobId)
+%}
+
+
+### 测试 Windows OpenAPI -- 证书列表
+< {%
+    import {createAuthorization} from './http_util.js'
+
+    const appId = client.global.get('windowsAppId')
+    const apiAccountId = 'windows_api_account';
+    const secret = client.global.get(apiAccountId)
+    client.log(appId, apiAccountId, secret)
+    const token = createAuthorization(appId, apiAccountId, secret)
+    request.variables.set('token', token)
+%}
+GET https://127.0.0.1/backend/api/windows/listCertificates
+Authorization: Bearer {{token}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const id = response.body.data.list.pop().id
+    client.test('测试响应结果 -- 证书列表', () => {
+        checkAPIResult(200, undefined)
+        client.assert(id, 'certificate id is empty')
+    })
+    client.global.set('uploadWindowsCertificateId', id)
+%}
+
+
+### 测试 Windows OpenAPI -- 获取签名任务信息
+< {%
+    import {createAuthorization} from './http_util.js'
+
+    const appId = client.global.get('windowsAppId')
+    const apiAccountId = 'windows_api_account';
+    const secret = client.global.get(apiAccountId)
+    client.log(appId, apiAccountId, secret)
+    const token = createAuthorization(appId, apiAccountId, secret)
+    request.variables.set('token', token)
+%}
+GET https://127.0.0.1/backend/api/windows/getSigningJobInformation?jobId={{windowsSigningJobId}}
+Authorization: Bearer {{token}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const info = response.body.data
+    client.test('测试响应结果 -- 获取签名任务信息', () => {
+        checkAPIResult(200, undefined)
+        client.assert(info, 'info is empty')
+    })
+%}
+
+
+### 测试 Windows OpenAPI -- 获取 WHQL 任务信息
+< {%
+    import {createAuthorization} from './http_util.js'
+
+    const appId = client.global.get('windowsAppId')
+    const apiAccountId = 'windows_api_account';
+    const secret = client.global.get(apiAccountId)
+    client.log(appId, apiAccountId, secret)
+    const token = createAuthorization(appId, apiAccountId, secret)
+    request.variables.set('token', token)
+%}
+GET https://127.0.0.1/backend/api/windows/getWHQLJobInformation?jobId={{whqlJobId}}
+Authorization: Bearer {{token}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const info = response.body.data
+    client.test('测试响应结果 -- 获取 WHQL 任务信息', () => {
+        checkAPIResult(200, undefined)
+        client.assert(info, 'info is empty')
+    })
+%}
