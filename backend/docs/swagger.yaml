@@ -1,0 +1,7115 @@
+definitions:
+  errs.Code:
+    enum:
+    - 100001
+    - 100002
+    - 100003
+    - 100004
+    type: integer
+    x-enum-varnames:
+    - ErrUnknown
+    - ErrInvalidRequestParameters
+    - ErrServerPanic
+    - ErrServerExiting
+  protocol.AndroidAPIGetSigningJobInformationRsp:
+    properties:
+      certificateAlias:
+        description: 证书别名
+        example: my_certificate
+        type: string
+      certificateId:
+        description: 证书 ID
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        type: string
+      createdTime:
+        description: 提交时间
+        example: "2020-01-01 01:01:01"
+        type: string
+      fileId:
+        description: 文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      fileName:
+        description: 文件名
+        type: string
+      finishedTime:
+        description: 结束时间
+        example: "2020-01-01 01:01:01"
+        type: string
+      log:
+        description: 日志
+        type: string
+      signedFileId:
+        description: 结果文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      signingConfig:
+        description: 签名配置
+        type: string
+      source:
+        description: 来源
+        example: 1
+        type: integer
+      type:
+        description: 类型
+        example: 1
+        type: integer
+      user:
+        description: 操作人
+        example: zhangsan
+        type: string
+    type: object
+  protocol.AndroidAPIListCertificatesItem:
+    properties:
+      alias:
+        description: 证书别名
+        example: my_certificate
+        type: string
+      createdTime:
+        description: 创建时间
+        example: "2020-01-01 01:01:01"
+        type: string
+      creator:
+        description: 创建人
+        example: zhangsan
+        type: string
+      effectedTime:
+        description: 生效时间
+        example: "2020-01-01 01:01:01"
+        type: string
+      expiredTime:
+        description: 过期时间
+        example: "2020-01-01 01:01:01"
+        type: string
+      id:
+        description: 证书 ID
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        type: string
+      owner:
+        description: 所有者
+        example: zhangsan
+        type: string
+      publicKeyAlgorithm:
+        description: 公钥算法
+        example: RSA_SHA256
+        type: string
+      sha1:
+        description: 摘要
+        example: 3050762623C5FCADB879258983E758A2F9559AD2
+        type: string
+      sha256:
+        description: 摘要
+        example: 50ad41624c25e493aa1dc7f4ab32bdc5a3b0b78ecc35b539936e3fea7c565af7
+        type: string
+      signatureAlgorithm:
+        description: 签名算法
+        example: RSA_SHA256
+        type: string
+      source:
+        description: 来源
+        example: 1
+        type: integer
+      type:
+        description: 证书类型
+        example: 1
+        type: integer
+    type: object
+  protocol.AndroidAPIListCertificatesRsp:
+    properties:
+      list:
+        description: 证书信息
+        items:
+          $ref: '#/definitions/protocol.AndroidAPIListCertificatesItem'
+        type: array
+    type: object
+  protocol.AndroidAPISubmitAABSigningJobReq:
+    properties:
+      certificateId:
+        description: 证书 ID
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        type: string
+      fileId:
+        description: 文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+    type: object
+  protocol.AndroidAPISubmitAABSigningJobRsp:
+    properties:
+      jobId:
+        description: 任务 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+    type: object
+  protocol.AndroidAPISubmitAPKPatchSigningJobReq:
+    properties:
+      certificateId:
+        description: 证书 ID
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        type: string
+      fileId:
+        description: 文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      minimumSdkVersion:
+        description: 最低安卓 API 版本号
+        example: 19
+        type: integer
+      signatureSchema:
+        description: 签名方案
+        example:
+        - 1
+        - 2
+        - 3
+        - 4
+        items:
+          type: integer
+        type: array
+        uniqueItems: true
+    required:
+    - minimumSdkVersion
+    - signatureSchema
+    type: object
+  protocol.AndroidAPISubmitAPKPatchSigningJobRsp:
+    properties:
+      jobId:
+        description: 任务 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+    type: object
+  protocol.AndroidAPISubmitAPKSigningJobReq:
+    properties:
+      certificateId:
+        description: 证书 ID
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        type: string
+      fileId:
+        description: 文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      signatureSchema:
+        description: 签名方案
+        example:
+        - 1
+        - 2
+        - 3
+        - 4
+        items:
+          type: integer
+        type: array
+        uniqueItems: true
+    required:
+    - signatureSchema
+    type: object
+  protocol.AndroidAPISubmitAPKSigningJobRsp:
+    properties:
+      jobId:
+        description: 任务 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+    type: object
+  protocol.AndroidWebAddOrganizationReq:
+    properties:
+      commonName:
+        description: 通用名
+        example: company certificate
+        maxLength: 32
+        type: string
+      dName:
+        description: 所有者
+        example: C=CN,ST=Hunan,L=Changsha,CN=company_android_cert
+        maxLength: 256
+        type: string
+    required:
+    - commonName
+    - dName
+    type: object
+  protocol.AndroidWebApplyCertificateReq:
+    properties:
+      alias:
+        description: 证书别名
+        example: my_certificate
+        maxLength: 64
+        type: string
+      ownerId:
+        description: 证书主体
+        example: 1
+        type: integer
+      type:
+        description: 证书类型
+        example: 1
+        maximum: 2
+        minimum: 1
+        type: integer
+    required:
+    - alias
+    type: object
+  protocol.AndroidWebGetCertificateFacebookDigestRsp:
+    properties:
+      digest:
+        description: 摘要值
+        type: string
+    type: object
+  protocol.AndroidWebGetGooglePlayDeployCertificateReq:
+    properties:
+      certificateId:
+        description: 证书 ID
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        type: string
+      publicKey:
+        description: 公钥 PEM 格式
+        type: string
+    required:
+    - publicKey
+    type: object
+  protocol.AndroidWebGetGooglePlayUpgradeCertificateReq:
+    properties:
+      deployCertificateId:
+        description: 部署证书 ID
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        type: string
+      publicKey:
+        description: 公钥 PEM 格式
+        type: string
+      uploadCertificateId:
+        description: 上传证书 ID
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        type: string
+    required:
+    - publicKey
+    type: object
+  protocol.AndroidWebListCertificatesItem:
+    properties:
+      alias:
+        description: 证书别名
+        example: my_certificate
+        type: string
+      createdTime:
+        description: 创建时间
+        example: "2020-01-01 01:01:01"
+        type: string
+      creator:
+        description: 创建人
+        example: zhangsan
+        type: string
+      effectedTime:
+        description: 生效时间
+        example: "2020-01-01 01:01:01"
+        type: string
+      expiredTime:
+        description: 过期时间
+        example: "2020-01-01 01:01:01"
+        type: string
+      id:
+        description: 证书 ID
+        example: "1"
+        type: string
+      owner:
+        description: 所有者
+        example: zhangsan
+        type: string
+      publicKeyAlgorithm:
+        description: 公钥算法
+        example: RSA_SHA256
+        type: string
+      sha1:
+        description: 摘要
+        example: 3050762623C5FCADB879258983E758A2F9559AD2
+        type: string
+      sha256:
+        description: 摘要
+        example: 50ad41624c25e493aa1dc7f4ab32bdc5a3b0b78ecc35b539936e3fea7c565af7
+        type: string
+      signatureAlgorithm:
+        description: 签名算法
+        example: RSA_SHA256
+        type: string
+      type:
+        description: 证书类型
+        example: 1
+        type: integer
+    type: object
+  protocol.AndroidWebListCertificatesRsp:
+    properties:
+      list:
+        description: 证书信息
+        items:
+          $ref: '#/definitions/protocol.AndroidWebListCertificatesItem'
+        type: array
+    type: object
+  protocol.AndroidWebListOrganizationsItem:
+    properties:
+      commonName:
+        description: 组织名
+        example: company certificate
+        type: string
+      createdTime:
+        description: 添加时间
+        example: "2020-01-01 01:01:01"
+        type: string
+      dname:
+        description: 证书信息
+        example: C=CN,ST=Hunan,L=Changsha,CN=company_android_cert
+        type: string
+      id:
+        description: ID
+        example: 1
+        type: integer
+      user:
+        description: 添加人
+        example: zhangsan
+        type: string
+    type: object
+  protocol.AndroidWebListOrganizationsRsp:
+    properties:
+      list:
+        description: 安卓证书主体信息
+        items:
+          $ref: '#/definitions/protocol.AndroidWebListOrganizationsItem'
+        type: array
+    type: object
+  protocol.AndroidWebListSigningJobsItem:
+    properties:
+      certificateAlias:
+        description: 证书别名
+        example: my_certificate
+        type: string
+      createdTime:
+        description: 提交时间
+        example: "2020-01-01 01:01:01"
+        type: string
+      fileId:
+        description: 文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      fileName:
+        description: 文件名
+        type: string
+      finishedTime:
+        description: 结束时间
+        example: "2020-01-01 01:01:01"
+        type: string
+      jobId:
+        description: 任务 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      log:
+        description: 日志
+        type: string
+      signedFileId:
+        description: 结果文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      signingConfig:
+        description: 签名配置
+        type: string
+      source:
+        description: 来源
+        example: 1
+        type: integer
+      type:
+        description: 类型
+        example: 1
+        type: integer
+      user:
+        description: 操作人
+        example: zhangsan
+        type: string
+    type: object
+  protocol.AndroidWebListSigningJobsRsp:
+    properties:
+      count:
+        description: 总数。
+        example: 10
+        type: integer
+      list:
+        description: 任务信息。
+        items:
+          $ref: '#/definitions/protocol.AndroidWebListSigningJobsItem'
+        type: array
+    type: object
+  protocol.AndroidWebSubmitAABSigningJobReq:
+    properties:
+      certificateId:
+        description: 证书 ID
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        type: string
+      fileId:
+        description: 文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+    type: object
+  protocol.AndroidWebSubmitAPKPatchSigningJobReq:
+    properties:
+      certificateId:
+        description: 证书 ID
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        type: string
+      fileId:
+        description: 文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      minimumSdkVersion:
+        description: 最低安卓 API 版本号
+        example: 19
+        type: integer
+      signatureSchema:
+        description: 签名方案
+        example:
+        - 1
+        - 2
+        - 3
+        - 4
+        items:
+          type: integer
+        type: array
+        uniqueItems: true
+    required:
+    - minimumSdkVersion
+    - signatureSchema
+    type: object
+  protocol.AndroidWebSubmitAPKSigningJobReq:
+    properties:
+      certificateId:
+        description: 证书 ID
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        type: string
+      fileId:
+        description: 文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      signatureSchema:
+        description: 签名方案
+        example:
+        - 1
+        - 2
+        - 3
+        - 4
+        items:
+          type: integer
+        type: array
+        uniqueItems: true
+    required:
+    - signatureSchema
+    type: object
+  protocol.AndroidWebUploadCertificateReq:
+    properties:
+      certificate:
+        description: 证书，Base64 编码
+        type: string
+      keypass:
+        description: 私钥密码
+        example: "123456"
+        maxLength: 32
+        minLength: 6
+        type: string
+      storepass:
+        description: 密钥库密码
+        example: "123456"
+        maxLength: 32
+        minLength: 6
+        type: string
+      type:
+        description: 证书类型
+        example: 1
+        maximum: 2
+        minimum: 1
+        type: integer
+    required:
+    - keypass
+    - storepass
+    type: object
+  protocol.AppWebCountRsp:
+    properties:
+      count:
+        description: 总数
+        example: 1
+        type: integer
+    type: object
+  protocol.AppWebGetInformationRsp:
+    properties:
+      admins:
+        additionalProperties:
+          type: string
+        description: 应用管理员
+        example:
+          zhangsan: 张三
+        type: object
+      appId:
+        description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      logoFileId:
+        description: 应用图标文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      members:
+        additionalProperties:
+          type: string
+        description: 应用成员
+        example:
+          zhangsan: 张三
+        type: object
+      name:
+        description: 应用名
+        example: MyApp
+        type: string
+      platform:
+        description: 应用平台
+        example: 1
+        type: integer
+      status:
+        description: 应用状态
+        example: 1
+        type: integer
+    type: object
+  protocol.AppWebSearchItem:
+    properties:
+      id:
+        description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      name:
+        description: 应用名
+        example: MyApp
+        type: string
+      platform:
+        description: 应用平台
+        example: 1
+        type: integer
+      status:
+        description: 状态
+        example: 1
+        type: integer
+    type: object
+  protocol.AppWebSearchReq:
+    properties:
+      name:
+        description: 应用名
+        example: MyApp
+        maxLength: 64
+        type: string
+      platform:
+        description: 平台
+        example:
+        - 1
+        items:
+          type: integer
+        type: array
+        uniqueItems: true
+      status:
+        description: 状态
+        example:
+        - 1
+        items:
+          type: integer
+        type: array
+        uniqueItems: true
+    type: object
+  protocol.AppWebSearchRsp:
+    properties:
+      list:
+        items:
+          $ref: '#/definitions/protocol.AppWebSearchItem'
+        type: array
+    type: object
+  protocol.AppWebUpdateReq:
+    properties:
+      admins:
+        description: 管理员
+        example:
+        - zhangsan
+        items:
+          type: string
+        minItems: 1
+        type: array
+        uniqueItems: true
+      logoFileId:
+        description: 应用图标文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      members:
+        description: 成员
+        example:
+        - zhangsan
+        items:
+          type: string
+        type: array
+        uniqueItems: true
+      name:
+        description: 应用名
+        example: MyApp
+        maxLength: 64
+        type: string
+    required:
+    - admins
+    - name
+    type: object
+  protocol.AppleAPIGetSigningJobInformationRsp:
+    properties:
+      bundleId:
+        description: Bundle ID
+        example: cn.ivfzhou.test
+        type: string
+      createdTime:
+        description: 创建时间
+        example: "2020-01-01 01:01:01"
+        type: string
+      fileId:
+        description: 待签名文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      fileName:
+        description: 待签名文件名
+        type: string
+      finishedTime:
+        description: 结束时间
+        example: "2020-01-01 01:01:01"
+        type: string
+      log:
+        description: 日志
+        type: string
+      profileId:
+        description: 描述文件 ID
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        type: string
+      signedFileId:
+        description: 结果文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      signedFileName:
+        description: 结果文件名
+        type: string
+      source:
+        description: 来源
+        example: 1
+        type: integer
+      status:
+        description: 状态
+        example: 1
+        type: integer
+      userName:
+        description: 提交人
+        example: zhangsan
+        type: string
+    type: object
+  protocol.AppleAPISubmitSigningJobReq:
+    properties:
+      fileId:
+        description: 待文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      profileId:
+        description: 描述文件 ID
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        type: string
+    type: object
+  protocol.AppleAPISubmitSigningJobRsp:
+    properties:
+      jobId:
+        description: 任务 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+    type: object
+  protocol.AppleWebApplyBundleIDReq:
+    properties:
+      bundleId:
+        description: Bundle ID
+        example: cn.ivfzhou.test
+        maxLength: 64
+        type: string
+      type:
+        description: 类型
+        example: 1
+        maximum: 2
+        minimum: 1
+        type: integer
+    required:
+    - bundleId
+    type: object
+  protocol.AppleWebApplyCertificateReq:
+    properties:
+      type:
+        description: 类型
+        example: IOS_DEVELOPMENT
+        type: string
+    type: object
+  protocol.AppleWebApplyInHouseProfileReq:
+    properties:
+      bundleId:
+        description: Bundle ID
+        example: cn.ivfzhou.test
+        maxLength: 64
+        type: string
+    required:
+    - bundleId
+    type: object
+  protocol.AppleWebApplyProfileReq:
+    properties:
+      bundleId:
+        description: Bundle ID
+        example: cn.ivfzhou.test
+        maxLength: 64
+        type: string
+      platform:
+        description: 平台
+        example: IOS
+        type: string
+      type:
+        description: 类型
+        example: IOS_APP_DEVELOPMENT
+        type: string
+    required:
+    - bundleId
+    type: object
+  protocol.AppleWebApplyPushCertificateReq:
+    properties:
+      bundleId:
+        description: Bundle ID
+        example: cn.ivfzhou.test
+        maxLength: 64
+        type: string
+      environment:
+        description: 环境
+        example: 1
+        maximum: 3
+        minimum: 1
+        type: integer
+    required:
+    - bundleId
+    type: object
+  protocol.AppleWebListAppCertificatesItem:
+    properties:
+      appleId:
+        description: 证书 ID
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        type: string
+      bundleId:
+        description: Bundle ID
+        example: cn.ivfzhou.test
+        type: string
+      category:
+        description: 文件类型
+        example: 1
+        type: integer
+      certificateOwner:
+        description: 证书所有者
+        example: C=CN, ST=HuNan, L=Changsha, O=ivfzhou, OU=ivfzhou, CN=windows personal
+          ev certificate, emailAddress=ivfzhou@126.com
+        type: string
+      createdTime:
+        description: 创建时间
+        example: "2020-01-01 01:01:01"
+        type: string
+      environment:
+        description: 环境
+        example: 1
+        type: integer
+      expirationTime:
+        description: 过期时间
+        example: "2020-01-01 01:01:01"
+        type: string
+      id:
+        description: 证书 ID
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        type: string
+      profileContent:
+        description: 描述文件内容
+        type: string
+      type:
+        description: 类型
+        example: iOS_APPLE_IN_HOUSE
+        type: string
+      user:
+        description: 所属人
+        example: zhangsan
+        type: string
+    type: object
+  protocol.AppleWebListAppCertificatesRsp:
+    properties:
+      list:
+        description: 证书信息
+        items:
+          $ref: '#/definitions/protocol.AppleWebListAppCertificatesItem'
+        type: array
+    type: object
+  protocol.AppleWebListBundleIDsItem:
+    properties:
+      capabilities:
+        description: 能力项
+        items:
+          type: string
+        type: array
+      createdTime:
+        description: 创建时间
+        type: string
+      creator:
+        description: 创建人
+        type: string
+      env:
+        description: 环境
+        type: integer
+      id:
+        description: Bundle ID
+        type: string
+    type: object
+  protocol.AppleWebListBundleIDsRsp:
+    properties:
+      list:
+        description: Bundle ID 信息
+        items:
+          $ref: '#/definitions/protocol.AppleWebListBundleIDsItem'
+        type: array
+    type: object
+  protocol.AppleWebListCertificatesItem:
+    properties:
+      createdTime:
+        description: 创建时间
+        type: string
+      creator:
+        description: 创建人
+        type: string
+      expirationTime:
+        description: 过期时间
+        type: string
+      id:
+        description: 证书 ID
+        type: string
+      owner:
+        description: 主体
+        type: string
+      publicKeyAlgorithm:
+        description: 公钥算法
+        type: string
+      publisher:
+        description: 签发人
+        type: string
+      signatureAlgorithm:
+        description: 签名算法
+        type: string
+      type:
+        description: 证书类型
+        type: string
+    type: object
+  protocol.AppleWebListCertificatesRsp:
+    properties:
+      list:
+        description: 证书信息
+        items:
+          $ref: '#/definitions/protocol.AppleWebListCertificatesItem'
+        type: array
+    type: object
+  protocol.AppleWebListDevicesItem:
+    properties:
+      createdTime:
+        description: 添加时间
+        example: "2020-01-01 01:01:01"
+        type: string
+      model:
+        description: 设备类型
+        type: string
+      remark:
+        description: 备注
+        type: string
+      status:
+        description: 状态
+        example: 1
+        type: integer
+      udid:
+        description: 设备 ID
+        type: string
+      user:
+        description: 添加人
+        example: zhangsan
+        type: string
+    type: object
+  protocol.AppleWebListDevicesRsp:
+    properties:
+      count:
+        description: 总数
+        example: 10
+        type: integer
+      list:
+        description: 设备信息
+        items:
+          $ref: '#/definitions/protocol.AppleWebListDevicesItem'
+        type: array
+    type: object
+  protocol.AppleWebListSigningJobsItem:
+    properties:
+      bundleId:
+        description: Bundle ID
+        example: cn.ivfzhou.test
+        type: string
+      createdTime:
+        description: 创建时间
+        example: "2020-01-01 01:01:01"
+        type: string
+      fileId:
+        description: 待签名文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      fileName:
+        description: 待签名文件名
+        type: string
+      finishedTime:
+        description: 结束时间
+        example: "2020-01-01 01:01:01"
+        type: string
+      jobId:
+        description: 任务 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      log:
+        description: 日志
+        type: string
+      profileId:
+        description: 描述文件 ID
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        type: string
+      signedFileId:
+        description: 结果文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      signedFileName:
+        description: 结果文件名
+        type: string
+      status:
+        description: 状态
+        example: 1
+        type: integer
+      userName:
+        description: 提交人
+        example: zhangsan
+        type: string
+    type: object
+  protocol.AppleWebListSigningJobsRsp:
+    properties:
+      count:
+        description: 总数
+        example: 10
+        type: integer
+      list:
+        description: 任务信息
+        items:
+          $ref: '#/definitions/protocol.AppleWebListSigningJobsItem'
+        type: array
+    type: object
+  protocol.AppleWebModifyBundleIDReq:
+    properties:
+      bundleId:
+        description: Bundle ID
+        example: cn.ivfzhou.test
+        maxLength: 64
+        type: string
+      capabilities:
+        description: 能力项。
+        example:
+        - in app purchase
+        items:
+          type: string
+        type: array
+        uniqueItems: true
+    required:
+    - bundleId
+    type: object
+  protocol.AppleWebRegisterDeviceReq:
+    properties:
+      device:
+        description: 设备类型
+        example: MAC
+        type: string
+      remark:
+        description: 备注
+        maxLength: 1024
+        type: string
+      udid:
+        description: 设备 ID
+        maxLength: 128
+        type: string
+    required:
+    - udid
+    type: object
+  protocol.AppleWebSubmitSigningJobReq:
+    properties:
+      fileId:
+        description: 待文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      profileId:
+        description: 描述文件 ID
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        type: string
+    type: object
+  protocol.EventWebListItem:
+    properties:
+      appId:
+        description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      appName:
+        description: 应用名
+        example: MyApp
+        type: string
+      content:
+        description: 事件内容
+        type: string
+      createdTime:
+        description: 创建时间
+        example: "2020-01-01 00:00:00"
+        type: string
+      platform:
+        description: 应用平台
+        example: 1
+        type: integer
+      source:
+        description: 事件来源
+        example: 1
+        type: integer
+      type:
+        description: 事件类型
+        example: 1
+        type: integer
+      user:
+        description: 操作人
+        example: zhangsan
+        type: string
+    type: object
+  protocol.EventWebListRsp:
+    properties:
+      count:
+        description: 总数
+        example: 10
+        type: integer
+      list:
+        description: 事件项
+        items:
+          $ref: '#/definitions/protocol.EventWebListItem'
+        type: array
+    type: object
+  protocol.FileAPIInitialReq:
+    properties:
+      md5:
+        description: 文件 MD5 值
+        example: 73b8928185abcc728c7fedb882ba531c
+        type: string
+      name:
+        description: 文件名
+        example: avatar.png
+        maxLength: 256
+        type: string
+      size:
+        description: 文件大小
+        example: 1024
+        type: integer
+      type:
+        description: 文件类型
+        example: 1
+        maximum: 7
+        type: integer
+    required:
+    - name
+    type: object
+  protocol.FileAPIInitialRsp:
+    properties:
+      exist:
+        description: 文件是否存在
+        example: true
+        type: boolean
+      fileId:
+        description: 文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+    type: object
+  protocol.FileWebInitialReq:
+    properties:
+      appId:
+        description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      md5:
+        description: 文件 MD5 值
+        example: 73b8928185abcc728c7fedb882ba531c
+        type: string
+      name:
+        description: 文件名
+        example: avatar.png
+        maxLength: 256
+        type: string
+      size:
+        description: 文件大小
+        example: 1024
+        type: integer
+      type:
+        description: 文件类型
+        example: 1
+        maximum: 7
+        type: integer
+    required:
+    - name
+    type: object
+  protocol.FileWebInitialRsp:
+    properties:
+      exist:
+        description: 文件是否存在
+        example: true
+        type: boolean
+      fileId:
+        description: 文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+    type: object
+  protocol.OpenWebApplyReq:
+    properties:
+      accountId:
+        description: 凭证 ID
+        example: test_account
+        maxLength: 64
+        type: string
+      authorities:
+        description: 授权项
+        example:
+        - 1
+        - 2
+        - 3
+        items:
+          type: integer
+        type: array
+        uniqueItems: true
+      frequency:
+        description: 请求频率
+        example: 100
+        maximum: 500
+        minimum: 10
+        type: integer
+      requestIp:
+        description: 请求源，逗号分割
+        example: '*,192.168.0.1,127.0.0.1-127.0.0.128'
+        maxLength: 256
+        type: string
+    required:
+    - accountId
+    - frequency
+    - requestIp
+    type: object
+  protocol.OpenWebApplyRsp:
+    properties:
+      password:
+        description: 凭证密码
+        type: string
+    type: object
+  protocol.OpenWebGetInformationRsp:
+    properties:
+      accountId:
+        description: 凭证 ID
+        example: test_account
+        type: string
+      appId:
+        description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      authorities:
+        description: 授权项
+        example:
+        - 1
+        - 2
+        - 3
+        items:
+          type: integer
+        type: array
+      createdTime:
+        description: 创建时间
+        example: "2020-01-01 01:01:01"
+        type: string
+      creator:
+        description: 创建人
+        example: zhangsan
+        type: string
+      expiration:
+        description: 过期时间
+        example: "2020-01-01 01:01:01"
+        type: string
+      frequency:
+        description: 请求频率
+        example: 100
+        type: integer
+      requestIp:
+        description: 请求源
+        example: '*,192.168.0.1,127.0.0.1-127.0.0.128'
+        type: string
+    type: object
+  protocol.OpenWebListItem:
+    properties:
+      accountId:
+        description: 凭证 ID
+        example: test_account
+        type: string
+      authorities:
+        description: 授权项
+        example:
+        - 1
+        - 2
+        - 3
+        items:
+          type: integer
+        type: array
+      createdTime:
+        description: 创建时间
+        example: "2020-01-01 01:01:01"
+        type: string
+      creator:
+        description: 创建人
+        example: zhangsan
+        type: string
+      expiration:
+        description: 过期时间
+        example: "2020-01-01 01:01:01"
+        type: string
+      frequency:
+        description: 请求频率
+        example: 100
+        type: integer
+      requestIp:
+        description: 请求源
+        example: '*,192.168.0.1,127.0.0.1-127.0.0.128'
+        type: string
+    type: object
+  protocol.OpenWebListRsp:
+    properties:
+      count:
+        description: 总数
+        example: 10
+        type: integer
+      list:
+        description: 每项信息
+        items:
+          $ref: '#/definitions/protocol.OpenWebListItem'
+        type: array
+    type: object
+  protocol.OpenWebResetRsp:
+    properties:
+      password:
+        description: 凭证密码
+        type: string
+    type: object
+  protocol.OpenWebUpdateReq:
+    properties:
+      accountId:
+        description: 凭证 ID
+        example: test_account
+        maxLength: 64
+        type: string
+      authorities:
+        description: 授权项
+        example:
+        - 1
+        - 2
+        - 3
+        items:
+          type: integer
+        type: array
+        uniqueItems: true
+      frequency:
+        description: 请求频率
+        example: 100
+        maximum: 500
+        minimum: 10
+        type: integer
+      requestIp:
+        description: 请求源
+        example: '*,192.168.0.1,127.0.0.1-127.0.0.128'
+        maxLength: 256
+        type: string
+    required:
+    - accountId
+    - frequency
+    - requestIp
+    type: object
+  protocol.TodoWebCountRsp:
+    properties:
+      done:
+        description: 已处理数
+        type: integer
+      needToDeal:
+        description: 待处理数
+        type: integer
+    type: object
+  protocol.TodoWebCreateReq:
+    properties:
+      appId:
+        description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      applyReason:
+        description: 理由
+        maxLength: 256
+        type: string
+      type:
+        description: 待办类型
+        enum:
+        - 2
+        - 3
+        example: 2
+        type: integer
+    required:
+    - applyReason
+    type: object
+  protocol.TodoWebDealReq:
+    properties:
+      approveMessage:
+        description: 审批语
+        type: string
+      id:
+        description: 待办 ID
+        example: 1
+        type: integer
+      isPass:
+        description: 是否通过
+        example: true
+        type: boolean
+    type: object
+  protocol.TodoWebGetDetailRsp:
+    properties:
+      appId:
+        description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      appName:
+        description: 应用名
+        example: MyApp
+        type: string
+      applyReason:
+        description: 申请理由
+        type: string
+      approveBy:
+        description: 处理人
+        example: zhangsan
+        type: string
+      approveMsg:
+        description: 审批语
+        type: string
+      candidates:
+        description: 可处理的人
+        example:
+        - zhangsan
+        items:
+          type: string
+        type: array
+      createdTime:
+        description: 申请时间
+        example: "2020-01-01 01:01:01"
+        type: string
+      creator:
+        description: 申请人
+        example: zhangsan
+        type: string
+      department:
+        description: 申请人所属部门
+        example: /技术部
+        type: string
+      deviceModel:
+        description: 测试设备型号
+        type: string
+      deviceUdid:
+        description: 测试设备 UDID
+        type: string
+      finishedTime:
+        description: 审批时间
+        example: "2020-01-01 01:01:01"
+        type: string
+      id:
+        description: 待办 ID
+        example: 1
+        type: integer
+      platform:
+        description: 应用平台
+        example: 1
+        type: integer
+      status:
+        description: 待办状态
+        example: 1
+        type: integer
+      type:
+        description: 待办类型
+        example: 1
+        type: integer
+    type: object
+  protocol.TodoWebListDealtItem:
+    properties:
+      appName:
+        description: 应用名
+        example: MyApp
+        type: string
+      approver:
+        description: 处理人
+        example: zhangsan
+        type: string
+      createdTime:
+        description: 申请时间
+        example: "2020-01-01 01:01:01"
+        type: string
+      creator:
+        description: 申请人
+        example: zhangsan
+        type: string
+      finishedTime:
+        description: 处理时间
+        example: "2020-01-01 01:01:01"
+        type: string
+      id:
+        description: 待办 ID
+        example: 1
+        type: integer
+      platform:
+        description: 应用平台
+        example: 1
+        type: integer
+      status:
+        description: 待办状态
+        example: 1
+        type: integer
+      type:
+        description: 待办类型
+        example: 1
+        type: integer
+    type: object
+  protocol.TodoWebListDealtRsp:
+    properties:
+      count:
+        description: 总数
+        example: 10
+        type: integer
+      list:
+        description: 待办信息
+        items:
+          $ref: '#/definitions/protocol.TodoWebListDealtItem'
+        type: array
+    type: object
+  protocol.TodoWebListItem:
+    properties:
+      appName:
+        description: 应用名
+        example: MyApp
+        type: string
+      createdTime:
+        description: 申请时间
+        example: "2020-01-01 01:01:01"
+        type: string
+      creator:
+        description: 申请人
+        example: zhangsan
+        type: string
+      id:
+        description: 待办 ID
+        example: 1
+        type: integer
+      platform:
+        description: 应用平台
+        example: 1
+        type: integer
+      status:
+        description: 待办状态
+        example: 1
+        type: integer
+      type:
+        description: 待办类型
+        example: 1
+        type: integer
+    type: object
+  protocol.TodoWebListRsp:
+    properties:
+      count:
+        description: 总数
+        example: 10
+        type: integer
+      list:
+        description: 待办信息
+        items:
+          $ref: '#/definitions/protocol.TodoWebListItem'
+        type: array
+    type: object
+  protocol.UserWebGetInformationRsp:
+    properties:
+      avatarFileId:
+        description: 头像文件 ID
+        example: 2026013885c6abe6e642a6b32965e6f8afebcb
+        type: string
+      department:
+        description: 部门
+        example: /技术部/研发
+        type: string
+      nameEn:
+        description: 英文名
+        example: zhangsan
+        type: string
+      nameZh:
+        description: 中文名
+        example: 张三
+        type: string
+    type: object
+  protocol.UserWebLoginReq:
+    properties:
+      nameEn:
+        description: 英文名
+        example: zhangsan
+        maxLength: 32
+        type: string
+      password:
+        description: 密码
+        example: "123456"
+        type: string
+    type: object
+  protocol.UserWebSearchRsp:
+    properties:
+      users:
+        additionalProperties:
+          type: string
+        description: 匹配的用户
+        example:
+          zhangsan: 张三
+        type: object
+    type: object
+  protocol.UserWebUpdateReq:
+    properties:
+      avatarFileId:
+        description: 用户头像文件 ID
+        example: 2026013885c6abe6e642a6b32965e6f8afebcb
+        type: string
+      department:
+        description: 部门
+        example: /技术部/研发
+        maxLength: 1024
+        type: string
+      nameZh:
+        description: 中文名
+        example: 张三
+        maxLength: 16
+        minLength: 2
+        type: string
+      password:
+        description: 密码
+        example: "123456"
+        minLength: 6
+        type: string
+      passwordConfirmation:
+        description: 二次确认密码
+        example: "123456"
+        type: string
+    required:
+    - department
+    type: object
+  protocol.WindowsAPIGetCertificatePasswordRsp:
+    properties:
+      password:
+        description: 密码
+        example: "123456"
+        type: string
+    type: object
+  protocol.WindowsAPIGetSigningJobInformationRsp:
+    properties:
+      certificateCommonName:
+        description: 证书主体
+        example: MyCert
+        type: string
+      certificateId:
+        description: 证书 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      createdTime:
+        description: 提交时间
+        example: "2026-01-20 09:48:00"
+        type: string
+      fileId:
+        description: 源文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      fileName:
+        description: 文件名
+        type: string
+      finishedTime:
+        description: 结束时间
+        example: "2026-01-20 09:48:00"
+        type: string
+      log:
+        description: 任务日志
+        type: string
+      productId:
+        description: 微软产品 ID
+        example: "15324896572190743"
+        type: string
+      signedFileId:
+        description: 结果文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      signingType:
+        description: 任务签名类型
+        example: 1
+        type: integer
+      source:
+        description: 任务来源
+        example: 1
+        type: integer
+      status:
+        description: 状态
+        example: 1
+        type: integer
+      submissionId:
+        description: 微软提交 ID
+        example: "1713904832489657219"
+        type: string
+      userName:
+        description: 提交人
+        example: zhangsan
+        type: string
+    type: object
+  protocol.WindowsAPIGetWHQLJobInformationRsp:
+    properties:
+      createdTime:
+        description: 创建时间
+        example: "2026-01-20 09:48:00"
+        type: string
+      fileId:
+        description: 文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      fileName:
+        description: 文件名
+        type: string
+      finishedTime:
+        description: 结束时间
+        example: "2026-01-20 09:48:00"
+        type: string
+      hlkLogFileId:
+        description: HLK 日志文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      hlkLogFileName:
+        description: HLKX 日志文件名
+        type: string
+      hlkxFileId:
+        description: HLKX 包文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      hlkxFileName:
+        description: HLKX 包文件名
+        type: string
+      log:
+        description: 日志
+        type: string
+      productId:
+        description: 微软产品 ID
+        example: "15324896572190743"
+        type: string
+      signedFileId:
+        description: 签名结果文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      signedFileName:
+        description: 签名结果文件名
+        type: string
+      source:
+        description: 来源
+        example: 1
+        type: integer
+      status:
+        description: 状态
+        example: 1
+        type: integer
+      submissionId:
+        description: 微软提交 ID
+        example: "1713904832489657219"
+        type: string
+      testSystem:
+        description: 测试系统
+        example: Windows 10 22H2_64
+        type: string
+      type:
+        description: 类型
+        example: 1
+        type: integer
+      userName:
+        description: 提交人
+        example: zhangsan
+        type: string
+    type: object
+  protocol.WindowsAPIListCertificatesItem:
+    properties:
+      createdTime:
+        description: 创建时间
+        example: "2026-01-20 09:48:00"
+        type: string
+      creator:
+        description: 创建人
+        example: zhangsan
+        type: string
+      fingerprint:
+        description: 指纹
+        example: e4fd2280d075253896580e0c061730032e2b9c7a
+        type: string
+      id:
+        description: 证书 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      notAfter:
+        description: 失效时间
+        example: "2026-01-20 09:48:00"
+        type: string
+      notBefore:
+        description: 生效时间
+        example: "2026-01-20 09:48:00"
+        type: string
+      owner:
+        description: 所有者
+        example: zhangsan
+        type: string
+      publicKeyAlgorithm:
+        description: 公钥算法
+        example: SHA1WithRSA
+        type: string
+      publisher:
+        description: 颁发者
+        example: C=CN, ST=HuNan, L=Changsha, O=ivfzhou, OU=ivfzhou, CN=windows personal
+          ev certificate, emailAddress=ivfzhou@126.com
+        type: string
+      signatureAlgorithm:
+        description: 签名算法
+        example: SHA1WithRSA
+        type: string
+      type:
+        description: 证书类型
+        example: 1
+        type: integer
+    type: object
+  protocol.WindowsAPIListCertificatesRsp:
+    properties:
+      list:
+        description: 证书列表
+        items:
+          $ref: '#/definitions/protocol.WindowsAPIListCertificatesItem'
+        type: array
+    type: object
+  protocol.WindowsAPISubmitSigningJobReq:
+    properties:
+      certificateId:
+        description: 证书 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      fileId:
+        description: 文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      signingType:
+        description: 签名类型
+        enum:
+        - 1
+        - 2
+        - 3
+        example: 1
+        type: integer
+    type: object
+  protocol.WindowsAPISubmitSigningJobRsp:
+    properties:
+      jobId:
+        description: 任务 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+    type: object
+  protocol.WindowsAPISubmitWHQLJobReq:
+    properties:
+      fileId:
+        description: 文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      serviceName:
+        description: 服务名称
+        maxLength: 256
+        type: string
+      signingType:
+        description: 类型
+        enum:
+        - 1
+        - 2
+        example: 1
+        type: integer
+      testConfig:
+        description: HLK 测试配置
+        maxLength: 65535
+        type: string
+      testSystem:
+        description: 测试系统
+        example: Windows 10 22H2_64
+        type: string
+      testTarget:
+        description: HLK Studio 测试对象
+        maxLength: 256
+        type: string
+    type: object
+  protocol.WindowsAPISubmitWHQLJobRsp:
+    properties:
+      jobId:
+        description: 任务 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+    type: object
+  protocol.WindowsWebAddEVCertificateReq:
+    properties:
+      isMicrosoftVerifyCertificate:
+        description: 是用于微软网站校验的证书
+        example: false
+        type: boolean
+      machineIp:
+        description: 机器 IP
+        example: 172.16.1.1
+        type: string
+      notAfter:
+        description: 失效时间
+        example: "2026-01-20 09:48:00"
+        type: string
+      notBefore:
+        description: 生效时间
+        example: "2026-01-20 09:48:00"
+        type: string
+      owner:
+        description: 所有者
+        example: C=CN, ST=HuNan, L=Changsha, O=ivfzhou, OU=ivfzhou, CN=windows personal
+          ev certificate, emailAddress=ivfzhou@126.com
+        type: string
+      password:
+        description: 密码
+        example: "123456"
+        maxLength: 64
+        minLength: 6
+        type: string
+      publicKeyAlgorithm:
+        description: 公钥算法
+        example: SHA1WithRSA
+        type: string
+      publisher:
+        description: 颁发者
+        example: C=CN, ST=HuNan, L=Changsha, O=ivfzhou, OU=ivfzhou, CN=windows personal
+          ev certificate, emailAddress=ivfzhou@126.com
+        type: string
+      serialNumber:
+        description: 序列号
+        example: 6e4314c191e2fe571b60818914982e53e03e7a20
+        maxLength: 1024
+        type: string
+      sha1:
+        description: 指纹
+        example: e4fd2280d075253896580e0c061730032e2b9c7a
+        type: string
+      signatureAlgorithm:
+        description: 签名算法
+        example: SHA1WithRSA
+        type: string
+      type:
+        description: 类型
+        enum:
+        - 1
+        - 3
+        example: 1
+        type: integer
+      version:
+        description: 版本号
+        example: 3
+        type: integer
+    required:
+    - notAfter
+    - notBefore
+    - owner
+    - password
+    - publicKeyAlgorithm
+    - publisher
+    - serialNumber
+    - signatureAlgorithm
+    type: object
+  protocol.WindowsWebGetCertificatePasswordRsp:
+    properties:
+      password:
+        description: 密码
+        example: "123456"
+        type: string
+    type: object
+  protocol.WindowsWebGrantAppEVCertificateReq:
+    properties:
+      appId:
+        description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      certificateId:
+        description: 证书 ID
+        example: e4fd2280d075253896580e0c06173003
+        type: string
+    type: object
+  protocol.WindowsWebListCertificatesItem:
+    properties:
+      createdTime:
+        description: 创建时间
+        example: "2026-01-20 09:48:00"
+        type: string
+      creator:
+        description: 创建人
+        example: zhangsan
+        type: string
+      fingerprint:
+        description: 指纹
+        example: e4fd2280d075253896580e0c061730032e2b9c7a
+        type: string
+      id:
+        description: 证书 ID
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        type: string
+      notAfter:
+        description: 失效时间
+        example: "2026-01-20 09:48:00"
+        type: string
+      notBefore:
+        description: 生效时间
+        example: "2026-01-20 09:48:00"
+        type: string
+      owner:
+        description: 所有者
+        example: C=CN, ST=HuNan, L=Changsha, O=ivfzhou, OU=ivfzhou, CN=windows personal
+          ev certificate, emailAddress=ivfzhou@126.com
+        type: string
+      publicKeyAlgorithm:
+        description: 公钥算法
+        example: SHA1WithRSA
+        type: string
+      publisher:
+        description: 颁发者
+        example: C=CN, ST=HuNan, L=Changsha, O=ivfzhou, OU=ivfzhou, CN=windows personal
+          ev certificate, emailAddress=ivfzhou@126.com
+        type: string
+      signatureAlgorithm:
+        description: 签名算法
+        example: SHA1WithRSA
+        type: string
+      type:
+        description: 证书类型
+        example: 1
+        type: integer
+    type: object
+  protocol.WindowsWebListCertificatesRsp:
+    properties:
+      list:
+        description: 证书列表
+        items:
+          $ref: '#/definitions/protocol.WindowsWebListCertificatesItem'
+        type: array
+    type: object
+  protocol.WindowsWebListCompanyCertificatesItem:
+    properties:
+      createdTime:
+        description: 创建时间
+        example: "2026-01-20 09:48:00"
+        type: string
+      creator:
+        description: 创建人
+        example: zhangsan
+        type: string
+      fingerprint:
+        description: 指纹
+        example: e4fd2280d075253896580e0c061730032e2b9c7a
+        type: string
+      id:
+        description: 证书 ID
+        example: e4fd2280d075253896580e0c06173003
+        type: string
+      isMSVerification:
+        description: 是否用于微软网站校验
+        example: false
+        type: boolean
+      machineIp:
+        description: UKey 所在机器 IP
+        example: 172.16.1.1
+        type: string
+      notAfter:
+        description: 过期时间
+        example: "2026-01-20 09:48:00"
+        type: string
+      notBefore:
+        description: 生效时间
+        example: "2026-01-20 09:48:00"
+        type: string
+      owner:
+        description: 所有者
+        example: zhangsan
+        type: string
+      password:
+        description: 密码
+        example: "123456"
+        type: string
+      publicKeyAlgorithm:
+        description: 公钥算法
+        example: SHA1WithRSA
+        type: string
+      publisher:
+        description: 颁发者
+        example: C=CN, ST=HuNan, L=Changsha, O=ivfzhou, OU=ivfzhou, CN=windows personal
+          ev certificate, emailAddress=ivfzhou@126.com
+        type: string
+      signatureAlgorithm:
+        description: 签名算法
+        example: SHA1WithRSA
+        type: string
+      type:
+        description: 类型
+        example: 1
+        type: integer
+    type: object
+  protocol.WindowsWebListCompanyCertificatesRsp:
+    properties:
+      list:
+        description: 证书信息。
+        items:
+          $ref: '#/definitions/protocol.WindowsWebListCompanyCertificatesItem'
+        type: array
+    type: object
+  protocol.WindowsWebListGrantCertificateAppsItem:
+    properties:
+      appId:
+        description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      appName:
+        description: 应用名
+        example: MyApp
+        type: string
+      certificateId:
+        description: 证书 ID
+        example: e4fd2280d075253896580e0c06173003
+        type: string
+      certificateOrganization:
+        description: 证书组织
+        example: C=CN, ST=HuNan, L=Changsha, O=ivfzhou, OU=ivfzhou, CN=windows personal
+          ev certificate, emailAddress=ivfzhou@126.com
+        type: string
+      grantTime:
+        description: 授权时间
+        example: "2026-01-20 09:48:00"
+        type: string
+      user:
+        description: 授权人
+        example: zhangsan
+        type: string
+    type: object
+  protocol.WindowsWebListGrantCertificateAppsRsp:
+    properties:
+      count:
+        description: 总数
+        example: 10
+        type: integer
+      list:
+        description: 授权项
+        items:
+          $ref: '#/definitions/protocol.WindowsWebListGrantCertificateAppsItem'
+        type: array
+    type: object
+  protocol.WindowsWebListSigningJobsItem:
+    properties:
+      certificateCommonName:
+        description: 证书主体
+        example: MyCert
+        type: string
+      certificateId:
+        description: 证书 ID
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        type: string
+      createdTime:
+        description: 提交时间
+        example: "2026-01-20 09:48:00"
+        type: string
+      fileId:
+        description: 源文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      fileName:
+        description: 文件名
+        type: string
+      finishedTime:
+        description: 结束时间
+        example: "2026-01-20 09:48:00"
+        type: string
+      jobId:
+        description: 任务 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      log:
+        description: 任务日志
+        type: string
+      signedFileId:
+        description: 结果文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      signingType:
+        description: 任务签名类型
+        example: 1
+        type: integer
+      source:
+        description: 任务来源
+        example: 1
+        type: integer
+      status:
+        description: 状态
+        example: 1
+        type: integer
+      userName:
+        description: 提交人
+        example: zhangsan
+        type: string
+    type: object
+  protocol.WindowsWebListSigningJobsRsp:
+    properties:
+      count:
+        description: 总数
+        example: 10
+        type: integer
+      list:
+        description: 任务信息
+        items:
+          $ref: '#/definitions/protocol.WindowsWebListSigningJobsItem'
+        type: array
+    type: object
+  protocol.WindowsWebListWHQLJobsItem:
+    properties:
+      createdTime:
+        description: 创建时间
+        example: "2026-01-20 09:48:00"
+        type: string
+      fileId:
+        description: 文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      fileName:
+        description: 文件名
+        type: string
+      finishedTime:
+        description: 结束时间
+        example: "2026-01-20 09:48:00"
+        type: string
+      hlkLogFileId:
+        description: HLK 日志文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      hlkLogFileName:
+        description: HLKX 日志文件名
+        type: string
+      hlkxFileId:
+        description: HLKX 包文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      hlkxFileName:
+        description: HLKX 包文件名
+        type: string
+      jobId:
+        description: 任务 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      log:
+        description: 日志
+        type: string
+      signedFileId:
+        description: 签名结果文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      signedFileName:
+        description: 签名结果文件名
+        type: string
+      source:
+        description: 来源
+        example: 1
+        type: integer
+      status:
+        description: 状态
+        example: 1
+        type: integer
+      testSystem:
+        description: 测试系统
+        example: Windows 10 22H2_64
+        type: string
+      type:
+        description: 类型
+        example: 1
+        type: integer
+      userName:
+        description: 提交人
+        example: zhangsan
+        type: string
+    type: object
+  protocol.WindowsWebListWHQLJobsRsp:
+    properties:
+      count:
+        description: 总数
+        example: 10
+        type: integer
+      list:
+        description: 任务信息。
+        items:
+          $ref: '#/definitions/protocol.WindowsWebListWHQLJobsItem'
+        type: array
+    type: object
+  protocol.WindowsWebSubmitSigningJobReq:
+    properties:
+      certificateId:
+        description: 证书 ID
+        example: e4fd2280d075253896580e0c06173003
+        type: string
+      fileId:
+        description: 文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      signingType:
+        description: 签名类型
+        enum:
+        - 1
+        - 2
+        - 3
+        example: 1
+        type: integer
+    type: object
+  protocol.WindowsWebSubmitWHQLJobReq:
+    properties:
+      fileId:
+        description: 文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        type: string
+      serviceName:
+        description: 服务名称
+        maxLength: 256
+        type: string
+      signingType:
+        description: 类型
+        enum:
+        - 1
+        - 2
+        example: 1
+        type: integer
+      testConfig:
+        description: HLK 测试配置
+        maxLength: 65535
+        type: string
+      testSystem:
+        description: 测试系统
+        example: Windows 10 22H2_64
+        type: string
+      testTarget:
+        description: HLK Studio 测试对象
+        maxLength: 256
+        type: string
+    type: object
+  protocol.WindowsWebUploadCertificateReq:
+    properties:
+      certificate:
+        description: 证书内容，Base64 编码
+        type: string
+      password:
+        description: 证书密码
+        example: "123456"
+        maxLength: 64
+        minLength: 1
+        type: string
+    required:
+    - certificate
+    type: object
+  protocol.WindowsWebUploadCompanyCertificateReq:
+    properties:
+      certificate:
+        description: 证书
+        type: string
+      password:
+        description: 证书密码
+        example: "123456"
+        maxLength: 64
+        minLength: 1
+        type: string
+    type: object
+  util.Response-any:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_AndroidAPIGetSigningJobInformationRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.AndroidAPIGetSigningJobInformationRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_AndroidAPIListCertificatesRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.AndroidAPIListCertificatesRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_AndroidAPISubmitAABSigningJobRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.AndroidAPISubmitAABSigningJobRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_AndroidAPISubmitAPKPatchSigningJobRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.AndroidAPISubmitAPKPatchSigningJobRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_AndroidAPISubmitAPKSigningJobRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.AndroidAPISubmitAPKSigningJobRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_AndroidWebGetCertificateFacebookDigestRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.AndroidWebGetCertificateFacebookDigestRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_AndroidWebListCertificatesRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.AndroidWebListCertificatesRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_AndroidWebListOrganizationsRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.AndroidWebListOrganizationsRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_AndroidWebListSigningJobsRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.AndroidWebListSigningJobsRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_AppWebCountRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.AppWebCountRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_AppWebGetInformationRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.AppWebGetInformationRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_AppWebSearchRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.AppWebSearchRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_AppleAPIGetSigningJobInformationRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.AppleAPIGetSigningJobInformationRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_AppleAPISubmitSigningJobRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.AppleAPISubmitSigningJobRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_AppleWebListAppCertificatesRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.AppleWebListAppCertificatesRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_AppleWebListBundleIDsRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.AppleWebListBundleIDsRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_AppleWebListCertificatesRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.AppleWebListCertificatesRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_AppleWebListDevicesRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.AppleWebListDevicesRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_AppleWebListSigningJobsRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.AppleWebListSigningJobsRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_EventWebListRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.EventWebListRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_FileAPIInitialRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.FileAPIInitialRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_FileWebInitialRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.FileWebInitialRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_OpenWebApplyRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.OpenWebApplyRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_OpenWebGetInformationRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.OpenWebGetInformationRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_OpenWebListRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.OpenWebListRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_OpenWebResetRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.OpenWebResetRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_TodoWebCountRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.TodoWebCountRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_TodoWebGetDetailRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.TodoWebGetDetailRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_TodoWebListDealtRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.TodoWebListDealtRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_TodoWebListRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.TodoWebListRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_UserWebGetInformationRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.UserWebGetInformationRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_UserWebSearchRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.UserWebSearchRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_WindowsAPIGetCertificatePasswordRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.WindowsAPIGetCertificatePasswordRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_WindowsAPIGetSigningJobInformationRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.WindowsAPIGetSigningJobInformationRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_WindowsAPIGetWHQLJobInformationRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.WindowsAPIGetWHQLJobInformationRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_WindowsAPIListCertificatesRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.WindowsAPIListCertificatesRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_WindowsAPISubmitSigningJobRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.WindowsAPISubmitSigningJobRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_WindowsAPISubmitWHQLJobRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.WindowsAPISubmitWHQLJobRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_WindowsWebGetCertificatePasswordRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.WindowsWebGetCertificatePasswordRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_WindowsWebListCertificatesRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.WindowsWebListCertificatesRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_WindowsWebListCompanyCertificatesRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.WindowsWebListCompanyCertificatesRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_WindowsWebListGrantCertificateAppsRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.WindowsWebListGrantCertificateAppsRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_WindowsWebListSigningJobsRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.WindowsWebListSigningJobsRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_WindowsWebListWHQLJobsRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.WindowsWebListWHQLJobsRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+host: 127.0.0.1:8090
+info:
+  contact:
+    email: ivfzhou@126.com
+    name: ivfzhou
+  license:
+    name: MulanPSL-2.0 license
+    url: http://license.coscl.org.cn/MulanPSL2
+  title: CSMS API
+  version: "1.0"
+paths:
+  /api/android/downloadCertificate:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求凭据
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 证书 ID
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        in: query
+        name: certificateId
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          headers:
+            Content-Disposition:
+              type: string
+          schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 下载安卓证书
+      tags:
+      - Android-OpenAPI
+  /api/android/getSigningJobInformation:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求凭据
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 任务 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        in: query
+        name: jobId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_AndroidAPIGetSigningJobInformationRsp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 获取任务信息
+      tags:
+      - Android-OpenAPI
+  /api/android/listCertificates:
+    get:
+      parameters:
+      - description: 请求凭据
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_AndroidAPIListCertificatesRsp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 获取安卓证书列表
+      tags:
+      - Android-OpenAPI
+  /api/android/submitAABSigningJob:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求凭据
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.AndroidAPISubmitAABSigningJobReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_AndroidAPISubmitAABSigningJobRsp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 提交 AAB 文件签名任务
+      tags:
+      - Android-OpenAPI
+  /api/android/submitAPKPatchSigningJob:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求凭据
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.AndroidAPISubmitAPKPatchSigningJobReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_AndroidAPISubmitAPKPatchSigningJobRsp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 提交 APK 补丁包文件签名任务
+      tags:
+      - Android-OpenAPI
+  /api/android/submitAPKSigningJob:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求凭据
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.AndroidAPISubmitAPKSigningJobReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_AndroidAPISubmitAPKSigningJobRsp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 提交 APK 文件签名任务
+      tags:
+      - Android-OpenAPI
+  /api/apple/downloadCertificate:
+    get:
+      consumes:
+      - application/x-www-urlencoded
+      parameters:
+      - description: 请求凭据
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        in: query
+        name: certificateId
+        type: string
+      - description: 类型
+        example: 1
+        in: query
+        maximum: 3
+        minimum: 1
+        name: type
+        type: integer
+      produces:
+      - application/otect-stream
+      responses:
+        "200":
+          description: OK
+          headers:
+            Content-Disposition:
+              type: string
+          schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 下载证书和描述文件
+      tags:
+      - Apple-OpenAPI
+  /api/apple/getSigningJobInformation:
+    get:
+      consumes:
+      - application/x-www-urlencoded
+      parameters:
+      - description: 请求凭据
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 任务 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        in: query
+        name: jobId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_AppleAPIGetSigningJobInformationRsp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 获取签名任务信息
+      tags:
+      - Apple-OpenAPI
+  /api/apple/submitSigningJob:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求凭据
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.AppleAPISubmitSigningJobReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_AppleAPISubmitSigningJobRsp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 提交签名任务
+      tags:
+      - Apple-OpenAPI
+  /api/file/download:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求凭据
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        in: query
+        name: fileId
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          headers:
+            Content-Disposition:
+              type: string
+          schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 下载
+      tags:
+      - File-OpenAPI
+  /api/file/initial:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求凭据
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.FileAPIInitialReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_FileAPIInitialRsp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 初始化上传
+      tags:
+      - File-OpenAPI
+  /api/file/mergeParts:
+    get:
+      consumes:
+      - application/x-www-urlencoded
+      parameters:
+      - description: 请求凭据
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        in: query
+        name: fileId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "408":
+          description: Request Timeout
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "423":
+          description: Locked
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 合并分片
+      tags:
+      - File-OpenAPI
+  /api/file/uploadPart:
+    post:
+      consumes:
+      - application/form-data
+      parameters:
+      - description: 请求凭据
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 文件分片
+        in: formData
+        name: chunk
+        required: true
+        type: file
+      - description: 文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        in: formData
+        name: fileId
+        required: true
+        type: string
+      - description: 文件分片序号
+        example: 1
+        in: formData
+        name: chunkNumber
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "408":
+          description: Request Timeout
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "423":
+          description: Locked
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 上传分片
+      tags:
+      - File-OpenAPI
+  /api/windows/downloadCertificate:
+    get:
+      consumes:
+      - application/x-www-urlencoded
+      parameters:
+      - description: 请求凭据
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 证书 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: query
+        name: certificateId
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          headers:
+            Content-Disposition:
+              type: string
+          schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 下载证书
+      tags:
+      - Windows-OpenAPI
+  /api/windows/getCertificatePassword:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求凭据
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 证书 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: query
+        name: certificateId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_WindowsAPIGetCertificatePasswordRsp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 查看证书密码
+      tags:
+      - Windows-OpenAPI
+  /api/windows/getSigningJobInformation:
+    get:
+      parameters:
+      - description: 请求凭据
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 任务 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        in: query
+        name: jobId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_WindowsAPIGetSigningJobInformationRsp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 获取签名任务信息
+      tags:
+      - Windows-OpenAPI
+  /api/windows/getWHQLJobInformation:
+    get:
+      parameters:
+      - description: 请求凭据
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 任务 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: query
+        name: jobId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_WindowsAPIGetWHQLJobInformationRsp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 获取 WHQL 任务信息
+      tags:
+      - Windows-OpenAPI
+  /api/windows/listCertificates:
+    get:
+      parameters:
+      - description: 请求凭据
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_WindowsAPIListCertificatesRsp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 证书列表
+      tags:
+      - Windows-OpenAPI
+  /api/windows/submitSigningJob:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求凭据
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.WindowsAPISubmitSigningJobReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_WindowsAPISubmitSigningJobRsp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 提交签名任务
+      tags:
+      - Windows-OpenAPI
+  /api/windows/submitWHQLJob:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求凭据
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.WindowsAPISubmitWHQLJobReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_WindowsAPISubmitWHQLJobRsp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/util.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 提交 WHQL 任务
+      tags:
+      - Windows-OpenAPI
+  /web/android/addOrganization:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.AndroidWebAddOrganizationReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 添加证书主体
+      tags:
+      - Android-WebAPI
+  /web/android/applyCertificate/{appId}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.AndroidWebApplyCertificateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 申请安卓证书
+      tags:
+      - Android-WebAPI
+  /web/android/deleteCertificate/{appId}:
+    delete:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 证书 ID
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        in: query
+        name: certificateId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 删除安卓证书
+      tags:
+      - Android-WebAPI
+  /web/android/downloadCertificate/{appId}:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 证书 ID
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        in: query
+        name: certificateId
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          headers:
+            Content-Disposition:
+              type: string
+          schema:
+            type: file
+      summary: 下载安卓证书
+      tags:
+      - Android-WebAPI
+  /web/android/getCertificateFacebookDigest/{appId}:
+    get:
+      consumes:
+      - application/x-www-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 证书 ID
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        in: query
+        name: certificateId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_AndroidWebGetCertificateFacebookDigestRsp'
+      summary: 获取证书的脸书摘要
+      tags:
+      - Android-WebAPI
+  /web/android/getGooglePlayCertificate/{appId}:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 证书 ID
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        in: query
+        name: certificateId
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          headers:
+            Content-Disposition:
+              type: string
+          schema:
+            type: file
+      summary: 获取谷歌 Play 上传证书
+      tags:
+      - Android-WebAPI
+  /web/android/getGooglePlayDeployCertificate/{appId}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.AndroidWebGetGooglePlayDeployCertificateReq'
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+      summary: 获取谷歌 Play 部署证书
+      tags:
+      - Android-WebAPI
+  /web/android/getGooglePlayUpgradeCertificate/{appId}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.AndroidWebGetGooglePlayUpgradeCertificateReq'
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+      summary: 获取谷歌 Play 升级签名密钥
+      tags:
+      - Android-WebAPI
+  /web/android/listCertificates/{appId}:
+    get:
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_AndroidWebListCertificatesRsp'
+      summary: 获取安卓证书列表
+      tags:
+      - Android-WebAPI
+  /web/android/listOrganizations:
+    get:
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_AndroidWebListOrganizationsRsp'
+      summary: 获取安卓主体信息列表
+      tags:
+      - Android-WebAPI
+  /web/android/listSigningJobs/{appId}:
+    get:
+      consumes:
+      - application/x-www-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 证书别名
+        example: my_certificate
+        in: query
+        maxLength: 64
+        name: certificateAlias
+        type: string
+      - description: 关键字
+        in: query
+        name: keyWord
+        type: string
+      - description: 页数
+        example: 1
+        in: query
+        minimum: 1
+        name: pageNumber
+        type: integer
+      - description: 一页任务条数
+        example: 10
+        in: query
+        maximum: 100
+        minimum: 1
+        name: pageSize
+        type: integer
+      - description: 状态
+        enum:
+        - 1
+        - 2
+        - 3
+        example: 1
+        in: query
+        name: status
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_AndroidWebListSigningJobsRsp'
+      summary: 获取签名任务列表信息
+      tags:
+      - Android-WebAPI
+  /web/android/removeOrganization:
+    delete:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 主体 ID
+        example: 1
+        in: query
+        name: id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 删除证书主体
+      tags:
+      - Android-WebAPI
+  /web/android/submitAABSigningJob/{appId}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.AndroidWebSubmitAABSigningJobReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 提交 AAB 文件签名任务
+      tags:
+      - Android-WebAPI
+  /web/android/submitAPKPatchSigningJob/{appId}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.AndroidWebSubmitAPKPatchSigningJobReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 提交 APK 补丁包文件签名任务
+      tags:
+      - Android-WebAPI
+  /web/android/submitAPKSigningJob/{appId}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.AndroidWebSubmitAPKSigningJobReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 提交 APK 文件签名任务
+      tags:
+      - Android-WebAPI
+  /web/android/uploadCertificate/{appId}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.AndroidWebUploadCertificateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 上传安卓证书
+      tags:
+      - Android-WebAPI
+  /web/app/count:
+    get:
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_AppWebCountRsp'
+      summary: 获取用户具有权限的应用个数
+      tags:
+      - App-WebAPI
+  /web/app/enable/{appId}:
+    get:
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: path
+        name: appId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 启用
+      tags:
+      - App-WebAPI
+  /web/app/getInformation/{appId}:
+    get:
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: path
+        name: appId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_AppWebGetInformationRsp'
+      summary: 获取应用信息
+      tags:
+      - App-WebAPI
+  /web/app/invalidate/{appId}:
+    get:
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: path
+        name: appId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 无效化
+      tags:
+      - App-WebAPI
+  /web/app/register:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用名
+        example: MyApp
+        in: formData
+        name: name
+        required: true
+        type: string
+      - description: 应用图标
+        in: formData
+        name: logo
+        required: true
+        type: file
+      - description: 平台
+        example: 1
+        in: formData
+        name: platform
+        required: true
+        type: integer
+      - collectionFormat: csv
+        description: 管理员
+        example: '[]{"zhangsan"}'
+        in: formData
+        items:
+          type: string
+        name: admins
+        required: true
+        type: array
+      - collectionFormat: csv
+        description: 成员
+        example: '[]{"zhangsan"}'
+        in: formData
+        items:
+          type: string
+        name: members
+        required: true
+        type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 注册
+      tags:
+      - App-WebAPI
+  /web/app/search:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.AppWebSearchReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_AppWebSearchRsp'
+      summary: 查询
+      tags:
+      - App-WebAPI
+  /web/app/update/{appId}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.AppWebUpdateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 更新
+      tags:
+      - App-WebAPI
+  /web/apple/applyBundleID/{appId}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.AppleWebApplyBundleIDReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 申请 Bundle ID
+      tags:
+      - Apple-WebAPI
+  /web/apple/applyCertificate:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.AppleWebApplyCertificateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 申请苹果签名证书
+      tags:
+      - Apple-WebAPI
+  /web/apple/applyCommonProfile/{appId}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 申请企业内测通配符描述文件
+      tags:
+      - Apple-WebAPI
+  /web/apple/applyInHouseProfile/{appId}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.AppleWebApplyInHouseProfileReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 申请企业内测描述文件
+      tags:
+      - Apple-WebAPI
+  /web/apple/applyProfile/{appId}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.AppleWebApplyProfileReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 申请描述文件
+      tags:
+      - Apple-WebAPI
+  /web/apple/applyPushCertificate/{appId}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.AppleWebApplyPushCertificateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 申请 Push 证书
+      tags:
+      - Apple-WebAPI
+  /web/apple/deleteBundleID/{appId}:
+    delete:
+      consumes:
+      - application/x-www-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: Bundle ID。
+        example: cn.ivfzhou.test
+        in: query
+        maxLength: 64
+        name: bundleId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 删除 Bundle ID
+      tags:
+      - Apple-WebAPI
+  /web/apple/downloadCertificate/{appId}:
+    get:
+      consumes:
+      - application/x-www-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: ID
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        in: query
+        name: certificateId
+        type: string
+      - description: 类型
+        example: 1
+        in: query
+        maximum: 3
+        minimum: 1
+        name: type
+        type: integer
+      produces:
+      - application/otect-stream
+      responses:
+        "200":
+          description: OK
+          headers:
+            Content-Disposition:
+              type: string
+          schema:
+            type: file
+      summary: 下载证书和描述文件
+      tags:
+      - Apple-WebAPI
+  /web/apple/listAppCertificates/{appId}:
+    get:
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_AppleWebListAppCertificatesRsp'
+      summary: 获取应用证书和描述文件列表
+      tags:
+      - Apple-WebAPI
+  /web/apple/listBundleIDs/{appId}:
+    get:
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_AppleWebListBundleIDsRsp'
+      summary: 获取 Bundle ID 列表
+      tags:
+      - Apple-WebAPI
+  /web/apple/listCertificates:
+    get:
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_AppleWebListCertificatesRsp'
+      summary: 获取苹果证书信息列表
+      tags:
+      - Apple-WebAPI
+  /web/apple/listDevices/{appId}:
+    get:
+      consumes:
+      - application/x-www-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 页数
+        example: 1
+        in: query
+        minimum: 1
+        name: pageNumber
+        type: integer
+      - description: 一页任务条数
+        example: 10
+        in: query
+        maximum: 100
+        minimum: 1
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_AppleWebListDevicesRsp'
+      summary: 设备列表
+      tags:
+      - Apple-WebAPI
+  /web/apple/listSigningJobs/{appId}:
+    get:
+      consumes:
+      - application/x-www-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 页数
+        example: 1
+        in: query
+        minimum: 1
+        name: pageNumber
+        type: integer
+      - description: 一页任务条数
+        example: 10
+        in: query
+        maximum: 100
+        minimum: 1
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_AppleWebListSigningJobsRsp'
+      summary: 获取签名任务信息列表
+      tags:
+      - Apple-WebAPI
+  /web/apple/modifyBundleID/{appId}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.AppleWebModifyBundleIDReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 修改 Bundle ID 能力项
+      tags:
+      - Apple-WebAPI
+  /web/apple/registerDevice/{appId}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.AppleWebRegisterDeviceReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 注册测试设备
+      tags:
+      - Apple-WebAPI
+  /web/apple/removeCertificate/{appId}:
+    delete:
+      consumes:
+      - application/x-www-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 证书 ID
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        in: query
+        name: certificateId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 删除苹果证书
+      tags:
+      - Apple-WebAPI
+  /web/apple/removeProfile/{appId}:
+    delete:
+      consumes:
+      - application/x-www-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 描述文件 ID。
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        in: query
+        name: profileId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 删除描述文件
+      tags:
+      - Apple-WebAPI
+  /web/apple/removePushCertificate/{appId}:
+    delete:
+      consumes:
+      - application/x-www-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 证书 ID。
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        in: query
+        name: certificateId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 删除 Push 证书
+      tags:
+      - Apple-WebAPI
+  /web/apple/submitSigningJob/{appId}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.AppleWebSubmitSigningJobReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 提交签名任务
+      tags:
+      - Apple-WebAPI
+  /web/event/list:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用名或应用 ID
+        example: MyApp
+        in: query
+        maxLength: 64
+        name: app
+        type: string
+      - description: 事件开始时间
+        example: "2020-01-01 00:00:00"
+        in: query
+        name: beginTime
+        type: string
+      - description: 事件结束时间
+        example: "2020-01-01 00:00:00"
+        in: query
+        name: endTime
+        type: string
+      - description: 页数
+        example: 10
+        in: query
+        name: pageNumber
+        type: integer
+      - description: 每页条数
+        example: 1
+        in: query
+        maximum: 100
+        name: pageSize
+        type: integer
+      - description: 应用平台
+        example: 1
+        in: query
+        maximum: 3
+        minimum: 0
+        name: platform
+        type: integer
+      - description: 事件来源
+        example: 1
+        in: query
+        maximum: 2
+        minimum: 0
+        name: source
+        type: integer
+      - description: 事件类型
+        example: 1
+        in: query
+        maximum: 28
+        minimum: 0
+        name: type
+        type: integer
+      - description: 操作人
+        example: 张三
+        in: query
+        maxLength: 32
+        name: user
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_EventWebListRsp'
+      summary: 获取应用事件列表
+      tags:
+      - Event-WebAPI
+  /web/file/download:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        in: query
+        name: fileId
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          headers:
+            Content-Disposition:
+              type: string
+          schema:
+            type: file
+      summary: 下载
+      tags:
+      - File-WebAPI
+  /web/file/initial:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.FileWebInitialReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_FileWebInitialRsp'
+      summary: 初始化上传
+      tags:
+      - File-WebAPI
+  /web/file/mergeParts:
+    get:
+      consumes:
+      - application/x-www-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        in: query
+        name: fileId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 合并分片
+      tags:
+      - File-WebAPI
+  /web/file/uploadPart:
+    post:
+      consumes:
+      - application/form-data
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 文件分片
+        in: formData
+        name: chunk
+        required: true
+        type: file
+      - description: 文件 ID
+        example: 2026014ef83c03e2ce4f1f94c11168d1acd087
+        in: formData
+        name: fileId
+        required: true
+        type: string
+      - description: 文件分片序号
+        example: 1
+        in: formData
+        name: chunkNumber
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 上传分片
+      tags:
+      - File-WebAPI
+  /web/open/apply/{appId}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.OpenWebApplyReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_OpenWebApplyRsp'
+      summary: 申请
+      tags:
+      - Open-WebAPI
+  /web/open/getInformation/{appId}:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 凭证 ID
+        example: test_account
+        in: query
+        maxLength: 64
+        name: accountId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_OpenWebGetInformationRsp'
+      summary: 获取请求凭证信息
+      tags:
+      - Open-WebAPI
+  /web/open/list/{appId}:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 页数
+        example: 1
+        in: query
+        name: pageNumber
+        type: integer
+      - description: 每页条数
+        example: 10
+        in: query
+        maximum: 100
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_OpenWebListRsp'
+      summary: 获取请求凭证信息列表
+      tags:
+      - Open-WebAPI
+  /web/open/remove/{appId}:
+    delete:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 凭证 ID
+        example: test_account
+        in: query
+        maxLength: 64
+        name: accountId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 删除
+      tags:
+      - Open-WebAPI
+  /web/open/renewal/{appId}:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 凭证 ID
+        example: test_account
+        in: query
+        maxLength: 64
+        name: accountId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 续期
+      tags:
+      - Open-WebAPI
+  /web/open/reset/{appId}:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 凭证 ID
+        example: test_account
+        in: query
+        maxLength: 64
+        name: accountId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_OpenWebResetRsp'
+      summary: 重置密钥
+      tags:
+      - Open-WebAPI
+  /web/open/update/{appId}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.OpenWebUpdateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 修改
+      tags:
+      - Open-WebAPI
+  /web/todo/count:
+    get:
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_TodoWebCountRsp'
+      summary: 获取用户待办、已办数量
+      tags:
+      - Todo-WebAPI
+  /web/todo/create:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.TodoWebCreateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 创建
+      tags:
+      - Todo-WebAPI
+  /web/todo/deal:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.TodoWebDealReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 审批
+      tags:
+      - Todo-WebAPI
+  /web/todo/getDetail:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 待办 ID
+        example: 1
+        in: query
+        name: id
+        type: integer
+      produces:
+      - application/x-www-form-urlencoded
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_TodoWebGetDetailRsp'
+      summary: 获取待办详情
+      tags:
+      - Todo-WebAPI
+  /web/todo/list:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 页数
+        example: 1
+        in: query
+        name: pageNumber
+        type: integer
+      - description: 每页条数
+        example: 10
+        in: query
+        maximum: 100
+        name: pageSize
+        type: integer
+      produces:
+      - application/x-www-form-urlencoded
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_TodoWebListRsp'
+      summary: 获取需要处理的待办
+      tags:
+      - Todo-WebAPI
+  /web/todo/listDealt:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: query
+        name: appId
+        type: string
+      - description: 页数
+        example: 1
+        in: query
+        name: pageNumber
+        type: integer
+      - description: 每页条数
+        example: 10
+        in: query
+        maximum: 100
+        name: pageSize
+        type: integer
+      - collectionFormat: csv
+        description: 待办状态
+        example:
+        - 2
+        - 3
+        in: query
+        items:
+          type: integer
+        name: status
+        type: array
+        uniqueItems: true
+      - collectionFormat: csv
+        description: 待办类型
+        example:
+        - 2
+        - 3
+        in: query
+        items:
+          type: integer
+        name: types
+        type: array
+        uniqueItems: true
+      produces:
+      - application/x-www-form-urlencoded
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_TodoWebListDealtRsp'
+      summary: 获取已处理的待办列表
+      tags:
+      - Todo-WebAPI
+  /web/user/getInformation:
+    get:
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_UserWebGetInformationRsp'
+      summary: 获取用户信息
+      tags:
+      - User-WebAPI
+  /web/user/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.UserWebLoginReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 登录
+      tags:
+      - User-WebAPI
+  /web/user/logout:
+    delete:
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          headers:
+            Set-Cookie:
+              description: 会话
+              type: string
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 登出
+      tags:
+      - User-WebAPI
+  /web/user/register:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 用户头像
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: 中文名
+        example: 张三
+        in: formData
+        name: nameZh
+        required: true
+        type: string
+      - description: 英文名
+        example: zhangsan
+        in: formData
+        name: NameEn
+        required: true
+        type: string
+      - description: 密码
+        example: "123456"
+        in: formData
+        name: password
+        required: true
+        type: string
+      - description: 二次确认密码
+        example: "123456"
+        in: formData
+        name: passwordConfirmation
+        required: true
+        type: string
+      - description: 部门
+        example: /技术部/研发
+        in: formData
+        name: department
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 注册
+      tags:
+      - User-WebAPI
+  /web/user/search:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 用户英文名
+        example: zhangsan
+        in: query
+        maxLength: 32
+        minLength: 1
+        name: name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_UserWebSearchRsp'
+      summary: 搜索用户
+      tags:
+      - User-WebAPI
+  /web/user/update:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.UserWebUpdateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 更新个人信息
+      tags:
+      - User-WebAPI
+  /web/windows/addEVCertificate:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.WindowsWebAddEVCertificateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 添加 EV 证书
+      tags:
+      - Windows-WebAPI
+  /web/windows/deleteCertificate/{appId}:
+    delete:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 证书 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: query
+        name: certificateId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 删除证书
+      tags:
+      - Windows-WebAPI
+  /web/windows/downloadCertificate/{appId}:
+    get:
+      consumes:
+      - application/x-www-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 证书 ID
+        example: 93aa1dc7f4ab32bdc5a3b0b78ecc35b5
+        in: query
+        name: certificateId
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+      summary: 下载证书
+      tags:
+      - Windows-WebAPI
+  /web/windows/downloadCompanyCertificate:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 证书 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: query
+        name: certificateId
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+      summary: 下载公司证书
+      tags:
+      - Windows-WebAPI
+  /web/windows/getCertificatePassword/{appId}:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 证书 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: query
+        name: certificateId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_WindowsWebGetCertificatePasswordRsp'
+      summary: 查看证书密码
+      tags:
+      - Windows-WebAPI
+  /web/windows/grantAppEVCertificate:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.WindowsWebGrantAppEVCertificateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 授权应用使用个人 EV 证书
+      tags:
+      - Windows-WebAPI
+  /web/windows/listCertificates/{appId}:
+    get:
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_WindowsWebListCertificatesRsp'
+      summary: 证书列表
+      tags:
+      - Windows-WebAPI
+  /web/windows/listCompanyCertificates:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_WindowsWebListCompanyCertificatesRsp'
+      summary: 获取后台管理中的 Windows 证书
+      tags:
+      - Windows-WebAPI
+  /web/windows/listGrantCertificateApps:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: query
+        name: appId
+        type: string
+      - description: 证书 ID
+        example: e4fd2280d075253896580e0c06173003
+        in: query
+        name: certificateId
+        type: string
+      - description: 页数
+        example: 1
+        in: query
+        name: pageNumber
+        type: integer
+      - description: 每页条数
+        example: 10
+        in: query
+        maximum: 100
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_WindowsWebListGrantCertificateAppsRsp'
+      summary: 获取授权 Windows EV 证书应用列表
+      tags:
+      - Windows-WebAPI
+  /web/windows/listSigningJobs/{appId}:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 关键字
+        in: query
+        name: keyWord
+        type: string
+      - description: 页数
+        example: 1
+        in: query
+        minimum: 1
+        name: pageNumber
+        type: integer
+      - description: 一页任务条数
+        example: 10
+        in: query
+        maximum: 100
+        minimum: 1
+        name: pageSize
+        type: integer
+      - description: 任务类型
+        enum:
+        - 1
+        - 2
+        - 3
+        - 4
+        example: 1
+        in: query
+        name: signingType
+        type: integer
+      - description: 任务状态
+        enum:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+        example: 1
+        in: query
+        name: status
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_WindowsWebListSigningJobsRsp'
+      summary: 获取签名任务列表
+      tags:
+      - Windows-WebAPI
+  /web/windows/listWHQLJobs/{appId}:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 页数
+        example: 1
+        in: path
+        minimum: 1
+        name: pageNumber
+        type: integer
+      - description: 一页任务条数
+        example: 10
+        in: path
+        maximum: 100
+        minimum: 1
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_WindowsWebListWHQLJobsRsp'
+      summary: 获取 WHQL 任务列表
+      tags:
+      - Windows-WebAPI
+  /web/windows/removeCompanyCertificate:
+    delete:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 证书 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: path
+        name: certificateId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 删除公司证书
+      tags:
+      - Windows-WebAPI
+  /web/windows/submitSigningJob/{appId}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.WindowsWebSubmitSigningJobReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 提交签名任务
+      tags:
+      - Windows-WebAPI
+  /web/windows/submitWHQLJob/{appId}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.WindowsWebSubmitWHQLJobReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 提交 WHQL 任务
+      tags:
+      - Windows-WebAPI
+  /web/windows/uploadCertificate/{appId}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: path
+        name: appId
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.WindowsWebUploadCertificateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 上传个人 OV 证书
+      tags:
+      - Windows-WebAPI
+  /web/windows/uploadCompanyCertificate:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.WindowsWebUploadCompanyCertificateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 上传公司 OV 证书
+      tags:
+      - Windows-WebAPI
+schemes:
+- http
+swagger: "2.0"
