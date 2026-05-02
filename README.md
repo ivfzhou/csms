@@ -15,7 +15,7 @@
 |       工具       |        版本号        |
 |:--------------:|:-----------------:|
 | Development OS |     Debian13      | 
-|     Golang     |      1.25.7       | 
+|     Golang     |       1.26        | 
 |      Java      | Temurin-25.0.2+10 | 
 |      Ruby      |       4.0.1       | 
 |     Python     |      3.13.5       | 
