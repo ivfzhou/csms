@@ -1,0 +1,13 @@
+@charset "UTF-8";
+
+/* 引入 ant 的重置样式 */
+@import "ant-design-vue/dist/reset.css";
+
+/* 通用样式 */
+@import "./styles/base.css";
+
+/* 手机端样式：屏幕宽度 <= 768px */
+@import "./styles/mobile.css" screen and (max-width: 768px);
+
+/* PC 端样式：屏幕宽度 > 768px */
+@import "./styles/pc.css" screen and (min-width: 769px);
