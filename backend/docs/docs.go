@@ -4067,6 +4067,35 @@ const docTemplate = `{
                 }
             }
         },
+        "/web/notice/last": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Notice-WebAPI"
+                ],
+                "summary": "获取通知",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "Mon, 02 Jan 2006 15:04:05 GMT",
+                        "description": "请求日期",
+                        "name": "Date",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/util.Response-protocol_NoticeWebLastRsp"
+                        }
+                    }
+                }
+            }
+        },
         "/web/open/apply/{appId}": {
             "post": {
                 "consumes": [
@@ -7531,6 +7560,15 @@ const docTemplate = `{
                 }
             }
         },
+        "protocol.NoticeWebLastRsp": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "description": "通知内容。",
+                    "type": "string"
+                }
+            }
+        },
         "protocol.OpenWebApplyReq": {
             "type": "object",
             "required": [
@@ -9655,6 +9693,33 @@ const docTemplate = `{
                     "allOf": [
                         {
                             "$ref": "#/definitions/protocol.FileWebInitialRsp"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "提示语",
+                    "type": "string",
+                    "example": "失败时的提示语"
+                }
+            }
+        },
+        "util.Response-protocol_NoticeWebLastRsp": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应码，大于 0 表示错误",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/errs.Code"
+                        }
+                    ],
+                    "example": 0
+                },
+                "data": {
+                    "description": "响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/protocol.NoticeWebLastRsp"
                         }
                     ]
                 },

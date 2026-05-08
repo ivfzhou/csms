@@ -1158,6 +1158,12 @@ definitions:
         example: 2026014ef83c03e2ce4f1f94c11168d1acd087
         type: string
     type: object
+  protocol.NoticeWebLastRsp:
+    properties:
+      message:
+        description: 通知内容。
+        type: string
+    type: object
   protocol.OpenWebApplyReq:
     properties:
       accountId:
@@ -2683,6 +2689,22 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/protocol.FileWebInitialRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_NoticeWebLastRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.NoticeWebLastRsp'
         description: 响应数据
       message:
         description: 提示语
@@ -5790,6 +5812,25 @@ paths:
       summary: 上传分片
       tags:
       - File-WebAPI
+  /web/notice/last:
+    get:
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_NoticeWebLastRsp'
+      summary: 获取通知
+      tags:
+      - Notice-WebAPI
   /web/open/apply/{appId}:
     post:
       consumes:

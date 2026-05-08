@@ -41,6 +41,7 @@ func initWebRoute(r *gin.RouterGroup) {
 	webAndroid(r)
 	webWindows(r)
 	webApple(r)
+	webNotice(r)
 }
 
 func webUser(r *gin.RouterGroup) {
@@ -269,6 +270,12 @@ func webApple(r *gin.RouterGroup) {
 		api.AppleWebRemovePushCertificate)
 	addRouteWithPermissions(r, http.MethodGet, "/downloadCertificate/:"+consts.HTTPPathAppID, permissionAppRead,
 		filter.PermissionWebAuthenticateFilter, api.AppleWebDownloadCertificate)
+}
+
+func webNotice(r *gin.RouterGroup) {
+	r = r.Group("/notice")
+
+	addRoute(r, http.MethodGet, "/last", api.NoticeWebLast)
 }
 
 func addRoute(r *gin.RouterGroup, method string, path string, handlers ...gin.HandlerFunc) {
