@@ -30,7 +30,10 @@ func DateCheckFilter(c *gin.Context) {
 
 	// 获取并校验请求时间。
 	dateString := c.Request.Header.Get("Date")
-	date, err := time.ParseInLocation("Mon, 02 Jan 2006 15:04:05 GMT", dateString, time.Local)
+	if len(dateString) <= 0 {
+		dateString = c.Request.Header.Get("X-Date")
+	}
+	date, err := time.ParseInLocation("Mon, 02 Jan 2006 15:04:05 GMT", dateString, time.UTC)
 	if err != nil {
 		c.Abort()
 		log.Warn(ctx, "failed to parse Date", err, dateString)

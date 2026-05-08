@@ -75,6 +75,7 @@ function xhrGet(reqUrl, query, headers) {
 
         // 处理 header
         if (headers) Object.keys(headers).forEach((key) => xhr.setRequestHeader(key, headers[key]))
+        xhr.setRequestHeader('X-Date', new Date().toUTCString())
 
         // 处理回调
         xhr.addEventListener('load', () =>
@@ -110,6 +111,7 @@ function xhrGetJson(reqUrl, query, headers) {
 
         // 处理 header
         if (headers) Object.keys(headers).forEach((key) => xhr.setRequestHeader(key, headers[key]))
+        xhr.setRequestHeader('X-Date', new Date().toUTCString())
 
         // 处理回调
         xhr.addEventListener('load', () => {
@@ -161,6 +163,7 @@ function xhrJsonPostJson(reqUrl, reqBody, query, headers) {
 
         // 处理 header
         if (headers) Object.keys(headers).forEach((key) => xhr.setRequestHeader(key, headers[key]))
+        xhr.setRequestHeader('X-Date', new Date().toUTCString())
 
         // 处理回调
         xhr.addEventListener('load', () => {
@@ -207,6 +210,7 @@ function xhrFormPostJson(reqUrl, reqBody, query, headers) {
 
         // 处理 header
         if (headers) Object.keys(headers).forEach((key) => xhr.setRequestHeader(key, headers[key]))
+        xhr.setRequestHeader('X-Date', new Date().toUTCString())
 
         // 处理回调
         xhr.addEventListener('load', () => {
@@ -245,7 +249,7 @@ function fetchGet(reqUrl, query, headers) {
     return new Promise((resolve, reject) => {
         fetch(`${reqUrl}`, {
             method: 'GET',
-            headers: headers
+            headers: mergeDateHeader(headers)
         })
             .then(async (res) =>
                 resolve({
@@ -274,7 +278,7 @@ function fetchGetJson(reqUrl, query, headers) {
     return new Promise((resolve, reject) => {
         fetch(`${reqUrl}`, {
             method: 'GET',
-            headers: headers
+            headers: mergeDateHeader(headers)
         })
             .then(async (res) =>
                 resolve({
@@ -316,7 +320,7 @@ function fetchJsonPostJson(reqUrl, reqBody, query, headers) {
 
         fetch(reqUrl, {
             method: 'POST',
-            headers: headers,
+            headers: mergeDateHeader(headers),
             body: reqBody
         })
             .then(async (res) =>
@@ -351,7 +355,7 @@ function fetchFormPostJson(reqUrl, reqBody, query, headers) {
     return new Promise((resolve, reject) => {
         fetch(`${reqUrl}`, {
             method: 'POST',
-            headers: headers,
+            headers: mergeDateHeader(headers),
             body: formData
         })
             .then(async (res) =>
@@ -413,4 +417,15 @@ function headersToObject(headers) {
     for (let [key, value] of headers.entries()) obj[key] = value
 
     return obj
+}
+
+/*
+ * mergeDateHeader 合并 Date 请求头
+ * @param headers object | undefined
+ * @returns object
+ */
+function mergeDateHeader(headers) {
+    if (!headers) headers = {}
+    headers['X-Date'] = new Date().toUTCString()
+    return headers
 }
