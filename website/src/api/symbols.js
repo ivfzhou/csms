@@ -10,9 +10,12 @@
  * See the Mulan PSL v2 for more details.
  */
 
-import {httpGetJson} from "@/api/http.js"
+const isDark = Symbol('isDark')
+const toggleTheme = Symbol('toggleTheme')
+const toggleLocale = Symbol('toggleLocale')
 
-// 获取通知。
-export async function getLastNotification() {
-    return await httpGetJson('/backend/web/notice/last')
+export default {
+    isDark,
+    toggleTheme,
+    toggleLocale
 }

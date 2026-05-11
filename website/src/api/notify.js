@@ -10,16 +10,9 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-import {computed, ref} from 'vue'
-import {defineStore} from 'pinia'
+import {httpGetJson} from "@/api/http.js"
 
-export const useCounterStore = defineStore('counter', () => {
-    const count = ref(0)
-    const doubleCount = computed(() => count.value * 2)
-
-    function increment() {
-        count.value++
-    }
-
-    return {count, doubleCount, increment}
-})
+// 获取通知。
+export async function getLastNotification() {
+    return await httpGetJson('/backend/web/notice/last')
+}

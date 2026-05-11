@@ -1,11 +1,24 @@
+<!--
+Copyright (c) 2023 ivfzhou
+website is licensed under Mulan PSL v2.
+You can use this software according to the terms and conditions of the Mulan PSL v2.
+You may obtain a copy of Mulan PSL v2 at:
+         http://license.coscl.org.cn/MulanPSL2
+THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+See the Mulan PSL v2 for more details.
+-->
+
 <script setup>
-import {ref} from 'vue'
-import {ConfigProvider, Layout, LayoutContent, LayoutHeader, StyleProvider} from "ant-design-vue";
+import {computed, provide, ref} from 'vue'
+import {ConfigProvider, StyleProvider, theme} from "ant-design-vue"
 import zhCN from 'ant-design-vue/es/locale/zh_CN'
 import enUS from 'ant-design-vue/es/locale/en_US'
 import dayjs from 'dayjs'
-import Notification from '@/views/Notification.vue'
-import Title from '@/views/Title.vue'
+import Notify from '@/views/header/Notify.vue'
+import Title from '@/views/header/Title.vue'
+import symbols from '@/api/symbols.js'
 
 const locale = ref(zhCN)
 const toggleLocale = () => {
@@ -13,22 +26,55 @@ const toggleLocale = () => {
   dayjs.locale(locale.value)
 }
 
+const isDark = ref(false)
+const themeConfig = computed(() => ({
+  algorithm: isDark.value ? theme.darkAlgorithm : theme.defaultAlgorithm,
+  components: {
+    Layout: {
+      colorBgHeader: isDark.value ? '#1f1f1f' : '#ffffff'
+    }
+  }
+}))
+const toggleTheme = () => isDark.value = !isDark.value
+
+provide(symbols.isDark, isDark)
+provide(symbols.toggleTheme, toggleTheme)
+provide(symbols.toggleLocale, toggleLocale)
+
 </script>
 
 <template>
-  <div class="csms-root">
-    <StyleProvider hash-priority="low">
-      <ConfigProvider :locale="locale">
-        <Layout>
-          <LayoutHeader class="csms-header">
-            <Notification/>
-            <Title/>
-          </LayoutHeader>
-          <LayoutContent></LayoutContent>
-        </Layout>
-      </ConfigProvider>
-    </StyleProvider>
-  </div>
+  <StyleProvider hash-priority="low">
+    <ConfigProvider :locale="locale" :theme="themeConfig">
+      <div class="csms-header">
+        <div class="csms-header-inner">
+          <Notify/>
+          <Title/>
+        </div>
+      </div>
+      <div class="csms-body"></div>
+    </ConfigProvider>
+  </StyleProvider>
 </template>
 
-<style scoped></style>
+<style scoped>
+.csms-header {
+  background-color: #fff;
+}
+
+.csms-header-inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: var(--header-height);
+  max-width: var(--content-width);
+  margin: 0 auto;
+}
+
+.csms-body {
+  max-width: var(--content-width);
+  margin: 0 auto;
+}
+</style>
