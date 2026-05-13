@@ -33,9 +33,7 @@ onBeforeMount(async () => {
 <template>
   <div v-if="show" class="csms-header-notify">
     <span class="csms-header-notify-content" v-html="message"></span>
-    <span class="csms-header-notify-close" @click="closeMessage">
-      <CloseOutlined/>
-    </span>
+    <CloseOutlined class="csms-header-notify-close" @click="closeMessage"/>
   </div>
 </template>
 
@@ -61,7 +59,7 @@ onBeforeMount(async () => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  margin-left: 2px;
+  margin-left: 10px;
   margin-right: 2px;
 }
 
@@ -69,5 +67,13 @@ onBeforeMount(async () => {
   cursor: pointer;
   right: 12px;
   margin-right: 2px;
+  transition-property: transform;
+  transition-duration: .2s;
+  transition-timing-function: cubic-bezier(0, 1.29, 1, .99);
+}
+
+.csms-header-notify-close:hover {
+  color: blue;
+  transform: scale(93%, 93%);
 }
 </style>
