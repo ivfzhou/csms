@@ -138,11 +138,11 @@ JS/CSS 实现过渡
   margin-right: 2px;
   transition-property: transform;
   transition-duration: .2s;
-  transition-timing-function: cubic-bezier(0, 1.29, 1, .99);
+  transition-timing-function: cubic-bezier(0, 1, 1, 1);
 }
 
 .csms-header-notify-close:hover {
   color: blue;
-  transform: scale(93%, 93%);
+  transform: scale(80%, 80%);
 }
 </style>
