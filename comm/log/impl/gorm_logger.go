@@ -16,6 +16,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -28,6 +29,11 @@ import (
 	"gitee.com/ivfzhou/csms/comm/log"
 	"gitee.com/ivfzhou/csms/comm/log/internal"
 	"gitee.com/ivfzhou/csms/comm/util"
+)
+
+var (
+	noMatchCallerRegexp = regexp.MustCompile(`(?:(?:^comm(@v.*)/model/t_.*$)|(?:^comm(@v.*)/query/t_.*$)|(?:^comm(@v.*)/query/gen.go$)|(?:^comm/model/t_.*$)|(?:^comm/query/t_.*$)|(?:^comm/query/gen.go$))`)
+	findVersionRegexp   = regexp.MustCompile(`^.*?(@v.*?)/.*$`)
 )
 
 type gormLoggerImpl struct {
@@ -94,19 +100,25 @@ func (l *gormLoggerImpl) Trace(ctx context.Context, begin time.Time, fc func() (
 	sql string, rowsAffected int64), err error) {
 
 	elapsed := time.Since(begin)
+
+	// 寻找 sql 触发代码位置。
 	caller := ""
 	callers := util.GetStackCallers()
 	for len(callers) > 0 {
 		caller = callers[0]
 		callers = callers[1:]
-		if !strings.HasPrefix(caller, "comm/model/t_") && !strings.HasPrefix(caller, "comm/query/t_") &&
-			caller != "comm/query/gen.go" {
+		if !noMatchCallerRegexp.MatchString(caller) {
+			hits := findVersionRegexp.FindStringSubmatch(caller)
+			if len(hits) >= 2 {
+				caller = strings.Replace(caller, hits[1], "", 1)
+			}
 			break
 		}
 	}
 	if len(callers) <= 0 {
 		caller = utils.FileWithLineNum()
 	}
+
 	var builder *internal.Builder
 	switch {
 	case err != nil && internal.GetLevel() <= log.LevelError && !errors.Is(err, gorm.ErrRecordNotFound):
