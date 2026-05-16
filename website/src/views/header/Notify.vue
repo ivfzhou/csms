@@ -14,17 +14,19 @@ See the Mulan PSL v2 for more details.
 import {CloseOutlined} from '@ant-design/icons-vue'
 import {onBeforeMount, ref} from 'vue'
 import {getLastNotification} from "@/api/notify.js"
+import {message} from 'ant-design-vue'
 
-const message = ref('')
+const content = ref('')
 const isShow = ref(false)
-
-const closeMessage = () => isShow.value = false
+const close = () => isShow.value = false
+const [messageApi, ContentHolder] = message.useMessage();
 
 onBeforeMount(async () => {
   const rsp = await getLastNotification()
-  if (rsp.status !== 200 || rsp.rspBody.data.code) {
+  if (rsp.status !== 200 || rsp.rspBody.code) {
+    messageApi.error(`获取通知失败：${rsp.rspBody.code} ${rsp.rspBody.message}`)
   } else {
-    message.value = rsp.rspBody.data.message
+    content.value = rsp.rspBody.data.message
     if (rsp.rspBody.data.message) {
       isShow.value = true
     }
@@ -34,8 +36,9 @@ onBeforeMount(async () => {
 
 <template>
   <div class="csms-header-notify" :class="{ 'notify-hidden': !isShow }">
-    <span class="csms-header-notify-content" v-html="message"></span>
-    <CloseOutlined class="csms-header-notify-close" @click="closeMessage"/>
+    <ContentHolder/>
+    <span class="csms-header-notify-content" v-html="content"></span>
+    <CloseOutlined class="csms-header-notify-close" @click="close"/>
   </div>
 </template>
 
