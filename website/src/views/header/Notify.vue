@@ -18,38 +18,14 @@ import {getLastNotification} from "@/api/notify.js"
 const message = ref('')
 const isShow = ref(false)
 
-// JS/CSS 实现过渡
-// const isNotifyHidden = ref(false)
-
-const closeMessage = () => {
-  // JS/CSS 实现过渡：isNotifyHidden.value = true
-  isShow.value = false
-}
-
-// JS/CSS 实现过渡
-// const notifyClosed = (e) => {
-//   if (e.currentTarget.classList.contains('notify-hidden')) {
-//     isShow.value = false
-//     isNotifyHidden.value = false
-//   }
-// }
+const closeMessage = () => isShow.value = false
 
 onBeforeMount(async () => {
   const rsp = await getLastNotification()
   if (rsp.status !== 200 || rsp.rspBody.data.code) {
-
   } else {
     message.value = rsp.rspBody.data.message
     if (rsp.rspBody.data.message) {
-      // JS/CSS 实现过渡
-      // isNotifyHidden.value = true
-      // isShow.value = true
-      // requestAnimationFrame(() => {
-      //   requestAnimationFrame(() => {
-      //     isNotifyHidden.value = false
-      //   })
-      // })
-
       isShow.value = true
     }
   }
@@ -57,69 +33,33 @@ onBeforeMount(async () => {
 </script>
 
 <template>
-  <Transition name="notify">
-    <!-- JS/CSS 实现过渡：<div v-if="isShow" class="csms-header-notify" :class="{ 'notify-hidden': isNotifyHidden}" @transitionend="notifyClosed"> -->
-    <div v-if="isShow" class="csms-header-notify">
-      <span class="csms-header-notify-content" v-html="message"></span>
-      <CloseOutlined class="csms-header-notify-close" @click="closeMessage"/>
-    </div>
-  </Transition>
+  <div class="csms-header-notify" :class="{ 'notify-hidden': !isShow }">
+    <span class="csms-header-notify-content" v-html="message"></span>
+    <CloseOutlined class="csms-header-notify-close" @click="closeMessage"/>
+  </div>
 </template>
 
 <style scoped>
-.notify-leave-active {
-  transition-property: opacity, transform;
-  transition-duration: .5s;
-  transition-timing-function: ease;
-  opacity: 1;
-}
-
-.notify-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-
-.notify-enter-active {
-  transition-property: opacity, transform;
-  transition-duration: .5s;
-  transition-timing-function: ease;
-  opacity: 0;
-  transform: translateY(-10px);
-}
-
-.notify-enter-to {
-  opacity: 1;
-  transform: translateY(0);
-}
-
 .csms-header-notify {
   background-color: LemonChiffon;
-  height: var(--notify-height);
-  width: 100%;
   display: flex;
+  width: 100%;
+  max-height: var(--notify-height);
+  opacity: 1;
+  overflow: hidden;
+  transition: max-height .5s ease, opacity .5s ease;
   align-items: center;
   justify-content: center;
   border-radius: 3px;
   box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.15);
-  border-width: 1px;
-  border-color: #f0e68c;
-  border-style: solid;
-
-  /*
-  JS/CSS 实现过渡
-  opacity: 1;
-  transform: translateY(0);
-  transition: opacity .4s ease, transform .4s ease;
-  */
+  border: 1px solid #f0e68c;
+  box-sizing: border-box;
 }
 
-/*
-JS/CSS 实现过渡
 .csms-header-notify.notify-hidden {
+  max-height: 0;
   opacity: 0;
-  transform: translateY(-10px);
 }
-*/
 
 .csms-header-notify-content {
   flex-grow: 1;
@@ -134,11 +74,8 @@ JS/CSS 实现过渡
 
 .csms-header-notify-close {
   cursor: pointer;
-  right: 12px;
   margin-right: 2px;
-  transition-property: transform;
-  transition-duration: .2s;
-  transition-timing-function: cubic-bezier(0, 1, 1, 1);
+  transition: transform .2s cubic-bezier(0, 1, 1, 1);
 }
 
 .csms-header-notify-close:hover {
