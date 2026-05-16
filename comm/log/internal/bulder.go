@@ -16,6 +16,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -43,7 +44,10 @@ const (
 	numberOfSkipCaller = 3
 )
 
-var logBuilderPool = sync.Pool{New: func() any { return &Builder{} }}
+var (
+	logBuilderPool    = sync.Pool{New: func() any { return &Builder{} }}
+	findVersionRegexp = regexp.MustCompile(`^.*?(@v.*?)/.*$`)
+)
 
 // Builder 日志构建器。
 type Builder struct {
@@ -86,6 +90,13 @@ func CreateBuilder(ctx context.Context, args ...any) *Builder {
 		index := strings.Index(file, consts.SystemName)
 		if index >= 0 {
 			file = strings.TrimLeft(file[index+len(consts.SystemName):], "/")
+
+			// 再去除其中的版本号。
+			hits := findVersionRegexp.FindStringSubmatch(file)
+			if len(hits) >= 2 {
+				file = strings.Replace(file, hits[1], "", 1)
+			}
+
 			builder.caller = fmt.Sprintf("%s:%d", file, line)
 		}
 	}
@@ -118,6 +129,13 @@ func CreateBuilderf(ctx context.Context, format string, args ...any) *Builder {
 		index := strings.Index(file, consts.SystemName)
 		if index >= 0 {
 			file = strings.TrimLeft(file[index+len(consts.SystemName):], "/")
+
+			// 再去除其中的版本号。
+			hits := findVersionRegexp.FindStringSubmatch(file)
+			if len(hits) >= 2 {
+				file = strings.Replace(file, hits[1], "", 1)
+			}
+
 			builder.caller = fmt.Sprintf("%s:%d", file, line)
 		}
 	}
