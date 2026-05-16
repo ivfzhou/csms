@@ -250,15 +250,13 @@ function fetchGet(reqUrl, query, headers) {
         fetch(`${reqUrl}`, {
             method: 'GET',
             headers: mergeDateHeader(headers)
-        })
-            .then(async (res) =>
-                resolve({
-                    status: res.status,
-                    headers: headersToObject(res.headers),
-                    rspBody: await res.arrayBuffer()
-                })
-            )
-            .catch((err) => reject(`fetchGet failure: ${err}`))
+        }).then(async (res) =>
+            resolve({
+                status: res.status,
+                headers: headersToObject(res.headers),
+                rspBody: await res.arrayBuffer()
+            })
+        ).catch((err) => reject(`fetchGet failure: ${err}`))
     })
 }
 
@@ -279,15 +277,13 @@ function fetchGetJson(reqUrl, query, headers) {
         fetch(`${reqUrl}`, {
             method: 'GET',
             headers: mergeDateHeader(headers)
-        })
-            .then(async (res) =>
-                resolve({
-                    status: res.status,
-                    headers: headersToObject(res.headers),
-                    rspBody: await res.json()
-                })
-            )
-            .catch((err) => reject(`fetchGetJson failure: ${err}`))
+        }).then(async (res) =>
+            resolve({
+                status: res.status,
+                headers: headersToObject(res.headers),
+                rspBody: await res.json()
+            })
+        ).catch((err) => reject(`fetchGetJson failure: ${err}`))
     })
 }
 
@@ -322,15 +318,13 @@ function fetchJsonPostJson(reqUrl, reqBody, query, headers) {
             method: 'POST',
             headers: mergeDateHeader(headers),
             body: reqBody
-        })
-            .then(async (res) =>
-                resolve({
-                    status: res.status,
-                    headers: headersToObject(res.headers),
-                    rspBody: await res.json()
-                })
-            )
-            .catch((err) => reject(`fetchJsonPostJson failure: ${err}`))
+        }).then(async (res) =>
+            resolve({
+                status: res.status,
+                headers: headersToObject(res.headers),
+                rspBody: await res.json()
+            })
+        ).catch((err) => reject(`fetchJsonPostJson failure: ${err}`))
     })
 }
 
@@ -357,15 +351,13 @@ function fetchFormPostJson(reqUrl, reqBody, query, headers) {
             method: 'POST',
             headers: mergeDateHeader(headers),
             body: formData
-        })
-            .then(async (res) =>
-                resolve({
-                    status: res.status,
-                    headers: headersToObject(res.headers),
-                    rspBody: await res.json()
-                })
-            )
-            .catch((err) => reject(`fetchFormPostJson failure: ${err}`))
+        }).then(async (res) =>
+            resolve({
+                status: res.status,
+                headers: headersToObject(res.headers),
+                rspBody: await res.json()
+            })
+        ).catch((err) => reject(`fetchFormPostJson failure: ${err}`))
     })
 }
 
@@ -379,8 +371,7 @@ function objectToQueryString(obj) {
 
     for (let [key, value] of Object.entries(obj)) {
         key = encodeURIComponent(key)
-        if (Array.isArray(value))
-            value.forEach((value) => parts.push(`${key}=${encodeURIComponent(value)}`))
+        if (Array.isArray(value)) value.forEach((value) => parts.push(`${key}=${encodeURIComponent(value)}`))
         else parts.push(`${key}=${encodeURIComponent(value)}`)
     }
 
@@ -395,8 +386,7 @@ function objectToQueryString(obj) {
 function responseHeadersToObject(str) {
     let obj = {}
 
-    str
-        .split('\r\n')
+    str.split('\r\n')
         .filter((value) => value.length > 0)
         .forEach((value) => {
             let [key, rest] = value.split(':', 2)
