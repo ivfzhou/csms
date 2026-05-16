@@ -18,7 +18,7 @@ import enUS from 'ant-design-vue/es/locale/en_US'
 import dayjs from 'dayjs'
 import Notify from '@/views/header/Notify.vue'
 import Title from '@/views/header/Title.vue'
-import symbols from '@/api/symbols.js'
+import constants from '@/utils/constants.js'
 
 const locale = ref(zhCN)
 const toggleLocale = () => {
@@ -37,9 +37,9 @@ const themeConfig = computed(() => ({
 }))
 const toggleTheme = () => isDark.value = !isDark.value
 
-provide(symbols.isDark, isDark)
-provide(symbols.toggleTheme, toggleTheme)
-provide(symbols.toggleLocale, toggleLocale)
+provide(constants.isDark, isDark)
+provide(constants.toggleTheme, toggleTheme)
+provide(constants.toggleLocale, toggleLocale)
 
 </script>
 
@@ -52,7 +52,9 @@ provide(symbols.toggleLocale, toggleLocale)
           <Title/>
         </div>
       </div>
-      <div class="csms-body"></div>
+      <div class="csms-body">
+        <RouterView/>
+      </div>
     </ConfigProvider>
   </StyleProvider>
 </template>
