@@ -58,7 +58,7 @@ func ResponseStatus(c *gin.Context, status int) {
 	c.Status(status)
 }
 
-// ResponseStatus 响应指定的响应码。
+// ResponseStatusCode 响应指定的响应码。
 func ResponseStatusCode(c *gin.Context, status int, code errs.Code) {
 	rid := ctxs.RequestID(c.Request.Context())
 	c.Writer.Header().Set(consts.HTTPHeaderRequestID, rid)
@@ -70,7 +70,7 @@ func ResponseStatusCode(c *gin.Context, status int, code errs.Code) {
 	c.JSON(status, &Response[any]{Message: message, Code: code})
 }
 
-// ResponseStatus 响应指定的响应码。
+// ResponseStatusMsg 响应指定的响应码。
 func ResponseStatusMsg(c *gin.Context, status int, msg string) {
 	rid := ctxs.RequestID(c.Request.Context())
 	c.Writer.Header().Set(consts.HTTPHeaderRequestID, rid)
