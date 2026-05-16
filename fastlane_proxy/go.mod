@@ -13,7 +13,7 @@ module gitee.com/ivfzhou/csms/fastlane_proxy
 go 1.26
 
 require (
-	gitee.com/ivfzhou/csms/comm v0.0.0-20260502063015-c682a0bdcd5f
+	gitee.com/ivfzhou/csms/comm v0.0.0-20260516131644-58d4ecb36269
 	github.com/gin-gonic/gin v1.12.0
 	github.com/go-playground/validator/v10 v10.30.2
 	github.com/google/uuid v1.6.0

@@ -1,7 +1,7 @@
 filippo.io/edwards25519 v1.2.0 h1:crnVqOiS4jqYleHd9vaKZ+HKtHfllngJIiOpNpoJsjo=
 filippo.io/edwards25519 v1.2.0/go.mod h1:xzAOLCNug/yB62zG1bQ8uziwrIqIuxhctzJT18Q77mc=
-gitee.com/ivfzhou/csms/comm v0.0.0-20260502063458-e61198fd041b h1:VlcJOJu1C4K786d1fCe1fhcMLgbQCF9Sqs/viek4FT4=
-gitee.com/ivfzhou/csms/comm v0.0.0-20260502063458-e61198fd041b/go.mod h1:VUg1rOjo8IZ+xRH/vp2NrBOAdSO8KdFTeuFbTRLepYE=
+gitee.com/ivfzhou/csms/comm v0.0.0-20260516131644-58d4ecb36269 h1:8ylJC5wqVsENJwr+pV9sMOBmHO0fp0ux6/n5043VbWY=
+gitee.com/ivfzhou/csms/comm v0.0.0-20260516131644-58d4ecb36269/go.mod h1:VUg1rOjo8IZ+xRH/vp2NrBOAdSO8KdFTeuFbTRLepYE=
 gitee.com/ivfzhou/csms/fastlane_proxy v0.0.0-20260502063458-e61198fd041b h1:CN23tfn3xaiyk614BWjXq3IU370Tdi1/7MBEzZPgRtA=
 gitee.com/ivfzhou/csms/fastlane_proxy v0.0.0-20260502063458-e61198fd041b/go.mod h1:LSUNlMRBS4qX3797pzJeIDL5sMLXdGt39Q0jlBeca58=
 gitee.com/ivfzhou/goroutine-util v1.0.7 h1:kx/AljNRXfI3j/6AKspz3FP+3qUtp9X/m9qC8pypwpQ=

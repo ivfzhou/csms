@@ -13,7 +13,7 @@ module gitee.com/ivfzhou/csms/backend
 go 1.26
 
 require (
-	gitee.com/ivfzhou/csms/comm v0.0.0-20260502063458-e61198fd041b
+	gitee.com/ivfzhou/csms/comm v0.0.0-20260516131644-58d4ecb36269
 	gitee.com/ivfzhou/csms/fastlane_proxy v0.0.0-20260502063458-e61198fd041b
 	gitee.com/ivfzhou/modify-variables-temporarily/v3 v3.0.1
 	gitee.com/ivfzhou/tus_client/v2 v2.1.2

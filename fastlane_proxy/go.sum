@@ -1,7 +1,7 @@
 filippo.io/edwards25519 v1.2.0 h1:crnVqOiS4jqYleHd9vaKZ+HKtHfllngJIiOpNpoJsjo=
 filippo.io/edwards25519 v1.2.0/go.mod h1:xzAOLCNug/yB62zG1bQ8uziwrIqIuxhctzJT18Q77mc=
-gitee.com/ivfzhou/csms/comm v0.0.0-20260502063015-c682a0bdcd5f h1:SaMLXTADymaI51Stc3dgRLzhA2TEmXs0KmmYg/Y4w80=
-gitee.com/ivfzhou/csms/comm v0.0.0-20260502063015-c682a0bdcd5f/go.mod h1:VUg1rOjo8IZ+xRH/vp2NrBOAdSO8KdFTeuFbTRLepYE=
+gitee.com/ivfzhou/csms/comm v0.0.0-20260516131644-58d4ecb36269 h1:8ylJC5wqVsENJwr+pV9sMOBmHO0fp0ux6/n5043VbWY=
+gitee.com/ivfzhou/csms/comm v0.0.0-20260516131644-58d4ecb36269/go.mod h1:VUg1rOjo8IZ+xRH/vp2NrBOAdSO8KdFTeuFbTRLepYE=
 gitee.com/ivfzhou/goroutine-util v1.0.7 h1:kx/AljNRXfI3j/6AKspz3FP+3qUtp9X/m9qC8pypwpQ=
 gitee.com/ivfzhou/goroutine-util v1.0.7/go.mod h1:Qa6PYWSZ84helnlRX2gHDZnhEPOCuCNGFhQ/p+yiJmY=
 gitee.com/ivfzhou/tus_client/v2 v2.1.2 h1:NoeIs3rwMSYzW2p2XSnMLNFRvB3U0O3uOK4hIlwfVpk=

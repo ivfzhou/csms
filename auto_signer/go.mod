@@ -14,7 +14,7 @@ go 1.26
 
 require (
 	gitee.com/ivfzhou/csms/backend v0.0.0-20260502063852-dee61ac3be66
-	gitee.com/ivfzhou/csms/comm v0.0.0-20260502063458-e61198fd041b
+	gitee.com/ivfzhou/csms/comm v0.0.0-20260516131644-58d4ecb36269
 	gitee.com/ivfzhou/goroutine-util v1.0.7
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	gopkg.in/yaml.v3 v3.0.1
