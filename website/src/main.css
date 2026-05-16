@@ -21,6 +21,7 @@
     --font-size: 16px;
     --header-height: 64px;
     --notify-height: 30px;
+    --title-height: 30px;
 }
 
 body {

@@ -20,13 +20,11 @@ import {UserOutlined} from '@ant-design/icons-vue'
     <span class="csms-header-title-logo"></span>
     <span class="csms-header-title-name">数字证书签名及管理系统</span>
     <RouterLink class="csms-header-title-index" to="/index">工作台</RouterLink>
-    <span class="csms-header-title-avatar">
-      <Avatar>
-        <template #icon>
-          <UserOutlined/>
-        </template>
-      </Avatar>
-    </span>
+    <Avatar class="csms-header-title-avatar">
+      <template #icon>
+        <UserOutlined/>
+      </template>
+    </Avatar>
     <ul class="csms-header-title-usermenu">
       <li>后台管理</li>
       <li>个人信息</li>
@@ -38,15 +36,17 @@ import {UserOutlined} from '@ant-design/icons-vue'
 <style scoped>
 .csms-header-title {
   width: 100%;
+  height: var(--title-height);
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
+  justify-content: center;
   position: relative;
 }
 
 .csms-header-title-logo {
   width: 30px;
-  height: 30px;
+  height: var(--title-height);
   background-image: url('/favicon.ico');
   display: inline-block;
   background-size: contain;
@@ -55,31 +55,30 @@ import {UserOutlined} from '@ant-design/icons-vue'
 }
 
 .csms-header-title-name {
-  display: inline-block;
+  display: inline-flex;
   font-size: 22px;
-  line-height: 30px;
+  height: var(--title-height);
   color: #2d3845;
   flex-grow: 1;
-  margin-left: 6px;
-  padding-top: 6px;
+  margin-left: 10px;
+  align-items: flex-end;
 }
 
 .csms-header-title-index {
-  display: inline-block;
+  display: inline-flex;
   font-size: 20px;
-  line-height: 30px;
-  vertical-align: middle;
+  height: var(--title-height);
   color: #7c8b99;
-  padding-top: 6px;
+  align-items: flex-end;
+  margin-right: 20px;
 }
 
 .csms-header-title-index:hover {
   color: #0094f7;
+  cursor: pointer;
 }
 
 .csms-header-title-avatar {
-  margin-left: 20px;
-  display: inline-flex;
   cursor: pointer;
 }
 
@@ -90,26 +89,25 @@ import {UserOutlined} from '@ant-design/icons-vue'
   top: 100%;
   right: 0;
   z-index: 1;
-  margin: 0;
-  padding: 8px 0;
   background: #fff;
   border: 1px solid #e8e8e8;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  white-space: nowrap;
+  border-radius: 3px;
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.15);
+  margin: 0;
+  padding: 0;
 }
 
 .csms-header-title-usermenu li {
-  padding: 8px 20px;
   cursor: pointer;
+  margin: 0;
+  padding: 8px 16px;
 }
 
 .csms-header-title-usermenu li:hover {
   background-color: #f5f5f5;
 }
 
-.csms-header-title-avatar:hover ~ .csms-header-title-usermenu,
-.csms-header-title-usermenu:hover {
+.csms-header-title-avatar:hover ~ .csms-header-title-usermenu, .csms-header-title-usermenu:hover {
   visibility: visible;
 }
 </style>
