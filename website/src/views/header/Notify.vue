@@ -19,7 +19,7 @@ import {message} from 'ant-design-vue'
 const content = ref('')
 const isShow = ref(false)
 const close = () => isShow.value = false
-const [messageApi, ContentHolder] = message.useMessage();
+const [messageApi, ContentHolder] = message.useMessage()
 
 onBeforeMount(async () => {
   const rsp = await getLastNotification()
