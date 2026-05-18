@@ -45,7 +45,7 @@ func WebAuthenticateFilter(c *gin.Context) {
 			util.ResponseCode(c, consts.ErrNeedLogin)
 			return
 		}
-		log.Error(ctx, "failed to get session from Cookie", err)
+		log.Error(ctx, "failed to get session from cookie", err)
 		util.ResponseError(c, errs.NewWithError(consts.ErrSystem, err))
 		return
 	}
@@ -56,7 +56,7 @@ func WebAuthenticateFilter(c *gin.Context) {
 			util.ResponseCode(c, consts.ErrNeedLogin)
 			return
 		}
-		log.Error(ctx, "failed to get username from Cookie", err)
+		log.Error(ctx, "failed to get username from cookie", err)
 		util.ResponseError(c, errs.NewWithError(consts.ErrSystem, err))
 		return
 	}
