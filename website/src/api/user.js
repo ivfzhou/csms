@@ -10,16 +10,15 @@
  * See the Mulan PSL v2 for more details.
  */
 
-import {computed, ref} from 'vue'
-import {defineStore} from 'pinia'
+import {httpGetJson, httpJsonPostJson} from "@/api/http.js"
+import {useLanguageStore} from "@/stores/language.js"
 
-export const useCounterStore = defineStore('counter', () => {
-    const count = ref(0)
-    const doubleCount = computed(() => count.value * 2)
+// 获取用户信息。
+export async function getUserInformation() {
+    return await httpGetJson('/backend/web/user/getInformation', {language: useLanguageStore().language})
+}
 
-    function increment() {
-        count.value++
-    }
-
-    return {count, doubleCount, increment}
-})
+// 登陆。
+export async function userLogin(payload) {
+    return await httpJsonPostJson('/backend/web/user/login', payload, {language: useLanguageStore().language})
+}

@@ -11,52 +11,52 @@ See the Mulan PSL v2 for more details.
 -->
 
 <script setup>
-import {computed, provide, ref} from 'vue'
-import {ConfigProvider, StyleProvider, theme} from "ant-design-vue"
-import zhCN from 'ant-design-vue/es/locale/zh_CN'
-import enUS from 'ant-design-vue/es/locale/en_US'
-import dayjs from 'dayjs'
+import {onBeforeMount} from 'vue'
+import {App} from "ant-design-vue"
 import Notify from '@/views/header/Notify.vue'
 import Title from '@/views/header/Title.vue'
-import constants from '@/utils/constants.js'
+import {getUserInformation} from "@/api/user.js"
+import {useUserInfoStore} from "@/stores/userInfo.js"
+import {isSuccessHttpCode} from "@/utils/utils.js"
 
-const locale = ref(zhCN)
-const toggleLocale = () => {
-  locale.value = locale.value === zhCN ? enUS : zhCN
-  dayjs.locale(locale.value)
-}
 
-const isDark = ref(false)
-const themeConfig = computed(() => ({
-  algorithm: isDark.value ? theme.darkAlgorithm : theme.defaultAlgorithm,
-  components: {
-    Layout: {
-      colorBgHeader: isDark.value ? '#1f1f1f' : '#ffffff'
+// 获取用户信息与登陆。
+const {message} = App.useApp()
+const userInfoStore = useUserInfoStore()
+onBeforeMount(async () => {
+  try {
+    const rsp = await getUserInformation()
+    if (!isSuccessHttpCode(rsp.status)) {
+      message.error(`获取用户信息失败 ${rsp}`)
+      return
     }
+    if ((!rsp.rspBody || rsp.rspBody.code > 0) && rsp.rspBody.message) {
+      message.warning(`${rsp.rspBody.code} ${rsp.rspBody.message}`)
+      return
+    }
+    if (!rsp.rspBody.data) {
+      message.warning(`未获取到获取用户信息 ${rsp}`)
+      return
+    }
+    userInfoStore.$patch(rsp.rspBody.data)
+  } catch (err) {
+    message.error(`获取用户信息异常 ${err}`)
   }
-}))
-const toggleTheme = () => isDark.value = !isDark.value
-
-provide(constants.isDark, isDark)
-provide(constants.toggleTheme, toggleTheme)
-provide(constants.toggleLocale, toggleLocale)
-
+})
 </script>
 
 <template>
-  <StyleProvider hash-priority="low">
-    <ConfigProvider :locale="locale" :theme="themeConfig">
-      <div class="csms-header">
-        <div class="csms-header-inner">
-          <Notify/>
-          <Title/>
-        </div>
+  <div class="csms-root">
+    <div class="csms-header">
+      <div class="csms-header-inner">
+        <Notify/>
+        <Title/>
       </div>
-      <div class="csms-body">
-        <RouterView/>
-      </div>
-    </ConfigProvider>
-  </StyleProvider>
+    </div>
+    <div class="csms-body">
+      <RouterView/>
+    </div>
+  </div>
 </template>
 
 <style scoped>
@@ -77,6 +77,7 @@ provide(constants.toggleLocale, toggleLocale)
 
 .csms-body {
   max-width: var(--content-width);
-  margin: 0 auto;
+  margin: 10px auto 0;
+  background-color: #fff;
 }
 </style>

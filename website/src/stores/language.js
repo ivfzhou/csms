@@ -10,15 +10,11 @@
  * See the Mulan PSL v2 for more details.
  */
 
-const isDark = Symbol('isDark')
-const toggleTheme = Symbol('toggleTheme')
-const toggleLocale = Symbol('toggleLocale')
+import {ref} from 'vue'
+import {defineStore} from 'pinia'
 
-const errCodeNeedLogin = 200006
+export const useLanguageStore = defineStore('language', () => {
+    const language = ref('zh')
 
-export default {
-    isDark,
-    toggleTheme,
-    toggleLocale,
-    errCodeNeedLogin
-}
+    return {language}
+})

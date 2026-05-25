@@ -39,9 +39,9 @@ type UserWebRegisterReq struct {
 // UserWebLoginReq 登录请求体。
 type UserWebLoginReq struct {
 	// 英文名
-	NameEn string `binding:"min=6|eq=admin,max=32,varname" example:"zhangsan"`
+	NameEn string `json:"nameEn" binding:"min=6|eq=admin,max=32,varname" example:"zhangsan"`
 	// 密码
-	Password string `binding:"utf8string,min=6|eq=admin" example:"123456"`
+	Password string `json:"password" binding:"utf8string,min=6|eq=admin" example:"123456"`
 }
 
 // UserWebGetInformationRsp 获取用户信息响应体。

@@ -10,15 +10,7 @@
  * See the Mulan PSL v2 for more details.
  */
 
-const isDark = Symbol('isDark')
-const toggleTheme = Symbol('toggleTheme')
-const toggleLocale = Symbol('toggleLocale')
-
-const errCodeNeedLogin = 200006
-
-export default {
-    isDark,
-    toggleTheme,
-    toggleLocale,
-    errCodeNeedLogin
+// 判断 HTTP 响应码是否是成功码。
+export function isSuccessHttpCode(code) {
+    return code >= 200 && code < 300
 }

@@ -11,32 +11,38 @@ See the Mulan PSL v2 for more details.
 -->
 
 <script setup>
-import {CloseOutlined} from '@ant-design/icons-vue'
 import {onBeforeMount, ref} from 'vue'
 import {getLastNotification} from "@/api/notify.js"
-import {message} from 'ant-design-vue'
+import {App} from 'ant-design-vue'
+import {isSuccessHttpCode} from "@/utils/utils.js"
+import {CloseOutlined} from '@ant-design/icons-vue'
 
+// 状态。
 const content = ref('')
 const isShow = ref(false)
 const close = () => isShow.value = false
-const [messageApi, ContentHolder] = message.useMessage()
+const {message} = App.useApp()
 
+// 获取通知内容。
 onBeforeMount(async () => {
   const rsp = await getLastNotification()
-  if (rsp.status !== 200 || rsp.rspBody.code) {
-    messageApi.error(`获取通知失败：${rsp.rspBody.code} ${rsp.rspBody.message}`)
-  } else {
+  if (!isSuccessHttpCode(rsp.status)) {
+    message.error(`获取通知失败 ${rsp.status} ${rsp}`)
+    return
+  }
+  if (rsp.rspBody && rsp.rspBody.code) {
+    message.error(`${rsp.rspBody.code} ${rsp.rspBody.message}`)
+    return
+  }
+  if (rsp.rspBody.data.message) {
     content.value = rsp.rspBody.data.message
-    if (rsp.rspBody.data.message) {
-      isShow.value = true
-    }
+    isShow.value = true
   }
 })
 </script>
 
 <template>
-  <div class="csms-header-notify" :class="{ 'notify-hidden': !isShow }">
-    <ContentHolder/>
+  <div class="csms-header-notify" :class="{ 'csms-header-notify-hidden': !isShow }">
     <span class="csms-header-notify-content" v-html="content"></span>
     <CloseOutlined class="csms-header-notify-close" @click="close"/>
   </div>
@@ -59,7 +65,7 @@ onBeforeMount(async () => {
   box-sizing: border-box;
 }
 
-.csms-header-notify.notify-hidden {
+.csms-header-notify.csms-header-notify-hidden {
   max-height: 0;
   opacity: 0;
 }

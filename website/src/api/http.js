@@ -10,6 +10,8 @@
  * See the Mulan PSL v2 for more details.
  */
 
+import constants from "@/utils/constants.js"
+
 /* httpGet 发送 HTTP GET 请求
  * @param reqUrl string，资源地址
  * @param query object，URL Query
@@ -17,7 +19,7 @@
  * @returns Promise<object | string>
  */
 export function httpGet(reqUrl, query, headers) {
-    if (window.fetch) return fetchGet(reqUrl, query, headers)
+    if (fetch) return fetchGet(reqUrl, query, headers)
     else return xhrGet(reqUrl, query, headers)
 }
 
@@ -28,7 +30,7 @@ export function httpGet(reqUrl, query, headers) {
  * @returns Promise<object | string>
  */
 export function httpGetJson(reqUrl, query, headers) {
-    if (window.fetch) return fetchGetJson(reqUrl, query, headers)
+    if (fetch) return fetchGetJson(reqUrl, query, headers)
     else return xhrGetJson(reqUrl, query, headers)
 }
 
@@ -40,7 +42,7 @@ export function httpGetJson(reqUrl, query, headers) {
  * @returns Promise<object | string>
  */
 export function httpJsonPostJson(reqUrl, reqBody, query, headers) {
-    if (window.fetch) return fetchJsonPostJson(reqUrl, reqBody, query, headers)
+    if (fetch) return fetchJsonPostJson(reqUrl, reqBody, query, headers)
     else return xhrJsonPostJson(reqUrl, reqBody, query, headers)
 }
 
@@ -52,7 +54,7 @@ export function httpJsonPostJson(reqUrl, reqBody, query, headers) {
  * @returns Promise<object | string>
  */
 export function httpFormPostJson(reqUrl, reqBody, query, headers) {
-    if (window.fetch) return fetchFormPostJson(reqUrl, reqBody, query, headers)
+    if (fetch) return fetchFormPostJson(reqUrl, reqBody, query, headers)
     else return xhrFormPostJson(reqUrl, reqBody, query, headers)
 }
 
@@ -76,14 +78,38 @@ function xhrGet(reqUrl, query, headers) {
         // 处理 header
         if (headers) Object.keys(headers).forEach((key) => xhr.setRequestHeader(key, headers[key]))
         xhr.setRequestHeader('X-Date', new Date().toUTCString())
+        xhr.withCredentials = true
 
         // 处理回调
-        xhr.addEventListener('load', () =>
-            resolve({
-                status: xhr.status,
-                headers: responseHeadersToObject(xhr.getAllResponseHeaders()),
-                rspBody: xhr.response
-            })
+        xhr.addEventListener('load', () => {
+                const headers = xhrHeadersToObject(xhr.getAllResponseHeaders())
+
+                // 判断是否需要登陆。响应体类型是 json，响应码是 200006。
+                const contentType = headers['Content-Type'] ??= headers['content-type']
+                if (contentType && contentType.startsWith && contentType.startsWith('application/json')) {
+                    try {
+                        const rspBody = JSON.parse(xhr.response)
+                        if (rspBody.code === constants.errCodeNeedLogin) {
+                            const currentPath = location.pathname + location.search + location.hash
+
+                            // 避免登陆页跳登陆页。
+                            if (!currentPath.startsWith('/loginAndRegister'))
+                                location.href = `/loginAndRegister?redirect=${encodeURIComponent(currentPath)}`
+
+                            return
+                        }
+                    } catch (err) {
+                        reject(`xhrGet failure: response body is not a json: ${err}: ${xhr.response}`)
+                        return
+                    }
+                }
+
+                resolve({
+                    status: xhr.status,
+                    headers: headers,
+                    rspBody: xhr.response
+                })
+            }
         )
         xhr.addEventListener('error', () => reject(`xhrGet failure: ${reqUrl}`))
 
@@ -112,6 +138,7 @@ function xhrGetJson(reqUrl, query, headers) {
         // 处理 header
         if (headers) Object.keys(headers).forEach((key) => xhr.setRequestHeader(key, headers[key]))
         xhr.setRequestHeader('X-Date', new Date().toUTCString())
+        xhr.withCredentials = true
 
         // 处理回调
         xhr.addEventListener('load', () => {
@@ -121,9 +148,21 @@ function xhrGetJson(reqUrl, query, headers) {
             } catch (err) {
                 reject(`xhrGetJson failure: response body is not a json: ${err}: ${xhr.response}`)
             }
+
+            // 判断是否需要登陆。响应码是 200006。
+            if (rspBody.code === constants.errCodeNeedLogin) {
+                const currentPath = location.pathname + location.search + location.hash
+
+                // 避免登陆页跳登陆页。
+                if (!currentPath.startsWith('/loginAndRegister'))
+                    location.href = `/loginAndRegister?redirect=${encodeURIComponent(currentPath)}`
+
+                return
+            }
+
             resolve({
                 status: xhr.status,
-                headers: responseHeadersToObject(xhr.getAllResponseHeaders()),
+                headers: xhrHeadersToObject(xhr.getAllResponseHeaders()),
                 rspBody: rspBody
             })
         })
@@ -164,6 +203,7 @@ function xhrJsonPostJson(reqUrl, reqBody, query, headers) {
         // 处理 header
         if (headers) Object.keys(headers).forEach((key) => xhr.setRequestHeader(key, headers[key]))
         xhr.setRequestHeader('X-Date', new Date().toUTCString())
+        xhr.withCredentials = true
 
         // 处理回调
         xhr.addEventListener('load', () => {
@@ -173,9 +213,21 @@ function xhrJsonPostJson(reqUrl, reqBody, query, headers) {
             } catch (err) {
                 reject(`xhrJsonPostJson failure: response body is not a json: ${err}: ${xhr.response}`)
             }
+
+            // 判断是否需要登陆。响应码是 200006。
+            if (rspBody.code === constants.errCodeNeedLogin) {
+                const currentPath = location.pathname + location.search + location.hash
+
+                // 避免登陆页跳登陆页。
+                if (!currentPath.startsWith('/loginAndRegister'))
+                    location.href = `/loginAndRegister?redirect=${encodeURIComponent(currentPath)}`
+
+                return
+            }
+
             resolve({
                 status: xhr.status,
-                headers: responseHeadersToObject(xhr.getAllResponseHeaders()),
+                headers: xhrHeadersToObject(xhr.getAllResponseHeaders()),
                 rspBody: rspBody
             })
         })
@@ -211,6 +263,7 @@ function xhrFormPostJson(reqUrl, reqBody, query, headers) {
         // 处理 header
         if (headers) Object.keys(headers).forEach((key) => xhr.setRequestHeader(key, headers[key]))
         xhr.setRequestHeader('X-Date', new Date().toUTCString())
+        xhr.withCredentials = true
 
         // 处理回调
         xhr.addEventListener('load', () => {
@@ -220,9 +273,21 @@ function xhrFormPostJson(reqUrl, reqBody, query, headers) {
             } catch (err) {
                 reject(`xhrFormPostJson failure: response body is not a json: ${err}: ${xhr.response}`)
             }
+
+            // 判断是否需要登陆。响应码是 200006。
+            if (rspBody.code === constants.errCodeNeedLogin) {
+                const currentPath = location.pathname + location.search + location.hash
+
+                // 避免登陆页跳登陆页。
+                if (!currentPath.startsWith('/loginAndRegister'))
+                    location.href = `/loginAndRegister?redirect=${encodeURIComponent(currentPath)}`
+
+                return
+            }
+
             resolve({
                 status: xhr.status,
-                headers: responseHeadersToObject(xhr.getAllResponseHeaders()),
+                headers: xhrHeadersToObject(xhr.getAllResponseHeaders()),
                 rspBody: rspBody
             })
         })
@@ -249,13 +314,37 @@ function fetchGet(reqUrl, query, headers) {
     return new Promise((resolve, reject) => {
         fetch(`${reqUrl}`, {
             method: 'GET',
-            headers: mergeDateHeader(headers)
-        }).then(async (res) =>
-            resolve({
-                status: res.status,
-                headers: headersToObject(res.headers),
-                rspBody: await res.arrayBuffer()
-            })
+            headers: mergeDateHeader(headers),
+            credentials: 'same-origin'
+        }).then(async (res) => {
+                const headers = fetchHeadersToObject(res.headers)
+
+                // 判断是否需要登陆。响应体类型是 json，响应码是 200006。
+                const contentType = headers['Content-Type'] ??= headers['content-type']
+                if (contentType && contentType.startsWith && contentType.startsWith('application/json')) {
+                    try {
+                        const rspBody = await res.json()
+                        if (rspBody.code === constants.errCodeNeedLogin) {
+                            const currentPath = location.pathname + location.search + location.hash
+
+                            // 避免登陆页跳登陆页。
+                            if (!currentPath.startsWith('/loginAndRegister'))
+                                location.href = `/loginAndRegister?redirect=${encodeURIComponent(currentPath)}`
+
+                            return
+                        }
+                    } catch (err) {
+                        reject(`fetchGet failure: response body is not a json: ${err}`)
+                        return
+                    }
+                }
+
+                resolve({
+                    status: res.status,
+                    headers: headers,
+                    rspBody: await res.arrayBuffer()
+                })
+            }
         ).catch((err) => reject(`fetchGet failure: ${err}`))
     })
 }
@@ -276,13 +365,28 @@ function fetchGetJson(reqUrl, query, headers) {
     return new Promise((resolve, reject) => {
         fetch(`${reqUrl}`, {
             method: 'GET',
-            headers: mergeDateHeader(headers)
-        }).then(async (res) =>
-            resolve({
-                status: res.status,
-                headers: headersToObject(res.headers),
-                rspBody: await res.json()
-            })
+            headers: mergeDateHeader(headers),
+            credentials: 'same-origin'
+        }).then(async (res) => {
+                const rspBody = await res.json()
+
+                // 判断是否需要登陆。响应码是 200006。
+                if (rspBody.code === constants.errCodeNeedLogin) {
+                    const currentPath = location.pathname + location.search + location.hash
+
+                    // 避免登陆页跳登陆页。
+                    if (!currentPath.startsWith('/loginAndRegister'))
+                        location.href = `/loginAndRegister?redirect=${encodeURIComponent(currentPath)}`
+
+                    return
+                }
+
+                resolve({
+                    status: res.status,
+                    headers: fetchHeadersToObject(res.headers),
+                    rspBody: rspBody
+                })
+            }
         ).catch((err) => reject(`fetchGetJson failure: ${err}`))
     })
 }
@@ -317,13 +421,28 @@ function fetchJsonPostJson(reqUrl, reqBody, query, headers) {
         fetch(reqUrl, {
             method: 'POST',
             headers: mergeDateHeader(headers),
-            body: reqBody
-        }).then(async (res) =>
-            resolve({
-                status: res.status,
-                headers: headersToObject(res.headers),
-                rspBody: await res.json()
-            })
+            body: reqBody,
+            credentials: 'same-origin'
+        }).then(async (res) => {
+                const rspBody = await res.json()
+
+                // 判断是否需要登陆。响应码是 200006。
+                if (rspBody.code === constants.errCodeNeedLogin) {
+                    const currentPath = location.pathname + location.search + location.hash
+
+                    // 避免登陆页跳登陆页。
+                    if (!currentPath.startsWith('/loginAndRegister'))
+                        location.href = `/loginAndRegister?redirect=${encodeURIComponent(currentPath)}`
+
+                    return
+                }
+
+                resolve({
+                    status: res.status,
+                    headers: fetchHeadersToObject(res.headers),
+                    rspBody: rspBody
+                })
+            }
         ).catch((err) => reject(`fetchJsonPostJson failure: ${err}`))
     })
 }
@@ -350,13 +469,28 @@ function fetchFormPostJson(reqUrl, reqBody, query, headers) {
         fetch(`${reqUrl}`, {
             method: 'POST',
             headers: mergeDateHeader(headers),
-            body: formData
-        }).then(async (res) =>
-            resolve({
-                status: res.status,
-                headers: headersToObject(res.headers),
-                rspBody: await res.json()
-            })
+            body: formData,
+            credentials: 'same-origin'
+        }).then(async (res) => {
+                const rspBody = await res.json()
+
+                // 判断是否需要登陆。响应码是 200006。
+                if (rspBody.code === constants.errCodeNeedLogin) {
+                    const currentPath = location.pathname + location.search + location.hash
+
+                    // 避免登陆页跳登陆页。
+                    if (!currentPath.startsWith('/loginAndRegister'))
+                        location.href = `/loginAndRegister?redirect=${encodeURIComponent(currentPath)}`
+
+                    return
+                }
+
+                resolve({
+                    status: res.status,
+                    headers: fetchHeadersToObject(res.headers),
+                    rspBody: rspBody
+                })
+            }
         ).catch((err) => reject(`fetchFormPostJson failure: ${err}`))
     })
 }
@@ -379,11 +513,11 @@ function objectToQueryString(obj) {
 }
 
 /*
- * responseHeadersToObject 将响应头字符串转化成对象
+ * xhrHeadersToObject 将响应头字符串转化成对象
  * @param str string
  * @returns object
  */
-function responseHeadersToObject(str) {
+function xhrHeadersToObject(str) {
     let obj = {}
 
     str.split('\r\n')
@@ -397,11 +531,11 @@ function responseHeadersToObject(str) {
 }
 
 /*
- * headersToObject 将响应头对象转化成对象
+ * fetchHeadersToObject 将响应头对象转化成对象
  * @param headers Headers
  * @returns object
  */
-function headersToObject(headers) {
+function fetchHeadersToObject(headers) {
     let obj = {}
 
     for (let [key, value] of headers.entries()) obj[key] = value

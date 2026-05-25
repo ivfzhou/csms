@@ -14,23 +14,30 @@ import {createRouter, createWebHistory} from 'vue-router'
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
+    strict: true,
     routes: [
         {
             path: '/',
-            name: 'index',
-            component: () => import('@/views/Index.vue')
-        },
-        {
-            path: '',
-            redirect: {name: 'index'}
+            component: () => import('@/views/Index.vue'),
+            children: [
+                {
+                    path: '',
+                    component: () => import('@/views/body/Dashboard.vue')
+                },
+                {
+                    path: 'loginAndRegister',
+                    component: () => import('@/views/body/LoginAndRegister.vue'),
+                    props: route => ({redirect: route.query.redirect})
+                }
+            ]
         },
         {
             path: '/index.html',
-            redirect: {name: 'index'}
+            redirect: '/'
         },
         {
             path: '/index',
-            redirect: {name: 'index'}
+            redirect: '/'
         }
     ],
 })
