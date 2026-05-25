@@ -11,16 +11,45 @@ See the Mulan PSL v2 for more details.
 -->
 
 <script setup>
-import {userLogin} from "@/api/user.js"
+import {getUserInformation, userLogin} from "@/api/user.js"
 import {isSuccessHttpCode} from '@/utils/utils.js'
 import {useRouter} from "vue-router"
-import {reactive, ref} from "vue"
+import {onBeforeMount, reactive, ref} from "vue"
 import {App, Button, Form, FormItem, Input, InputPassword, Upload} from 'ant-design-vue'
 import {LockOutlined, UserOutlined} from "@ant-design/icons-vue"
+import {useUserInfoStore} from "@/stores/userInfo.js"
+import constants from "@/utils/constants.js"
 
 // 定义组件 props。
 const props = defineProps({
   redirect: String
+})
+
+// 校验下是否已经登陆了。若已登陆就跳转到原页面。
+const {message} = App.useApp()
+const userInfoStore = useUserInfoStore()
+const router = useRouter()
+onBeforeMount(async () => {
+  if (userInfoStore.userInfo) {
+    try {
+      const rsp = await getUserInformation()
+      if (!isSuccessHttpCode(rsp.status)) {
+        message.error(`获取用户信息失败 ${rsp}`)
+        return
+      }
+      if (rsp.rspBody && rsp.rspBody.code && rsp.rspBody.code !== constants.errCodeNeedLogin) {
+        message.warning(`${rsp.rspBody.code} ${rsp.rspBody.message}`)
+        return
+      }
+      if (rsp.rspBody && rsp.rspBody.data) {
+        userInfoStore.$patch(rsp.rspBody.data)
+        message.info(`已登陆，即将跳转`)
+        setTimeout(() => router.push(props.redirect), 2000)
+      }
+    } catch (err) {
+      message.error(`获取用户信息异常 ${err}`)
+    }
+  }
 })
 
 // 控制登陆/注册模式。
@@ -66,8 +95,6 @@ const formRules = {
 }
 
 // 登陆/注册，提交后端接口。
-const {message} = App.useApp()
-const router = useRouter()
 const finishForm = async (value) => {
   if (isLogin.value) {
     try {
@@ -155,7 +182,7 @@ const onLeave = (el, done) => {
     <Form class="csms-body-loginandregister-form" @finish="finishForm" :rules="formRules" :model="formState"
           :label-col="{span: 6}" :wrapper-col="{span: 18}" validateFirst autocomplete="on">
       <Transition @beforeEnter="onBeforeEnter" @enter="onEnter" @leave="onLeave">
-        <FormItem label="头像" name="avatar" v-if="!isLogin">
+        <FormItem label="头像" name="avatar" required v-if="!isLogin">
           <Upload></Upload>
         </FormItem>
       </Transition>
@@ -168,7 +195,7 @@ const onLeave = (el, done) => {
         </Input>
       </FormItem>
       <Transition @beforeEnter="onBeforeEnter" @enter="onEnter" @leave="onLeave">
-        <FormItem name="nickname" label="中文名" hasFeedback validateFirst v-if="!isLogin">
+        <FormItem name="nickname" label="中文名" hasFeedback validateFirst required v-if="!isLogin">
           <Input v-model:value="formState.nickname" placeholder="请输入用户名，2 到 16 位汉字">
           </Input>
         </FormItem>
@@ -182,7 +209,7 @@ const onLeave = (el, done) => {
         </InputPassword>
       </FormItem>
       <Transition @beforeEnter="onBeforeEnter" @enter="onEnter" @leave="onLeave">
-        <FormItem label="密码确认" name="passwordConfirm" hasFeedback validateFirst v-if="!isLogin">
+        <FormItem label="密码确认" name="passwordConfirm" hasFeedback validateFirst required v-if="!isLogin">
           <InputPassword v-model:value="formState.passwordConfirm" placeholder="请再次输入密码">
             <template #prefix>
               <LockOutlined/>
@@ -190,7 +217,7 @@ const onLeave = (el, done) => {
           </InputPassword>
         </FormItem>
       </Transition>
-      <Transition @beforeEnter="onBeforeEnter" @enter="onEnter" @leave="onLeave">
+      <Transition @beforeEnter="onBeforeEnter" @enter="onEnter" @leave="onLeave" required>
         <FormItem label="部门" name="department" hasFeedback validateFirst v-if="!isLogin">
           <Input v-model:value="formState.department"
                  placeholder="请输入部门信息，最多 1024 个字符，组织单元间以 / 分隔"/>
