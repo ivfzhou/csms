@@ -13,16 +13,24 @@ See the Mulan PSL v2 for more details.
 <script setup>
 import {getUserInformation, userLogin} from "@/api/user.js"
 import {isSuccessHttpCode} from '@/utils/utils.js'
-import {useRouter} from "vue-router"
-import {onBeforeMount, reactive, ref} from "vue"
+import {useRoute, useRouter} from "vue-router"
+import {onBeforeMount, reactive, ref, watch} from "vue"
 import {App, Button, Form, FormItem, Input, InputPassword, Upload} from 'ant-design-vue'
-import {LockOutlined, UserOutlined} from "@ant-design/icons-vue"
+import {
+  HomeOutlined,
+  IdcardOutlined,
+  LoadingOutlined,
+  LockOutlined,
+  PlusOutlined,
+  UserOutlined
+} from "@ant-design/icons-vue"
 import {useUserInfoStore} from "@/stores/userInfo.js"
 import constants from "@/utils/constants.js"
 
 // 定义组件 props。
 const props = defineProps({
-  redirect: String
+  redirect: String,
+  isLogin: Boolean
 })
 
 // 校验下是否已经登陆了。若已登陆就跳转到原页面。
@@ -53,11 +61,15 @@ onBeforeMount(async () => {
 })
 
 // 控制登陆/注册模式。
-const isLogin = ref(true)
+const isLogin = ref(props.isLogin)
+const route = useRoute()
+watch(isLogin, (value) => {
+  router.replace({query: {...route.query, isLogin: value ? '' : undefined}})
+})
 
 // 表单数据。
 const formState = reactive({
-  avatar: null,
+  avatar: [],
   username: '',
   nickname: '',
   password: '',
@@ -172,6 +184,20 @@ const onLeave = (el, done) => {
   }
   el.addEventListener('transitionend', onTransitionEnd)
 }
+
+// 控制头像。
+const isAvatarLoading = ref(false)
+const avatarBeforeUpload = async (file) => {
+  try {
+    isAvatarLoading.value = true
+
+    formState.avatar = [file]
+    return false
+  } finally {
+    isAvatarLoading.value = false
+  }
+}
+const removeAvatar = () => formState.avatar = []
 </script>
 
 <template>
@@ -183,10 +209,16 @@ const onLeave = (el, done) => {
           :label-col="{span: 6}" :wrapper-col="{span: 18}" validateFirst autocomplete="on">
       <Transition @beforeEnter="onBeforeEnter" @enter="onEnter" @leave="onLeave">
         <FormItem label="头像" name="avatar" required v-if="!isLogin">
-          <Upload></Upload>
+          <Upload v-model:fileList="formState.avatar" listType="picture-card" :beforeUpload="avatarBeforeUpload"
+                  @remove="removeAvatar" accept="image/png,image/jpeg,image/jpg">
+            <div v-if="formState.avatar.length <= 0">
+              <LoadingOutlined v-if="isAvatarLoading"/>
+              <PlusOutlined v-else/>
+            </div>
+          </Upload>
         </FormItem>
       </Transition>
-      <FormItem name="username" label="用户名" hasFeedback required validateFirst>
+      <FormItem label="用户名" name="username" hasFeedback required validateFirst>
         <Input v-model:value="formState.username" autocomplete="username"
                placeholder="请输入用户名，6 到 32 位字符，由数字和字母组成，第一个字符需为字母">
           <template #prefix>
@@ -195,8 +227,11 @@ const onLeave = (el, done) => {
         </Input>
       </FormItem>
       <Transition @beforeEnter="onBeforeEnter" @enter="onEnter" @leave="onLeave">
-        <FormItem name="nickname" label="中文名" hasFeedback validateFirst required v-if="!isLogin">
+        <FormItem label="中文名" name="nickname" hasFeedback validateFirst required v-if="!isLogin">
           <Input v-model:value="formState.nickname" placeholder="请输入用户名，2 到 16 位汉字">
+            <template #prefix>
+              <IdcardOutlined/>
+            </template>
           </Input>
         </FormItem>
       </Transition>
@@ -219,8 +254,11 @@ const onLeave = (el, done) => {
       </Transition>
       <Transition @beforeEnter="onBeforeEnter" @enter="onEnter" @leave="onLeave" required>
         <FormItem label="部门" name="department" hasFeedback validateFirst v-if="!isLogin">
-          <Input v-model:value="formState.department"
-                 placeholder="请输入部门信息，最多 1024 个字符，组织单元间以 / 分隔"/>
+          <Input v-model:value="formState.department" placeholder="请输入部门信息，最多 1024 个字符，组织单元间以 / 分隔">
+            <template #prefix>
+              <HomeOutlined/>
+            </template>
+          </Input>
         </FormItem>
       </Transition>
       <FormItem :wrapperCol="{span: 18, offset: 6}">

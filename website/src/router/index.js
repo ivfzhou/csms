@@ -27,7 +27,7 @@ const router = createRouter({
                 {
                     path: 'loginAndRegister',
                     component: () => import('@/views/body/LoginAndRegister.vue'),
-                    props: route => ({redirect: route.query.redirect})
+                    props: route => ({redirect: route.query.redirect, isLogin: route.query.isLogin}),
                 }
             ]
         },
