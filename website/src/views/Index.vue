@@ -15,13 +15,17 @@ import {onBeforeMount} from 'vue'
 import {App} from "ant-design-vue"
 import Notify from '@/views/header/Notify.vue'
 import Title from '@/views/header/Title.vue'
-import {getUserInformation} from "@/api/user.js"
+import {getUserInformation} from "@/api/user_api.js"
 import {useUserInfoStore} from "@/stores/userInfo.js"
 import {isSuccessHttpCode} from "@/utils/utils.js"
+import {useMessageStore} from "@/stores/message.js"
 
+// 保存消息提示变量。
+const {message} = App.useApp()
+const messageStore = useMessageStore()
+messageStore.$patch({message})
 
 // 获取用户信息与登陆。
-const {message} = App.useApp()
 const userInfoStore = useUserInfoStore()
 onBeforeMount(async () => {
   try {

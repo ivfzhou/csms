@@ -10,15 +10,11 @@
  * See the Mulan PSL v2 for more details.
  */
 
-import {httpGetJson, httpJsonPostJson} from "@/api/http.js"
-import {useLanguageStore} from "@/stores/language.js"
+import {ref} from 'vue'
+import {defineStore} from 'pinia'
 
-// 获取用户信息。
-export async function getUserInformation() {
-    return await httpGetJson('/backend/web/user/getInformation', {language: useLanguageStore().language})
-}
+export const useMessageStore = defineStore('message', () => {
+    const message = ref()
 
-// 登陆。
-export async function userLogin(payload) {
-    return await httpJsonPostJson('/backend/web/user/login', payload, {language: useLanguageStore().language})
-}
+    return {message}
+})

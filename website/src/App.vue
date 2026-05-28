@@ -12,11 +12,12 @@ See the Mulan PSL v2 for more details.
 
 <script setup>
 import {App, ConfigProvider, StyleProvider, theme} from "ant-design-vue"
-import {computed, provide, ref} from 'vue'
+import {computed, ref} from 'vue'
 import zhCN from 'ant-design-vue/es/locale/zh_CN'
 import enUS from 'ant-design-vue/es/locale/en_US'
 import dayjs from 'dayjs'
-import constants from '@/utils/constants.js'
+import {useLocalStore} from "@/stores/locale.js"
+import {useThemeStore} from "@/stores/theme.js"
 
 // ant 组件本地化。
 const locale = ref(zhCN)
@@ -24,7 +25,8 @@ const toggleLocale = () => {
   locale.value = locale.value === zhCN ? enUS : zhCN
   dayjs.locale(locale.value)
 }
-provide(constants.toggleLocale, toggleLocale)
+const localStore = useLocalStore()
+localStore.$patch({toggleLocale})
 
 // ant 组件主题。
 const isDark = ref(false)
@@ -37,8 +39,8 @@ const themeConfig = computed(() => ({
   }
 }))
 const toggleTheme = () => isDark.value = !isDark.value
-provide(constants.isDark, isDark)
-provide(constants.toggleTheme, toggleTheme)
+const themeStore = useThemeStore()
+themeStore.$patch({toggleTheme, isDark})
 </script>
 
 <template>

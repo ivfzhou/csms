@@ -12,7 +12,7 @@ See the Mulan PSL v2 for more details.
 
 <script setup>
 import {onBeforeMount, ref} from 'vue'
-import {getLastNotification} from "@/api/notify.js"
+import {getLastNotification} from "@/api/notify_api.js"
 import {App} from 'ant-design-vue'
 import {isSuccessHttpCode} from "@/utils/utils.js"
 import {CloseOutlined} from '@ant-design/icons-vue'

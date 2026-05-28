@@ -248,8 +248,13 @@ function xhrJsonPostJson(reqUrl, reqBody, query, headers) {
 function xhrFormPostJson(reqUrl, reqBody, query, headers) {
     return new Promise((resolve, reject) => {
         // 处理 reqBody
-        let formData = new FormData()
-        for (let [key, value] of Object.entries(reqBody)) formData.append(key, value)
+        let formData
+        if (reqBody instanceof FormData) {
+            formData = reqBody
+        } else {
+            formData = new FormData()
+            for (let [key, value] of Object.entries(reqBody)) formData.append(key, value)
+        }
 
         // 处理 query
         if (query) {
@@ -462,8 +467,13 @@ function fetchFormPostJson(reqUrl, reqBody, query, headers) {
     }
 
     // 处理 reqBody
-    let formData = new FormData()
-    for (let [key, value] of Object.entries(reqBody)) formData.append(key, value)
+    let formData
+    if (reqBody instanceof FormData) {
+        formData = reqBody
+    } else {
+        formData = new FormData()
+        for (let [key, value] of Object.entries(reqBody)) formData.append(key, value)
+    }
 
     return new Promise((resolve, reject) => {
         fetch(`${reqUrl}`, {

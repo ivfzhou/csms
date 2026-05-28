@@ -11,7 +11,6 @@ See the Mulan PSL v2 for more details.
 -->
 
 <script setup>
-import {getUserInformation, userLogin} from "@/api/user.js"
 import {isSuccessHttpCode} from '@/utils/utils.js'
 import {useRoute, useRouter} from "vue-router"
 import {onBeforeMount, reactive, ref, watch} from "vue"
@@ -26,14 +25,18 @@ import {
 } from "@ant-design/icons-vue"
 import {useUserInfoStore} from "@/stores/userInfo.js"
 import constants from "@/utils/constants.js"
+import {getUserInformation, userLogin, userRegister} from "@/api/user_api.js";
 
 // 定义组件 props。
 const props = defineProps({
-  redirect: String,
+  redirect: {
+    type: String,
+    default: '/'
+  },
   isLogin: Boolean
 })
 
-// 校验下是否已经登陆了。若已登陆就跳转到原页面。
+// 校验是否已经登陆了。若已登陆就跳转到原页面。
 const {message} = App.useApp()
 const userInfoStore = useUserInfoStore()
 const router = useRouter()
@@ -67,7 +70,7 @@ watch(isLogin, (value) => {
   router.replace({query: {...route.query, isLogin: value ? '' : undefined}})
 })
 
-// 表单数据。
+// 控制表单数据/校验/提交接口。
 const formState = reactive({
   avatar: [],
   username: '',
@@ -76,10 +79,11 @@ const formState = reactive({
   passwordConfirm: '',
   department: ''
 })
-
-// 表单校验。
 const formRules = {
-  avatar: [],
+  avatar: {
+    required: true,
+    message: '请上传头像'
+  },
   username: {
     trigger: 'change',
     validator: async (_, value) => {
@@ -88,6 +92,18 @@ const formRules = {
       if (value.length < 6 || value.length > 32) return Promise.reject('用户名至少 6 位字符，最多 32 位字符')
 
       if (!/^[a-zA-Z][a-zA-Z0-9]+$/.test(value)) return Promise.reject('用户名由数字和字母组成，第一个字符需为字母')
+
+      return Promise.resolve()
+    }
+  },
+  nickname: {
+    trigger: 'change',
+    validator: async (_, value) => {
+      if (!value) return Promise.reject('请输入中文名')
+
+      if (value.length < 2 || value.length > 16) return Promise.reject('中文名至少 2 位字符，最多 16 位字符')
+
+      if (!/^\p{Unified_Ideograph}+$/u.test(value)) return Promise.reject('中文名只能包含中文字符')
 
       return Promise.resolve()
     }
@@ -103,10 +119,34 @@ const formRules = {
 
       return Promise.resolve()
     }
+  },
+  passwordConfirm: {
+    trigger: 'change',
+    validator: async (_, value) => {
+      if (!value) return Promise.reject('请输入密码')
+
+      if (value.length < 6) return Promise.reject('密码至少 6 位字符')
+
+      if (/\p{C}/u.test(value) || value.includes('�')) return Promise.reject('密码只能包含可打印字符')
+
+      if (value !== formState.password) return Promise.reject('两次输入的密码须相同')
+
+      return Promise.resolve()
+    }
+  },
+  department: {
+    trigger: 'change',
+    validator: async (_, value) => {
+      if (!value) return Promise.reject('请输入用户所在部门')
+
+      if (value.length > 1024) return Promise.reject('部门字符数不能超过 1024 位')
+
+      if (/\p{C}/u.test(value) || value.includes('�')) return Promise.reject('部门只能包含可打印字符')
+
+      return Promise.resolve()
+    }
   }
 }
-
-// 登陆/注册，提交后端接口。
 const finishForm = async (value) => {
   if (isLogin.value) {
     try {
@@ -124,8 +164,21 @@ const finishForm = async (value) => {
       // 跳转到原页面。
       setTimeout(() => router.push(props.redirect), 500)
     } catch (err) {
-      message.error(`登陆失败 ${err}`)
+      message.error(`登陆异常 ${err}`)
     }
+  }
+
+  const data = new FormData()
+  data.append('nameZh', value.nickname)
+  data.append('nameEn', value.username)
+  data.append('password', value.password)
+  data.append('passwordConfirmation', value.passwordConfirm)
+  data.append('department', value.department)
+  data.append('avatar', value.avatar[0])
+  const {ok} = await userRegister(data)
+  if (ok) {
+    // 跳转到原页面。
+    setTimeout(() => router.push(props.redirect), 500)
   }
 }
 
@@ -228,7 +281,7 @@ const removeAvatar = () => formState.avatar = []
       </FormItem>
       <Transition @beforeEnter="onBeforeEnter" @enter="onEnter" @leave="onLeave">
         <FormItem label="中文名" name="nickname" hasFeedback validateFirst required v-if="!isLogin">
-          <Input v-model:value="formState.nickname" placeholder="请输入用户名，2 到 16 位汉字">
+          <Input v-model:value="formState.nickname" placeholder="请输入中文名，2 到 16 位汉字">
             <template #prefix>
               <IdcardOutlined/>
             </template>
@@ -236,7 +289,7 @@ const removeAvatar = () => formState.avatar = []
         </FormItem>
       </Transition>
       <FormItem label="密码" name="password" hasFeedback validateFirst required>
-        <InputPassword v-model:value="formState.password" autocomplete="current-password"
+        <InputPassword v-model:value="formState.password" autocomplete="current-password" :visibilityToggle="isLogin"
                        placeholder="请输入密码，至少 6 位可打印字符">
           <template #prefix>
             <LockOutlined/>
@@ -244,8 +297,9 @@ const removeAvatar = () => formState.avatar = []
         </InputPassword>
       </FormItem>
       <Transition @beforeEnter="onBeforeEnter" @enter="onEnter" @leave="onLeave">
-        <FormItem label="密码确认" name="passwordConfirm" hasFeedback validateFirst required v-if="!isLogin">
-          <InputPassword v-model:value="formState.passwordConfirm" placeholder="请再次输入密码">
+        <FormItem label="确认密码" name="passwordConfirm" hasFeedback validateFirst required v-if="!isLogin">
+          <InputPassword v-model:value="formState.passwordConfirm" placeholder="请再次输入密码"
+                         :visibilityToggle="isLogin">
             <template #prefix>
               <LockOutlined/>
             </template>

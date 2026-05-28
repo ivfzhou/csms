@@ -10,8 +10,12 @@
  * See the Mulan PSL v2 for more details.
  */
 
-const errCodeNeedLogin = 200006
+import {ref} from 'vue'
+import {defineStore} from 'pinia'
 
-export default {
-    errCodeNeedLogin
-}
+export const useThemeStore = defineStore('theme', () => {
+    const isDark = ref(false)
+    const toggleTheme = () => isDark.value = !isDark.value
+
+    return {isDark, toggleTheme}
+})
