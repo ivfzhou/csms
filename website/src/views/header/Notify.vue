@@ -13,29 +13,18 @@ See the Mulan PSL v2 for more details.
 <script setup>
 import {onBeforeMount, ref} from 'vue'
 import {getLastNotification} from "@/api/notify_api.js"
-import {App} from 'ant-design-vue'
-import {isSuccessHttpCode} from "@/utils/utils.js"
 import {CloseOutlined} from '@ant-design/icons-vue'
 
 // 状态。
 const content = ref('')
 const isShow = ref(false)
 const close = () => isShow.value = false
-const {message} = App.useApp()
 
 // 获取通知内容。
 onBeforeMount(async () => {
-  const rsp = await getLastNotification()
-  if (!isSuccessHttpCode(rsp.status)) {
-    message.error(`获取通知失败 ${rsp.status} ${rsp}`)
-    return
-  }
-  if (rsp.rspBody && rsp.rspBody.code) {
-    message.error(`${rsp.rspBody.code} ${rsp.rspBody.message}`)
-    return
-  }
-  if (rsp.rspBody.data.message) {
-    content.value = rsp.rspBody.data.message
+  const {ok, data} = await getLastNotification()
+  if (ok) {
+    content.value = data.message
     isShow.value = true
   }
 })

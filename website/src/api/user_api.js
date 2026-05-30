@@ -17,12 +17,58 @@ import {isSuccessHttpCode} from "@/utils/utils.js"
 
 // 获取用户信息。
 export async function getUserInformation() {
-    return await httpGetJson('/backend/web/user/getInformation', {language: useLanguageStore().language})
+    const messageStore = useMessageStore()
+    try {
+        const rsp = await httpGetJson('/backend/web/user/getInformation', {language: useLanguageStore().language})
+        if (!isSuccessHttpCode(rsp.status)) {
+            messageStore.message.error(`获取用户信息失败 ${rsp.status} ${rsp}`)
+            return Promise.resolve({ok: false, data: undefined})
+        }
+        if (!rsp.rspBody) {
+            messageStore.message.error(`获取用户信息失败 ${rsp}`)
+            return Promise.resolve({ok: false, data: undefined})
+        }
+        if (rsp.rspBody.code > 0) {
+            messageStore.message.warning(`${rsp.rspBody.code} ${rsp.rspBody.message}`)
+            return Promise.resolve({ok: false, data: undefined})
+        }
+        if (rsp.rspBody.code < 0) {
+            messageStore.message.success(`${rsp.rspBody.code} ${rsp.rspBody.message}`)
+        }
+
+        return Promise.resolve({ok: true, data: rsp.rspBody.data})
+    } catch (err) {
+        messageStore.message.error(`获取用户信息异常 ${err}`)
+        return Promise.resolve({ok: false, data: undefined})
+    }
 }
 
 // 登陆。
 export async function userLogin(payload) {
-    return await httpJsonPostJson('/backend/web/user/login', payload, {language: useLanguageStore().language})
+    const messageStore = useMessageStore()
+    try {
+        const rsp = await httpJsonPostJson('/backend/web/user/login', payload, {language: useLanguageStore().language})
+        if (!isSuccessHttpCode(rsp.status)) {
+            messageStore.message.error(`登陆失败 ${rsp.status} ${rsp}`)
+            return Promise.resolve({ok: false, data: undefined})
+        }
+        if (!rsp.rspBody) {
+            messageStore.message.error(`登陆失败 ${rsp}`)
+            return Promise.resolve({ok: false, data: undefined})
+        }
+        if (rsp.rspBody.code > 0) {
+            messageStore.message.warning(`${rsp.rspBody.code} ${rsp.rspBody.message}`)
+            return Promise.resolve({ok: false, data: undefined})
+        }
+        if (rsp.rspBody.code < 0) {
+            messageStore.message.success(`${rsp.rspBody.code} ${rsp.rspBody.message}`)
+        }
+
+        return Promise.resolve({ok: true, data: rsp.rspBody.data})
+    } catch (err) {
+        messageStore.message.error(`登陆异常 ${err}`)
+        return Promise.resolve({ok: false, data: undefined})
+    }
 }
 
 // 注册。
@@ -43,11 +89,12 @@ export async function userRegister(payload) {
             return Promise.resolve({ok: false, data: undefined})
         }
         if (rsp.rspBody.code < 0) {
-            messageStore.message.sucess(`${rsp.rspBody.code} ${rsp.rspBody.message}`)
+            messageStore.message.success(`${rsp.rspBody.code} ${rsp.rspBody.message}`)
         }
 
         return Promise.resolve({ok: true, data: rsp.rspBody.data})
     } catch (err) {
         messageStore.message.error(`注册异常 ${err}`)
+        return Promise.resolve({ok: false, data: undefined})
     }
 }

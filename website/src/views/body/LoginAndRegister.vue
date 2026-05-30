@@ -11,10 +11,9 @@ See the Mulan PSL v2 for more details.
 -->
 
 <script setup>
-import {isSuccessHttpCode} from '@/utils/utils.js'
 import {useRoute, useRouter} from "vue-router"
 import {onBeforeMount, reactive, ref, watch} from "vue"
-import {App, Button, Form, FormItem, Input, InputPassword, Upload} from 'ant-design-vue'
+import {App, Button, Form, FormItem, Input, InputPassword, Modal, Upload} from 'ant-design-vue'
 import {
   HomeOutlined,
   IdcardOutlined,
@@ -24,8 +23,8 @@ import {
   UserOutlined
 } from "@ant-design/icons-vue"
 import {useUserInfoStore} from "@/stores/userInfo.js"
-import constants from "@/utils/constants.js"
-import {getUserInformation, userLogin, userRegister} from "@/api/user_api.js";
+import {getUserInformation, userLogin, userRegister} from "@/api/user_api.js"
+import {getBase64} from "@/utils/utils.js"
 
 // 定义组件 props。
 const props = defineProps({
@@ -42,23 +41,11 @@ const userInfoStore = useUserInfoStore()
 const router = useRouter()
 onBeforeMount(async () => {
   if (userInfoStore.userInfo) {
-    try {
-      const rsp = await getUserInformation()
-      if (!isSuccessHttpCode(rsp.status)) {
-        message.error(`获取用户信息失败 ${rsp}`)
-        return
-      }
-      if (rsp.rspBody && rsp.rspBody.code && rsp.rspBody.code !== constants.errCodeNeedLogin) {
-        message.warning(`${rsp.rspBody.code} ${rsp.rspBody.message}`)
-        return
-      }
-      if (rsp.rspBody && rsp.rspBody.data) {
-        userInfoStore.$patch(rsp.rspBody.data)
-        message.info(`已登陆，即将跳转`)
-        setTimeout(() => router.push(props.redirect), 2000)
-      }
-    } catch (err) {
-      message.error(`获取用户信息异常 ${err}`)
+    const {ok, data} = await getUserInformation()
+    if (ok) {
+      userInfoStore.$patch(data)
+      message.info(`已登陆，即将跳转`)
+      setTimeout(() => router.push(props.redirect), 2000)
     }
   }
 })
@@ -149,23 +136,12 @@ const formRules = {
 }
 const finishForm = async (value) => {
   if (isLogin.value) {
-    try {
-      const rsp = await userLogin({nameEn: value.username, password: value.password})
-      if (!isSuccessHttpCode(rsp.status)) {
-        message.error(`登陆失败 ${rsp.status} ${rsp}`)
-        return
-      }
-      if (!rsp.rspBody || rsp.rspBody.code > 0) {
-        message.warning(`${rsp.rspBody.code} ${rsp.rspBody.message}`)
-        return
-      }
-      if (rsp.rspBody.code < 0 && rsp.rspBody.message) message.success(rsp.rspBody.message)
-
+    const {ok, _} = await userLogin({nameEn: value.username, password: value.password})
+    if (ok) {
       // 跳转到原页面。
       setTimeout(() => router.push(props.redirect), 500)
-    } catch (err) {
-      message.error(`登陆异常 ${err}`)
     }
+    return
   }
 
   const data = new FormData()
@@ -174,11 +150,11 @@ const finishForm = async (value) => {
   data.append('password', value.password)
   data.append('passwordConfirmation', value.passwordConfirm)
   data.append('department', value.department)
-  data.append('avatar', value.avatar[0])
+  data.append('avatar', value.avatar[0].originFileObj, value.avatar[0].name)
   const {ok} = await userRegister(data)
   if (ok) {
-    // 跳转到原页面。
-    setTimeout(() => router.push(props.redirect), 500)
+    // 切换到登陆页面。
+    isLogin.value = true
   }
 }
 
@@ -240,9 +216,25 @@ const onLeave = (el, done) => {
 
 // 控制头像。
 const isAvatarLoading = ref(false)
-const avatarBeforeUpload = async (file) => {
+const avatarBeforeUpload = async (file, fileList) => {
   try {
     isAvatarLoading.value = true
+
+    // 校验文件格式和大小。
+    const maximumFileSize = 1 << 20
+    if (file.size > maximumFileSize) {
+      message.warning(`头像过大，最大允许 ${maximumFileSize} 字节`)
+      formState.avatar = []
+      return false
+    }
+    if (!['image/jpeg', 'image/png'].includes(file.type)) {
+      message.warning(`头像格式非法，只允许上传 .jpg/.png 格式头像`)
+      formState.avatar = []
+      return false
+    }
+
+    // 手动生成预览 URL，让 Upload 组件能显示图片
+    file.url = URL.createObjectURL(file)
 
     formState.avatar = [file]
     return false
@@ -250,7 +242,23 @@ const avatarBeforeUpload = async (file) => {
     isAvatarLoading.value = false
   }
 }
-const removeAvatar = () => formState.avatar = []
+const removeAvatar = (file) => formState.avatar.shift()
+
+// 控制头像预览。
+const previewVisible = ref(false)
+const previewTitle = ref('')
+const previewImage = ref('')
+const handleCancel = () => {
+  previewVisible.value = false
+  previewTitle.value = ''
+}
+const handlePreview = async file => {
+  const fileObj = file.originFileObj || file
+  file.preview = await getBase64(fileObj)
+  previewImage.value = file.url || file.preview
+  previewVisible.value = true
+  previewTitle.value = file.name || file.url.substring(file.url.lastIndexOf('/') + 1)
+};
 </script>
 
 <template>
@@ -262,8 +270,8 @@ const removeAvatar = () => formState.avatar = []
           :label-col="{span: 6}" :wrapper-col="{span: 18}" validateFirst autocomplete="on">
       <Transition @beforeEnter="onBeforeEnter" @enter="onEnter" @leave="onLeave">
         <FormItem label="头像" name="avatar" required v-if="!isLogin">
-          <Upload v-model:fileList="formState.avatar" listType="picture-card" :beforeUpload="avatarBeforeUpload"
-                  @remove="removeAvatar" accept="image/png,image/jpeg,image/jpg">
+          <Upload :fileList="formState.avatar" listType="picture-card" :beforeUpload="avatarBeforeUpload"
+                  @remove="removeAvatar" accept="image/png,image/jpeg,image/jpg" @preview="handlePreview">
             <div v-if="formState.avatar.length <= 0">
               <LoadingOutlined v-if="isAvatarLoading"/>
               <PlusOutlined v-else/>
@@ -322,6 +330,9 @@ const removeAvatar = () => formState.avatar = []
         </div>
       </FormItem>
     </Form>
+    <Modal :open="previewVisible" :title="previewTitle" :footer="null" @cancel="handleCancel">
+      <img alt="头像" style="width: 100%" :src="previewImage"/>
+    </Modal>
   </div>
 </template>
 

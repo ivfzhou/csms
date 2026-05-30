@@ -17,7 +17,6 @@ import Notify from '@/views/header/Notify.vue'
 import Title from '@/views/header/Title.vue'
 import {getUserInformation} from "@/api/user_api.js"
 import {useUserInfoStore} from "@/stores/userInfo.js"
-import {isSuccessHttpCode} from "@/utils/utils.js"
 import {useMessageStore} from "@/stores/message.js"
 
 // 保存消息提示变量。
@@ -28,24 +27,8 @@ messageStore.$patch({message})
 // 获取用户信息与登陆。
 const userInfoStore = useUserInfoStore()
 onBeforeMount(async () => {
-  try {
-    const rsp = await getUserInformation()
-    if (!isSuccessHttpCode(rsp.status)) {
-      message.error(`获取用户信息失败 ${rsp}`)
-      return
-    }
-    if ((!rsp.rspBody || rsp.rspBody.code > 0) && rsp.rspBody.message) {
-      message.warning(`${rsp.rspBody.code} ${rsp.rspBody.message}`)
-      return
-    }
-    if (!rsp.rspBody.data) {
-      message.warning(`未获取到获取用户信息 ${rsp}`)
-      return
-    }
-    userInfoStore.$patch(rsp.rspBody.data)
-  } catch (err) {
-    message.error(`获取用户信息异常 ${err}`)
-  }
+  const {ok, data} = await getUserInformation()
+  if (ok) userInfoStore.$patch(data)
 })
 </script>
 
