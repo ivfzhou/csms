@@ -136,10 +136,17 @@ const formRules = {
 }
 const finishForm = async (value) => {
   if (isLogin.value) {
-    const {ok, _} = await userLogin({nameEn: value.username, password: value.password})
+    const {ok} = await userLogin({nameEn: value.username, password: value.password})
     if (ok) {
       // 跳转到原页面。
-      setTimeout(() => router.push(props.redirect), 500)
+      setTimeout(async () => {
+
+        // 更新保存的用户信息。
+        const {ok, data} = await getUserInformation()
+        if (ok) userInfoStore.$patch(data)
+
+        router.push(props.redirect)
+      }, 500)
     }
     return
   }
