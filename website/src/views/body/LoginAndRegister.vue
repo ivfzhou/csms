@@ -145,12 +145,12 @@ const finishForm = async (value) => {
   }
 
   const data = new FormData()
-  data.append('nameZh', value.nickname)
-  data.append('nameEn', value.username)
-  data.append('password', value.password)
-  data.append('passwordConfirmation', value.passwordConfirm)
-  data.append('department', value.department)
-  data.append('avatar', value.avatar[0].originFileObj, value.avatar[0].name)
+  data.append('nameZh', formState.nickname)
+  data.append('nameEn', formState.username)
+  data.append('password', formState.password)
+  data.append('passwordConfirmation', formState.passwordConfirm)
+  data.append('department', formState.department)
+  data.append('avatar', formState.avatar[0], formState.avatar[0].name)
   const {ok} = await userRegister(data)
   if (ok) {
     // 切换到登陆页面。
@@ -251,13 +251,16 @@ const previewImage = ref('')
 const handleCancel = () => {
   previewVisible.value = false
   previewTitle.value = ''
+  previewImage.value = ''
 }
 const handlePreview = async file => {
-  const fileObj = file.originFileObj || file
-  file.preview = await getBase64(fileObj)
-  previewImage.value = file.url || file.preview
-  previewVisible.value = true
+  previewImage.value = file.url
+  if (!previewImage.value) {
+    const fileObj = file.originFileObj || file
+    previewImage.value = await getBase64(fileObj)
+  }
   previewTitle.value = file.name || file.url.substring(file.url.lastIndexOf('/') + 1)
+  previewVisible.value = true
 };
 </script>
 
