@@ -36,15 +36,15 @@ userInfoStore.$subscribe((_, state) => isShowUserInfo.value = state && state.nam
       </template>
     </Avatar>
     <ul class="csms-header-title-usermenu">
-      <li>
+      <li v-ripple>
         <SvgIcon type="mdi" :path="mdiLayersOutline"/>
         后台管理
       </li>
-      <li>
+      <li v-ripple>
         <SvgIcon type="mdi" :path="mdiAccount"/>
         个人信息
       </li>
-      <li>
+      <li v-ripple>
         <SvgIcon type="mdi" :path="mdiLogout"/>
         退出登陆
       </li>
