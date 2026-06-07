@@ -35,7 +35,7 @@ const props = defineProps({
   isLogin: Boolean
 })
 
-// 校验是否已经登陆了。若已登陆就跳转到原页面。
+// 校验是否已经登陆了，若已登陆就跳转到原页面。
 const {message} = App.useApp()
 const userInfoStore = useUserInfoStore()
 const router = useRouter()
@@ -50,14 +50,14 @@ onBeforeMount(async () => {
   }
 })
 
-// 控制登陆/注册模式。
+// 控制登陆/注册模式下浏览器链接地址。
 const isLogin = ref(props.isLogin)
 const route = useRoute()
 watch(isLogin, (value) => {
   router.replace({query: {...route.query, isLogin: value ? '' : undefined}})
 })
 
-// 控制表单数据/校验/提交接口。
+// 表单数据、校验和提交逻辑。
 const formState = reactive({
   avatar: [],
   username: '',
@@ -214,7 +214,7 @@ const onLeave = (el, done) => {
   el.addEventListener('transitionend', onTransitionEnd)
 }
 
-// 控制头像。
+// 控制头像数据。
 const isAvatarLoading = ref(false)
 const avatarBeforeUpload = async (file, fileList) => {
   try {
