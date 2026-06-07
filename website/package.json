@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@ant-design/icons-vue": "^7.0.1",
+    "@jamescoyle/vue-icon": "^0.1.2",
+    "@mdi/js": "^7.4.47",
     "ant-design-vue": "^4.2.6",
     "dayjs": "^1.11.20",
     "pinia": "^3.0.4",

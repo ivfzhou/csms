@@ -15,6 +15,8 @@ import {ref} from "vue"
 import {useUserInfoStore} from "@/stores/userInfo.js"
 import {Avatar} from 'ant-design-vue'
 import {UserOutlined} from '@ant-design/icons-vue'
+import SvgIcon from '@jamescoyle/vue-icon'
+import {mdiAccount, mdiLayersOutline, mdiLogout} from '@mdi/js'
 
 // 控制展示已登陆的信息。
 const isShowUserInfo = ref(true)
@@ -34,9 +36,18 @@ userInfoStore.$subscribe((_, state) => isShowUserInfo.value = state && state.nam
       </template>
     </Avatar>
     <ul class="csms-header-title-usermenu">
-      <li>后台管理</li>
-      <li>个人信息</li>
-      <li>退出登陆</li>
+      <li>
+        <SvgIcon type="mdi" :path="mdiLayersOutline"/>
+        后台管理
+      </li>
+      <li>
+        <SvgIcon type="mdi" :path="mdiAccount"/>
+        个人信息
+      </li>
+      <li>
+        <SvgIcon type="mdi" :path="mdiLogout"/>
+        退出登陆
+      </li>
     </ul>
   </div>
 </template>
@@ -54,31 +65,27 @@ userInfoStore.$subscribe((_, state) => isShowUserInfo.value = state && state.nam
 
 .csms-header-title-logo {
   width: 30px;
-  height: var(--title-height);
+  height: 30px;
   background-image: url('/favicon.ico');
-  display: inline-block;
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
 }
 
 .csms-header-title-name {
-  display: inline-flex;
   font-size: 22px;
-  height: var(--title-height);
   color: #2d3845;
   flex-grow: 1;
   margin-left: 10px;
-  align-items: flex-end;
+  align-self: baseline;
+  user-select: none;
 }
 
 .csms-header-title-index {
-  display: inline-flex;
   font-size: 20px;
-  height: var(--title-height);
   color: #7c8b99;
-  align-items: flex-end;
-  margin-right: 20px;
+  margin-right: 10px;
+  align-self: baseline;
 }
 
 .csms-header-title-index:hover {
@@ -99,23 +106,32 @@ userInfoStore.$subscribe((_, state) => isShowUserInfo.value = state && state.nam
   z-index: 1;
   background: #fff;
   border: 1px solid #e8e8e8;
-  border-radius: 3px;
+  border-radius: 8px;
   box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.15);
   margin: 0;
   padding: 0;
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: transform .3s ease, opacity .3s ease;
 }
 
 .csms-header-title-usermenu li {
   cursor: pointer;
   margin: 0;
-  padding: 8px 16px;
+  padding: 8px 24px;
+  display: flex;
+  align-items: center;
+  user-select: none;
 }
 
 .csms-header-title-usermenu li:hover {
   background-color: #f5f5f5;
 }
 
-.csms-header-title-avatar:hover ~ .csms-header-title-usermenu, .csms-header-title-usermenu:hover {
+.csms-header-title-avatar:hover ~ .csms-header-title-usermenu,
+.csms-header-title-usermenu:hover {
   visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
 }
 </style>
