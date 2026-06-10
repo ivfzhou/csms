@@ -23,8 +23,8 @@ const close = () => isShow.value = false
 // 获取通知内容。
 onBeforeMount(async () => {
   const {ok, data} = await getLastNotification()
-  if (ok) {
-    content.value = data.message
+  if (ok && data.message?.trim()) {
+    content.value = data.message?.trim()
     isShow.value = true
   }
 })

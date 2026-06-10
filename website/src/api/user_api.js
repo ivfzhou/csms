@@ -10,7 +10,7 @@
  * See the Mulan PSL v2 for more details.
  */
 
-import {httpFormPostJson, httpGetJson, httpJsonPostJson} from "@/api/http.js"
+import {httpDeleteJson, httpFormPostJson, httpGetJson, httpJsonPostJson} from "@/api/http.js"
 import {useLanguageStore} from "@/stores/language.js"
 import {useMessageStore} from "@/stores/message.js"
 import {isSuccessHttpCode} from "@/utils/utils.js"
@@ -95,6 +95,34 @@ export async function userRegister(payload) {
         return Promise.resolve({ok: true, data: rsp.rspBody.data})
     } catch (err) {
         messageStore.message.error(`注册异常 ${err}`)
+        return Promise.resolve({ok: false, data: undefined})
+    }
+}
+
+// 退出登陆。
+export async function userLogout() {
+    const messageStore = useMessageStore()
+    try {
+        const rsp = await httpDeleteJson('/backend/web/user/logout', {language: useLanguageStore().language})
+        if (!isSuccessHttpCode(rsp.status)) {
+            messageStore.message.error(`退出登陆失败 ${rsp.status} ${rsp}`)
+            return Promise.resolve({ok: false, data: undefined})
+        }
+        if (!rsp.rspBody) {
+            messageStore.message.error(`退出登陆失败 ${rsp}`)
+            return Promise.resolve({ok: false, data: undefined})
+        }
+        if (rsp.rspBody.code > 0) {
+            messageStore.message.warning(`${rsp.rspBody.code} ${rsp.rspBody.message}`)
+            return Promise.resolve({ok: false, data: undefined})
+        }
+        if (rsp.rspBody.code < 0) {
+            messageStore.message.success(`${rsp.rspBody.code} ${rsp.rspBody.message}`)
+        }
+
+        return Promise.resolve({ok: true, data: rsp.rspBody.data})
+    } catch (err) {
+        messageStore.message.error(`退出登陆异常 ${err}`)
         return Promise.resolve({ok: false, data: undefined})
     }
 }

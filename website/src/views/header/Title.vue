@@ -17,12 +17,30 @@ import {Avatar} from 'ant-design-vue'
 import {UserOutlined} from '@ant-design/icons-vue'
 import SvgIcon from '@jamescoyle/vue-icon'
 import {mdiAccount, mdiLayersOutline, mdiLogout} from '@mdi/js'
+import {userLogout} from "@/api/user_api.js"
+import {isNavigationFailure, NavigationFailureType, useRouter} from "vue-router"
 
 // 控制展示已登陆的信息。
 const isShowUserInfo = ref(true)
 const userInfoStore = useUserInfoStore()
 isShowUserInfo.value = userInfoStore.userInfo.nameEn !== undefined
 userInfoStore.$subscribe((_, state) => isShowUserInfo.value = state && state.nameEn)
+
+// 退出登陆。
+const router = useRouter()
+
+async function logoutHandler() {
+  const {ok} = await userLogout()
+  if (ok) {
+    // 成功退出登陆后，跳转到首页。
+    setTimeout(async () => {
+      const res = await router.push('/index')
+      if (isNavigationFailure(res, NavigationFailureType.duplicated)) {
+        location.reload()
+      }
+    }, 1000)
+  }
+}
 </script>
 
 <template>
@@ -44,7 +62,7 @@ userInfoStore.$subscribe((_, state) => isShowUserInfo.value = state && state.nam
         <SvgIcon type="mdi" :path="mdiAccount"/>
         个人信息
       </li>
-      <li v-ripple>
+      <li v-ripple @click="logoutHandler">
         <SvgIcon type="mdi" :path="mdiLogout"/>
         退出登陆
       </li>

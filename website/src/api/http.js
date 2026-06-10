@@ -34,6 +34,11 @@ export function httpGetJson(reqUrl, query, headers) {
     else return xhrGetJson(reqUrl, query, headers)
 }
 
+export function httpDeleteJson(reqUrl, query, headers) {
+    if (fetch) return fetchDeleteJson(reqUrl, query, headers)
+    else return xhrDeleteJson(reqUrl, query, headers)
+}
+
 /* httpJsonPostJson 发送 HTTP POST 请求，发送 JSON 格式数据并以 JSON 格式解析响应数据
  * @param reqUrl string，资源地址
  * @param reqBody object，请求体
@@ -167,6 +172,55 @@ function xhrGetJson(reqUrl, query, headers) {
             })
         })
         xhr.addEventListener('error', () => reject(`xhrGetJson failure: ${reqUrl}`))
+
+        // 发送请求
+        xhr.send()
+    })
+}
+
+function xhrDeleteJson(reqUrl, query, headers) {
+    return new Promise((resolve, reject) => {
+        // 处理 query
+        if (query) {
+            if (reqUrl.indexOf('?') >= 0) reqUrl = `${reqUrl}&${objectToQueryString(query)}`
+            else reqUrl = `${reqUrl}?${objectToQueryString(query)}`
+        }
+
+        let xhr = new XMLHttpRequest()
+        xhr.open('DELETE', `${reqUrl}`)
+
+        // 处理 header
+        if (headers) Object.keys(headers).forEach((key) => xhr.setRequestHeader(key, headers[key]))
+        xhr.setRequestHeader('X-Date', new Date().toUTCString())
+        xhr.withCredentials = true
+
+        // 处理回调
+        xhr.addEventListener('load', () => {
+            let rspBody
+            try {
+                rspBody = JSON.parse(xhr.response)
+            } catch (err) {
+                reject(`xhrGetJson failure: response body is not a json: ${err}: ${xhr.response}`)
+            }
+
+            // 判断是否需要登陆。响应码是 200006。
+            if (rspBody.code === constants.errCodeNeedLogin) {
+                const currentPath = location.pathname + location.search + location.hash
+
+                // 避免登陆页跳登陆页。
+                if (!currentPath.startsWith('/loginAndRegister'))
+                    location.href = `/loginAndRegister?redirect=${encodeURIComponent(currentPath)}`
+
+                return
+            }
+
+            resolve({
+                status: xhr.status,
+                headers: xhrHeadersToObject(xhr.getAllResponseHeaders()),
+                rspBody: rspBody
+            })
+        })
+        xhr.addEventListener('error', () => reject(`xhrDeleteJson failure: ${reqUrl}`))
 
         // 发送请求
         xhr.send()
@@ -347,7 +401,7 @@ function fetchGet(reqUrl, query, headers) {
                 resolve({
                     status: res.status,
                     headers: headers,
-                    rspBody: await res.arrayBuffer()
+                    rspBody: res.body
                 })
             }
         ).catch((err) => reject(`fetchGet failure: ${err}`))
@@ -393,6 +447,42 @@ function fetchGetJson(reqUrl, query, headers) {
                 })
             }
         ).catch((err) => reject(`fetchGetJson failure: ${err}`))
+    })
+}
+
+function fetchDeleteJson(reqUrl, query, headers) {
+    // 处理 query
+    if (query) {
+        if (reqUrl.indexOf('?') >= 0) reqUrl = `${reqUrl}&${objectToQueryString(query)}`
+        else reqUrl = `${reqUrl}?${objectToQueryString(query)}`
+    }
+
+    return new Promise((resolve, reject) => {
+        fetch(`${reqUrl}`, {
+            method: 'DELETE',
+            headers: mergeDateHeader(headers),
+            credentials: 'same-origin'
+        }).then(async (res) => {
+                const rspBody = await res.json()
+
+                // 判断是否需要登陆。响应码是 200006。
+                if (rspBody.code === constants.errCodeNeedLogin) {
+                    const currentPath = location.pathname + location.search + location.hash
+
+                    // 避免登陆页跳登陆页。
+                    if (!currentPath.startsWith('/loginAndRegister'))
+                        location.href = `/loginAndRegister?redirect=${encodeURIComponent(currentPath)}`
+
+                    return
+                }
+
+                resolve({
+                    status: res.status,
+                    headers: fetchHeadersToObject(res.headers),
+                    rspBody: rspBody
+                })
+            }
+        ).catch((err) => reject(`fetchDeleteJson failure: ${err}`))
     })
 }
 
@@ -515,7 +605,7 @@ function objectToQueryString(obj) {
 
     for (let [key, value] of Object.entries(obj)) {
         key = encodeURIComponent(key)
-        if (Array.isArray(value)) value.forEach((value) => parts.push(`${key}=${encodeURIComponent(value)}`))
+        if (Array.isArray(value)) value.forEach((v) => parts.push(`${key}=${encodeURIComponent(v)}`))
         else parts.push(`${key}=${encodeURIComponent(value)}`)
     }
 
