@@ -32,8 +32,8 @@ import (
 )
 
 var (
-	mysqlConnectionClosedFlag      int32
-	mysqlConnectionInitializedFlag int32
+	mysqlConnectionClosedFlag      atomic.Int32
+	mysqlConnectionInitializedFlag atomic.Int32
 	mysqlConnectionLock            sync.Mutex
 	gormQuery                      = &query.DB{}
 	mysqlDBConnection              *sql.DB
@@ -49,12 +49,12 @@ func InitializeMySQLConnection(ctx context.Context) {
 	mysqlConnectionLock.Lock()
 	defer mysqlConnectionLock.Unlock()
 
-	if atomic.LoadInt32(&mysqlConnectionClosedFlag) > 0 {
+	if mysqlConnectionClosedFlag.Load() > 0 {
 		log.Warn(ctx, "mysql connection is closed, no need to initialize")
 		return
 	}
 
-	if !atomic.CompareAndSwapInt32(&mysqlConnectionInitializedFlag, 0, 1) {
+	if !mysqlConnectionInitializedFlag.CompareAndSwap(0, 1) {
 		return
 	}
 
@@ -136,7 +136,7 @@ func CloseMySQLConnection(ctx context.Context) {
 	mysqlConnectionLock.Lock()
 	defer mysqlConnectionLock.Unlock()
 
-	if !atomic.CompareAndSwapInt32(&mysqlConnectionClosedFlag, 0, 1) {
+	if !mysqlConnectionClosedFlag.CompareAndSwap(0, 1) {
 		return
 	}
 
@@ -195,7 +195,7 @@ func watchMySQLConfigurationUpdate(configurer cfg.Configurer) {
 	defer mysqlConnectionLock.Unlock()
 
 	ctx := ctxs.New()
-	if atomic.LoadInt32(&mysqlConnectionClosedFlag) > 0 {
+	if mysqlConnectionClosedFlag.Load() > 0 {
 		log.Warn(ctx, "mysql connection is closed, no need to update configuration")
 		return
 	}

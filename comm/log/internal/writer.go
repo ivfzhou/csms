@@ -27,7 +27,7 @@ import (
 var (
 	writers         []WriteCloser
 	writerLock      sync.RWMutex
-	writerCloseFlag int32
+	writerCloseFlag atomic.Int32
 )
 
 // WriteCloser 日志打印者。
@@ -48,7 +48,7 @@ func RegisterWriter(w WriteCloser) {
 	writerLock.Lock()
 	defer writerLock.Unlock()
 
-	if atomic.LoadInt32(&writerCloseFlag) > 0 {
+	if writerCloseFlag.Load() > 0 {
 		panic("cannot register writer, because writer is already closed")
 	}
 
@@ -116,7 +116,7 @@ func CloseWriter(ctx context.Context) {
 	writerLock.Lock()
 	defer writerLock.Unlock()
 
-	if !atomic.CompareAndSwapInt32(&writerCloseFlag, 0, 1) {
+	if !writerCloseFlag.CompareAndSwap(0, 1) {
 		log.Warn(ctx, "writer is already closed")
 		return
 	}

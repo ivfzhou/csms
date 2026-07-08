@@ -350,11 +350,11 @@ func TestFileAPI_WebUploadPart(t *testing.T) {
 		ChunkNumber *int
 		FileData    []byte
 	}{
-		{"分片缺失", TakeStringPtr(util.FastRandomAlphaNumberString(38)), TakeIntPtr(1), nil},
-		{"分片大小为零", TakeStringPtr(util.FastRandomAlphaNumberString(38)), TakeIntPtr(1), []byte{}},
-		{"文件ID错误", TakeStringPtr(util.FastRandomAlphaNumberString(37)), TakeIntPtr(1), GenerateBytes(4096)},
-		{"文件ID字符非法", TakeStringPtr("汉" + util.FastRandomAlphaNumberString(37)), TakeIntPtr(1), GenerateBytes(4096)},
-		{"分片序号错误", TakeStringPtr(util.FastRandomAlphaNumberString(38)), TakeIntPtr(-1), GenerateBytes(4096)},
+		{"分片缺失", new(util.FastRandomAlphaNumberString(38)), new(1), nil},
+		{"分片大小为零", new(util.FastRandomAlphaNumberString(38)), new(1), []byte{}},
+		{"文件ID错误", new(util.FastRandomAlphaNumberString(37)), new(1), GenerateBytes(4096)},
+		{"文件ID字符非法", new("汉" + util.FastRandomAlphaNumberString(37)), new(1), GenerateBytes(4096)},
+		{"分片序号错误", new(util.FastRandomAlphaNumberString(38)), new(-1), GenerateBytes(4096)},
 	} {
 		t.Run("异常测试_"+v.Name, func(t *testing.T) {
 			validateErrorRequest(t, v.FileID, v.ChunkNumber, v.FileData)

@@ -28,8 +28,8 @@ import (
 )
 
 var (
-	rabbitMQClosedFlag         int32
-	rabbitMQInitializedFlag    int32
+	rabbitMQClosedFlag         atomic.Int32
+	rabbitMQInitializedFlag    atomic.Int32
 	rabbitMQUpdateLock         sync.Mutex
 	rabbitMQCloseNotifyChannel chan *amqp.Error
 	rabbitMQContext            context.Context
@@ -58,11 +58,11 @@ func InitializeRabbitMQConnection(ctx context.Context) {
 	rabbitMQUpdateLock.Lock()
 	defer rabbitMQUpdateLock.Unlock()
 
-	if atomic.LoadInt32(&rabbitMQClosedFlag) > 0 {
+	if rabbitMQClosedFlag.Load() > 0 {
 		return
 	}
 
-	if !atomic.CompareAndSwapInt32(&rabbitMQInitializedFlag, 0, 1) {
+	if !rabbitMQInitializedFlag.CompareAndSwap(0, 1) {
 		return
 	}
 
@@ -116,7 +116,7 @@ func CloseRabbitMQConnection(ctx context.Context) {
 	rabbitMQUpdateLock.Lock()
 	defer rabbitMQUpdateLock.Unlock()
 
-	if !atomic.CompareAndSwapInt32(&rabbitMQClosedFlag, 0, 1) {
+	if !rabbitMQClosedFlag.CompareAndSwap(0, 1) {
 		return
 	}
 
@@ -267,7 +267,7 @@ func watchRabbitMQConfigurationUpdate(configurer cfg.Configurer) {
 	defer rabbitMQUpdateLock.Unlock()
 
 	ctx := ctxs.New()
-	if atomic.LoadInt32(&rabbitMQClosedFlag) > 0 {
+	if rabbitMQClosedFlag.Load() > 0 {
 		log.Warn(ctx, "rabbitmq connection is closed, no need to update configuration")
 		return
 	}

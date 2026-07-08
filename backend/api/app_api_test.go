@@ -96,7 +96,7 @@ func TestAppAPI_WebRegister(t *testing.T) {
 
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
-		name, logoName, platform, admins, members, logoData := TakeStringPtr("应用名"), TakeStringPtr("logo_name.png"),
+		name, logoName, platform, admins, members, logoData := new("应用名"), new("logo_name.png"),
 			TakeIntPtr(model.AppPlatformWindows), []string{"a", "d"}, []string{"b", "c"}, GeneratePNG(t, 10, 10)
 
 		defer MockDBClient[model.App](ctx).
@@ -148,7 +148,7 @@ func TestAppAPI_WebRegister(t *testing.T) {
 
 	t.Run("异常测试_图标文件过大", func(t *testing.T) {
 		ctx := context.Background()
-		name, logoName, platform, admins, members, logoData := TakeStringPtr("应用名"), TakeStringPtr("logo_name.png"),
+		name, logoName, platform, admins, members, logoData := new("应用名"), new("logo_name.png"),
 			TakeIntPtr(model.AppPlatformWindows), []string{"a", "d"}, []string{"b", "c"}, GeneratePNG(t, 10, 10)
 
 		defer mvt.Chain(cfg.Get()).
@@ -180,7 +180,7 @@ func TestAppAPI_WebRegister(t *testing.T) {
 
 	t.Run("异常测试_图标文件格式非法", func(t *testing.T) {
 		ctx := context.Background()
-		name, logoName, platform, admins, members, logoData := TakeStringPtr("应用名"), TakeStringPtr("logo_name.png"),
+		name, logoName, platform, admins, members, logoData := new("应用名"), new("logo_name.png"),
 			TakeIntPtr(model.AppPlatformWindows), []string{"a", "d"}, []string{"b", "c"}, GenerateGIF(t, 10, 10)
 
 		defer MockRedis(ctx).
@@ -206,7 +206,7 @@ func TestAppAPI_WebRegister(t *testing.T) {
 
 	t.Run("异常测试_用户不存在", func(t *testing.T) {
 		ctx := context.Background()
-		name, logoName, platform, admins, members, logoData := TakeStringPtr("应用名"), TakeStringPtr("logo_name.png"),
+		name, logoName, platform, admins, members, logoData := new("应用名"), new("logo_name.png"),
 			TakeIntPtr(model.AppPlatformWindows), []string{"a", "d"}, []string{"b", "c"}, GeneratePNG(t, 10, 10)
 
 		defer MockRedis(ctx).
@@ -274,16 +274,16 @@ func TestAppAPI_WebRegister(t *testing.T) {
 		Admins, Members []string
 		LogoData        []byte
 	}{
-		{"应用名缺失", nil, TakeStringPtr("logo_name.png"), TakeIntPtr(model.AppPlatformWindows), []string{"a", "d"}, []string{"b", "c"}, GeneratePNG(t, 10, 10)},
-		{"应用名字符过多", TakeStringPtr(util.FastRandomAlphaNumberString(65)), TakeStringPtr("logo_name.png"), TakeIntPtr(model.AppPlatformWindows), []string{"a", "d"}, []string{"b", "c"}, GeneratePNG(t, 10, 10)},
-		{"应用图标缺失", TakeStringPtr("应用名"), TakeStringPtr("logo_name.png"), TakeIntPtr(model.AppPlatformWindows), []string{"a", "d"}, []string{"b", "c"}, nil},
-		{"应用平台非法", TakeStringPtr("应用名"), TakeStringPtr("logo_name.png"), TakeIntPtr(0), []string{"a", "d"}, []string{"b", "c"}, GeneratePNG(t, 10, 10)},
-		{"管理员字符非法", TakeStringPtr("应用名"), TakeStringPtr("logo_name.png"), TakeIntPtr(model.AppPlatformWindows), []string{"张", "d"}, []string{"b", "c"}, GeneratePNG(t, 10, 10)},
-		{"管理员非法", TakeStringPtr("应用名"), TakeStringPtr("logo_name.png"), TakeIntPtr(model.AppPlatformWindows), []string{util.FastRandomAlphaNumberString(33), "d"}, []string{"b", "c"}, GeneratePNG(t, 10, 10)},
-		{"管理员重复", TakeStringPtr("应用名"), TakeStringPtr("logo_name.png"), TakeIntPtr(model.AppPlatformWindows), []string{"a", "a"}, []string{"b", "c"}, GeneratePNG(t, 10, 10)},
-		{"成员字符非法", TakeStringPtr("应用名"), TakeStringPtr("logo_name.png"), TakeIntPtr(model.AppPlatformWindows), []string{"a", "d"}, []string{"张", "c"}, GeneratePNG(t, 10, 10)},
-		{"成员非法", TakeStringPtr("应用名"), TakeStringPtr("logo_name.png"), TakeIntPtr(model.AppPlatformWindows), []string{"a", "d"}, []string{util.FastRandomAlphaNumberString(33), "c"}, GeneratePNG(t, 10, 10)},
-		{"成员重复", TakeStringPtr("应用名"), TakeStringPtr("logo_name.png"), TakeIntPtr(model.AppPlatformWindows), []string{"a", "d"}, []string{"c", "c"}, GeneratePNG(t, 10, 10)},
+		{"应用名缺失", nil, new("logo_name.png"), TakeIntPtr(model.AppPlatformWindows), []string{"a", "d"}, []string{"b", "c"}, GeneratePNG(t, 10, 10)},
+		{"应用名字符过多", new(util.FastRandomAlphaNumberString(65)), new("logo_name.png"), TakeIntPtr(model.AppPlatformWindows), []string{"a", "d"}, []string{"b", "c"}, GeneratePNG(t, 10, 10)},
+		{"应用图标缺失", new("应用名"), new("logo_name.png"), TakeIntPtr(model.AppPlatformWindows), []string{"a", "d"}, []string{"b", "c"}, nil},
+		{"应用平台非法", new("应用名"), new("logo_name.png"), new(0), []string{"a", "d"}, []string{"b", "c"}, GeneratePNG(t, 10, 10)},
+		{"管理员字符非法", new("应用名"), new("logo_name.png"), TakeIntPtr(model.AppPlatformWindows), []string{"张", "d"}, []string{"b", "c"}, GeneratePNG(t, 10, 10)},
+		{"管理员非法", new("应用名"), new("logo_name.png"), TakeIntPtr(model.AppPlatformWindows), []string{util.FastRandomAlphaNumberString(33), "d"}, []string{"b", "c"}, GeneratePNG(t, 10, 10)},
+		{"管理员重复", new("应用名"), new("logo_name.png"), TakeIntPtr(model.AppPlatformWindows), []string{"a", "a"}, []string{"b", "c"}, GeneratePNG(t, 10, 10)},
+		{"成员字符非法", new("应用名"), new("logo_name.png"), TakeIntPtr(model.AppPlatformWindows), []string{"a", "d"}, []string{"张", "c"}, GeneratePNG(t, 10, 10)},
+		{"成员非法", new("应用名"), new("logo_name.png"), TakeIntPtr(model.AppPlatformWindows), []string{"a", "d"}, []string{util.FastRandomAlphaNumberString(33), "c"}, GeneratePNG(t, 10, 10)},
+		{"成员重复", new("应用名"), new("logo_name.png"), TakeIntPtr(model.AppPlatformWindows), []string{"a", "d"}, []string{"c", "c"}, GeneratePNG(t, 10, 10)},
 	} {
 		t.Run("异常测试_"+v.Name, func(t *testing.T) {
 			validateErrorRequest(

@@ -129,9 +129,7 @@ func consumeWindowsMessage(ctx context.Context) (slept bool) {
 	}
 
 	// 监听证书更新。
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for {
 			time.Sleep(10 * time.Second)
 
@@ -165,7 +163,7 @@ func consumeWindowsMessage(ctx context.Context) (slept bool) {
 				}
 			}
 		}
-	}()
+	})
 
 	wg.Wait()
 	log.Info(ctx, "end consume")
@@ -556,7 +554,7 @@ func signWindowsFileForPEAndAttestationType(ctx context.Context, delivery amqp.D
 		fileExt := filepath.Ext(fileName)
 		fileName = strings.TrimSuffix(fileName, fileExt)
 		infFilePath := filepath.Join(filepath.Dir(sourceFilePath), fileName+cc.ExtensionINF)
-		err = os.WriteFile(infFilePath, []byte(fmt.Sprintf(consts.INFTemplate, fileName)), cc.FileMode)
+		err = os.WriteFile(infFilePath, fmt.Appendf(nil, consts.INFTemplate, fileName), cc.FileMode)
 		if err != nil {
 			log.Error(ctx, "failed to write inf file", err)
 			log.ErrorIf(ctx, delivery.Nack(false, true), "failed to nack message", windowsSigningJob.JobID)
@@ -600,8 +598,8 @@ func signWindowsFileForPEAndAttestationType(ctx context.Context, delivery amqp.D
 		// 生成 ddf。TODO: 模板是否通用。
 		ddfFilePath := filepath.Join(filepath.Dir(sourceFilePath), fileName+cc.ExtensionDDF)
 		catFilePath := filepath.Join(filepath.Dir(sourceFilePath), fileName+cc.ExtensionCAT)
-		err = os.WriteFile(ddfFilePath, []byte(fmt.Sprintf(
-			consts.DDFTemplate, workspace, fileName, catFilePath, infFilePath, sourceFilePath)), cc.FileMode)
+		err = os.WriteFile(ddfFilePath, fmt.Appendf(
+			nil, consts.DDFTemplate, workspace, fileName, catFilePath, infFilePath, sourceFilePath), cc.FileMode)
 		if err != nil {
 			log.Error(ctx, "failed to write ddf file", err)
 			log.ErrorIf(ctx, delivery.Nack(false, true), "failed to nack message", windowsSigningJob.JobID)
@@ -869,7 +867,7 @@ func signWindowsFileForAttestationType(ctx context.Context, delivery amqp.Delive
 		fileExt := filepath.Ext(fileName)
 		fileName = strings.TrimSuffix(fileName, fileExt)
 		infFilePath := filepath.Join(filepath.Dir(sourceFilePath), fileName+cc.ExtensionINF)
-		err = os.WriteFile(infFilePath, []byte(fmt.Sprintf(consts.INFTemplate, fileName)), cc.FileMode)
+		err = os.WriteFile(infFilePath, fmt.Appendf(nil, consts.INFTemplate, fileName), cc.FileMode)
 		if err != nil {
 			log.Error(ctx, "failed to write inf file", err)
 			log.ErrorIf(ctx, delivery.Nack(false, true), "failed to nack message", windowsSigningJob.JobID)
@@ -914,8 +912,8 @@ func signWindowsFileForAttestationType(ctx context.Context, delivery amqp.Delive
 		// 生成 ddf。TODO: 模板是否通用。
 		ddfFilePath := filepath.Join(filepath.Dir(sourceFilePath), fileName+cc.ExtensionDDF)
 		catFilePath := filepath.Join(filepath.Dir(sourceFilePath), fileName+cc.ExtensionCAT)
-		err = os.WriteFile(ddfFilePath, []byte(fmt.Sprintf(
-			consts.DDFTemplate, workspace, fileName, catFilePath, infFilePath, sourceFilePath)), cc.FileMode)
+		err = os.WriteFile(ddfFilePath, fmt.Appendf(
+			nil, consts.DDFTemplate, workspace, fileName, catFilePath, infFilePath, sourceFilePath), cc.FileMode)
 		if err != nil {
 			log.Error(ctx, "failed to write ddf file", err)
 			log.ErrorIf(ctx, delivery.Nack(false, true), "failed to nack message", windowsSigningJob.JobID)

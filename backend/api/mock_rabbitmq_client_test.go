@@ -24,11 +24,13 @@ import (
 const (
 	rabbitQueueDeclare rabbitMQMethod = 1 + iota
 	rabbitPublishWithContext
+	rabbitConsumeWithContext
 )
 
 type RabbitMQMocker interface {
 	QueueDeclareOnce(amqp.Queue, error) RabbitMQMocker
 	PublishWithContextOnce(error) RabbitMQMocker
+	ConsumeWithContextOnce(<-chan amqp.Delivery, error) RabbitMQMocker
 	Reset()
 }
 
@@ -69,6 +71,14 @@ func (c *rabbitMQMockerImpl) PublishWithContextOnce(e error) RabbitMQMocker {
 	return c
 }
 
+func (c *rabbitMQMockerImpl) ConsumeWithContextOnce(ch <-chan amqp.Delivery, e error) RabbitMQMocker {
+	c.datas = append(c.datas, &rabbitMQResultData{
+		fn:     rabbitConsumeWithContext,
+		result: []any{ch, e},
+	})
+	return c
+}
+
 func (c *rabbitMQMockerImpl) Reset() {
 	c.reset()
 }
@@ -89,6 +99,18 @@ func (c *rabbitMQMockerImpl) PublishWithContext(context.Context, string, string,
 		return err
 	}
 	panic("unhandle PublishWithContext")
+}
+
+func (c *rabbitMQMockerImpl) ConsumeWithContext(ctx context.Context, queue, consumer string,
+	autoAck, exclusive, noLocal, noWait bool, args amqp.Table) (<-chan amqp.Delivery, error) {
+
+	data := c.getRabbitData(rabbitConsumeWithContext)
+	if data != nil {
+		err, _ := data[0].(error)
+		ch, _ := data[0].(<-chan amqp.Delivery)
+		return ch, err
+	}
+	panic("unhandle ConsumeWithContext")
 }
 
 func (c *rabbitMQMockerImpl) getRabbitData(fn rabbitMQMethod) []any {

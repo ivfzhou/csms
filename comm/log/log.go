@@ -26,7 +26,7 @@ import (
 )
 
 var (
-	initializedFlag       int32
+	initializedFlag       atomic.Int32
 	closeFunc             = func(context.Context) {}
 	getLoggerFunc         = func() Logger { return defaultLoggerImpl }
 	getLevelFunc          = func() Level { return LevelDebug }
@@ -55,7 +55,7 @@ func RegisterImplement(
 		panic("nil value is not allowed")
 	}
 
-	if !atomic.CompareAndSwapInt32(&initializedFlag, 0, 1) {
+	if !initializedFlag.CompareAndSwap(0, 1) {
 		panic("function has already been called")
 	}
 

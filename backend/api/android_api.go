@@ -66,7 +66,7 @@ func AndroidWebListOrganizations(c *gin.Context) {
 	ctx := c.Request.Context()
 	rsp, err := service.AndroidWebListOrganizations(ctx)
 	if err != nil {
-		log.Warn(ctx, "failed to list android organization", err)
+		log.Warn(ctx, "failed to list android organizations", err)
 		util.ResponseError(c, err)
 		return
 	}

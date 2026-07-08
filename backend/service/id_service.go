@@ -44,30 +44,13 @@ type IDType string
 
 // 生成唯一 ID。
 func generateID(ctx context.Context, typ IDType) (string, error) {
-	for {
-		id := ""
-		switch typ {
-		case IDApp, IDWindowsCertificate, IDAndroidCertificate, IDWHQLJob, IDAppleCertificate, IDAppleDevice:
-			id = strings.ReplaceAll(uuid.NewString(), "-", "")
-		default:
-			id = time.Now().Format("200601") + strings.ReplaceAll(uuid.NewString(), "-", "")
-		}
-		redisResult, err := conn.RedisClient(ctx).SAdd(ctx, fmt.Sprintf(consts.RedisKeyIDFmt, typ), id).Result()
-		if err != nil {
-			log.Error(ctx, "failed to add data id to redis", err)
-			return "", errs.NewWithError(consts.ErrSystem, err)
-		}
-		if redisResult > 0 && len(id) > 0 {
-			return id, nil
-		}
-		time.Sleep(time.Millisecond * 100)
-	}
+	return generateIDWithTime(ctx, typ, time.Now())
 }
 
 // 生成唯一 ID。
 func generateIDWithTime(ctx context.Context, typ IDType, t time.Time) (string, error) {
 	yearMonth := t.Format("200601")
-	for {
+	for range 100 {
 		id := ""
 		switch typ {
 		case IDApp, IDWindowsCertificate, IDAndroidCertificate, IDWHQLJob, IDAppleCertificate, IDAppleDevice:
@@ -85,6 +68,7 @@ func generateIDWithTime(ctx context.Context, typ IDType, t time.Time) (string, e
 		}
 		time.Sleep(time.Millisecond * 100)
 	}
+	return "", errs.NewWithMsg(consts.ErrSystem, "no id available")
 }
 
 // 回收 ID。

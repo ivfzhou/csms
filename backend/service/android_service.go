@@ -117,9 +117,9 @@ func AndroidWebListOrganizations(ctx context.Context) (rsp *protocol.AndroidWebL
 		androidOrganizations, err = androidOrganizationDo.WithContext(ctx).Order(
 			androidOrganizationDo.CreatedTime.Desc(),
 			androidOrganizationDo.ID.Desc(),
-		).Order(androidOrganizationDo.ID.Desc()).Find()
+		).Find()
 		if err != nil {
-			log.Error(ctx, "failed to retrieve android organization from database", err)
+			log.Error(ctx, "failed to retrieve android organizations from database", err)
 			err = errs.NewWithError(consts.ErrSystem, err)
 			return
 		}
@@ -215,7 +215,7 @@ func AndroidWebApplyCertificate(ctx context.Context, req *protocol.AndroidWebApp
 	var keypass string
 	var storepass string
 	{
-		log.Info(ctx, "run the keytool ro generate android keystore")
+		log.Info(ctx, "run the keytool to generate android keystore")
 		jksFilePath, err = util.GenerateTemporaryFile(cc.ServiceNameBackend, "*.jks")
 		if err != nil {
 			log.Error(ctx, "failed to get a file path", err)
@@ -300,7 +300,6 @@ func AndroidWebApplyCertificate(ctx context.Context, req *protocol.AndroidWebApp
 					"failed to reclaim android certificate id", certificateID)
 			}
 		}()
-		now := time.Now()
 		androidCertificate = &model.AndroidCertificate{
 			CertificateID:      certificateID,
 			AppID:              app.ID,
@@ -324,7 +323,7 @@ func AndroidWebApplyCertificate(ctx context.Context, req *protocol.AndroidWebApp
 			NotBefore:          jksInfo.ValidFrom,
 			NotAfter:           jksInfo.ValidUntil,
 			Content:            jksBytes,
-			CreatedTime:        now,
+			CreatedTime:        time.Now(),
 		}
 		androidCertificateTxDo := conn.MySQLTxClient(ctx).AndroidCertificate
 		err = androidCertificateTxDo.WithContext(ctx).Select(
@@ -502,7 +501,6 @@ func AndroidWebUploadCertificate(ctx context.Context, req *protocol.AndroidWebUp
 					"failed to reclaim android certificate id", certificateID)
 			}
 		}()
-		now := time.Now()
 		androidCertificate = &model.AndroidCertificate{
 			CertificateID:      certificateID,
 			AppID:              app.ID,
@@ -526,7 +524,7 @@ func AndroidWebUploadCertificate(ctx context.Context, req *protocol.AndroidWebUp
 			NotBefore:          jksInfo.ValidFrom,
 			NotAfter:           jksInfo.ValidUntil,
 			Content:            jksData,
-			CreatedTime:        now,
+			CreatedTime:        time.Now(),
 		}
 		androidCertificateTxDo := conn.MySQLTxClient(ctx).AndroidCertificate
 		err = androidCertificateTxDo.WithContext(ctx).Select(
@@ -836,7 +834,7 @@ func AndroidWebGetGooglePlayCertificate(ctx context.Context, req *protocol.Andro
 	var androidCertificate *model.AndroidCertificate
 	{
 		log.Info(ctx, "get android certificate information from database")
-		androidCertificateDo := conn.MySQLTxClient(ctx).AndroidCertificate
+		androidCertificateDo := conn.MySQLClient(ctx).AndroidCertificate
 		androidCertificate, err = androidCertificateDo.WithContext(ctx).Select(
 			androidCertificateDo.AesKeyID,
 			androidCertificateDo.Content,
@@ -894,6 +892,7 @@ func AndroidWebGetGooglePlayCertificate(ctx context.Context, req *protocol.Andro
 			err = errs.NewWithError(consts.ErrSystem, err)
 			return
 		}
+		defer util.RemoveFile(ctx, jksPath)
 		var outPath string
 		outPath, err = util.GenerateTemporaryFile(cc.ServiceNameBackend, "*.cer")
 		if err != nil {
@@ -901,7 +900,7 @@ func AndroidWebGetGooglePlayCertificate(ctx context.Context, req *protocol.Andro
 			err = errs.NewWithError(consts.ErrSystem, err)
 			return
 		}
-		defer util.RemoveFile(ctx, jksPath)
+		defer util.RemoveFile(ctx, outPath)
 		var output []byte
 		output, err = exec.Command(
 			consts.KeytoolBinaryPath,
@@ -920,7 +919,6 @@ func AndroidWebGetGooglePlayCertificate(ctx context.Context, req *protocol.Andro
 			err = errs.NewWithError(consts.ErrSystem, err)
 			return
 		}
-		defer util.RemoveFile(ctx, outPath)
 		jksData, err = os.ReadFile(outPath)
 		if err != nil {
 			log.Error(ctx, "failed to read file", err)
@@ -998,7 +996,7 @@ func AndroidWebGetGooglePlayDeployCertificate(ctx context.Context,
 	var androidCertificate *model.AndroidCertificate
 	{
 		log.Info(ctx, "get android certificate information from database")
-		androidCertificateDo := conn.MySQLTxClient(ctx).AndroidCertificate
+		androidCertificateDo := conn.MySQLClient(ctx).AndroidCertificate
 		androidCertificate, err = androidCertificateDo.WithContext(ctx).Select(
 			androidCertificateDo.Category,
 			androidCertificateDo.Content,
@@ -1075,7 +1073,8 @@ func AndroidWebGetGooglePlayDeployCertificate(ctx context.Context,
 		defer util.RemoveFile(ctx, pkeyPath)
 		var output []byte
 		output, err = exec.Command(
-			consts.JavaBinaryPathForPepk, "-jar", consts.PepkJarPath,
+			consts.JavaBinaryPathForPepk,
+			"-jar", consts.PepkJarPath,
 			"--keystore="+jksPath,
 			"--alias="+androidCertificate.Alias_,
 			"--output="+outPath,
@@ -1168,7 +1167,7 @@ func AndroidWebGetGooglePlayUpgradeCertificate(ctx context.Context,
 	var deployAndroidCertificate *model.AndroidCertificate
 	{
 		log.Info(ctx, "get deploy android certificate")
-		androidCertificateDo := conn.MySQLTxClient(ctx).AndroidCertificate
+		androidCertificateDo := conn.MySQLClient(ctx).AndroidCertificate
 		deployAndroidCertificate, err = androidCertificateDo.WithContext(ctx).Select(
 			androidCertificateDo.Category,
 			androidCertificateDo.Content,
@@ -1235,7 +1234,7 @@ func AndroidWebGetGooglePlayUpgradeCertificate(ctx context.Context,
 	var uploadAndroidCertificate *model.AndroidCertificate
 	{
 		log.Info(ctx, "get upload android certificate")
-		androidCertificateDo := conn.MySQLTxClient(ctx).AndroidCertificate
+		androidCertificateDo := conn.MySQLClient(ctx).AndroidCertificate
 		uploadAndroidCertificate, err = androidCertificateDo.WithContext(ctx).Select(
 			androidCertificateDo.Category,
 			androidCertificateDo.Content,
@@ -1322,7 +1321,8 @@ func AndroidWebGetGooglePlayUpgradeCertificate(ctx context.Context,
 		}
 		var output []byte
 		output, err = exec.Command(
-			consts.JavaBinaryPathForPepk, "-jar", consts.PepkJarPath,
+			consts.JavaBinaryPathForPepk,
+			"-jar", consts.PepkJarPath,
 			"--keystore", deployCertificatePath,
 			"--alias", deployAndroidCertificate.Alias_,
 			"--output", outPath,
@@ -2069,12 +2069,12 @@ func AndroidWebListSigningJobs(ctx context.Context, req *protocol.AndroidWebList
 	var userIDToName map[int]string
 	var apiAccountIDToName map[int]string
 	var fileIDs []string
-	var certificateIDs2 []int
+	var androidCertificateIDs2 []int
 	{
 		log.Info(ctx, "get user information from database")
 		userIDs2 := make([]int, 0, len(androidSigningJobs)/2)
 		apiAccountIDs := make([]int, 0, len(androidSigningJobs)/2)
-		certificateIDs2 = make([]int, 0, len(androidSigningJobs))
+		androidCertificateIDs2 = make([]int, 0, len(androidSigningJobs))
 		fileIDs = make([]string, 0, len(androidSigningJobs))
 		for _, v := range androidSigningJobs {
 			switch v.Source {
@@ -2085,12 +2085,12 @@ func AndroidWebListSigningJobs(ctx context.Context, req *protocol.AndroidWebList
 			default:
 				log.Warn(ctx, "unknown source type", v.Source)
 			}
-			certificateIDs2 = append(certificateIDs2, v.CertificateID)
+			androidCertificateIDs2 = append(androidCertificateIDs2, v.CertificateID)
 			fileIDs = append(fileIDs, v.FileID)
 		}
 		userIDs2 = util.CleanNumbers(userIDs2)
 		apiAccountIDs = util.CleanNumbers(apiAccountIDs)
-		certificateIDs2 = util.CleanNumbers(certificateIDs2)
+		androidCertificateIDs2 = util.CleanNumbers(androidCertificateIDs2)
 		fileIDs = util.CleanStrings(fileIDs)
 		userIDToName, err = GetUserNamesByIDs(ctx, userIDs2)
 		if err != nil {
@@ -2114,7 +2114,7 @@ func AndroidWebListSigningJobs(ctx context.Context, req *protocol.AndroidWebList
 	// 查询证书别名。
 	var androidCertificateIDToAlias map[int]string
 	{
-		if len(certificateIDs2) > 0 {
+		if len(androidCertificateIDs2) > 0 {
 			log.Info(ctx, "get android certificate information from database")
 			var androidCertificates []*model.AndroidCertificate
 			androidCertificateDo := conn.MySQLClient(ctx).AndroidCertificate
@@ -2122,7 +2122,7 @@ func AndroidWebListSigningJobs(ctx context.Context, req *protocol.AndroidWebList
 				androidCertificateDo.ID,
 				androidCertificateDo.Alias_,
 			).Where(
-				androidCertificateDo.ID.In(certificateIDs2...),
+				androidCertificateDo.ID.In(androidCertificateIDs2...),
 			).Find()
 			if err != nil {
 				log.Error(ctx, "failed to retrieve android certificate information from database", err)
@@ -2265,7 +2265,7 @@ func AndroidWebDeleteCertificate(ctx context.Context, req *protocol.AndroidWebDe
 			androidCertificateTxDo.CertificateID.Eq(req.CertificateID),
 			androidCertificateTxDo.AppID.Eq(app.ID),
 			androidCertificateTxDo.DeletedTime.IsNull(),
-		).Take()
+		).Clauses(query.ForUpdate()).Take()
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				log.Warn(ctx, "android certificate not found")

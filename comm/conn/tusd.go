@@ -29,7 +29,7 @@ import (
 
 var (
 	tusdClient          tus.TusClient
-	tusdInitializedFlag int32
+	tusdInitializedFlag atomic.Int32
 	tusdAddress         string
 	tusdLogLevel        int
 	tusdUpdateLock      sync.Mutex
@@ -37,7 +37,7 @@ var (
 
 // InitializeTusdConnection 初始化 Tusd 服务器连接。
 func InitializeTusdConnection(ctx context.Context) {
-	if !atomic.CompareAndSwapInt32(&tusdInitializedFlag, 0, 1) {
+	if !tusdInitializedFlag.CompareAndSwap(0, 1) {
 		return
 	}
 

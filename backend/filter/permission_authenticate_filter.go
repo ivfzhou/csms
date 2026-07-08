@@ -34,7 +34,7 @@ func AddPathAuthorities(path string, auths ...int) {
 	if pathToAuthorities == nil {
 		pathToAuthorities = make(map[string][]int)
 	}
-	pathToAuthorities[path] = append(pathToAuthorities[path], auths...)
+	pathToAuthorities[path] = util.CleanNumbers(append(pathToAuthorities[path], auths...))
 }
 
 // PermissionWebAuthenticateFilter 鉴权函数。
@@ -43,7 +43,7 @@ func PermissionWebAuthenticateFilter(c *gin.Context) {
 	ctx := c.Request.Context()
 	log.Info(ctx, "authenticate web request")
 	reqPath := c.FullPath()
-	authorities := util.CleanNumbers(pathToAuthorities[reqPath])
+	authorities := pathToAuthorities[reqPath]
 
 	// 获取应用信息。
 	var err error
@@ -110,7 +110,7 @@ func PermissionAPIAuthenticateFilter(c *gin.Context) {
 	ctx := c.Request.Context()
 	log.Info(ctx, "authenticate api request")
 	reqPath := c.FullPath()
-	authorities := util.CleanNumbers(pathToAuthorities[reqPath])
+	authorities := pathToAuthorities[reqPath]
 
 	// 不需要权限。
 	if len(authorities) <= 0 {

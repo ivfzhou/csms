@@ -26,7 +26,7 @@ const (
 )
 
 var (
-	initializedFlag int32
+	initializedFlag atomic.Int32
 	getFunc         = func(errs.Code, Language) (string, bool) { return "", false }
 	closeFunc       = func(context.Context) {}
 )
@@ -40,7 +40,7 @@ func RegisterImplement(get func(errs.Code, Language) (string, bool), close func(
 		panic("nil value is not allowed")
 	}
 
-	if !atomic.CompareAndSwapInt32(&initializedFlag, 0, 1) {
+	if !initializedFlag.CompareAndSwap(0, 1) {
 		panic("function has already been called")
 	}
 

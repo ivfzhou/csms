@@ -133,47 +133,153 @@ func webOpen(r *gin.RouterGroup) {
 func webAndroid(r *gin.RouterGroup) {
 	r = r.Group("/android", filter.WebAuthenticateFilter)
 
-	addRouteWithPermissions(r, http.MethodPost, "/addOrganization", permissionSystem,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, api.AndroidWebAddOrganization)
-	addRouteWithPermissions(r, http.MethodGet, "/listOrganizations", permissionSystem,
-		filter.PermissionWebAuthenticateFilter, api.AndroidWebListOrganizations)
-	addRouteWithPermissions(r, http.MethodPost, "/applyCertificate/:"+consts.HTTPPathAppID, permissionApp,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.AndroidWebApplyCertificate)
-	addRouteWithPermissions(r, http.MethodPost, "/uploadCertificate/:"+consts.HTTPPathAppID, permissionApp,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.AndroidWebUploadCertificate)
-	addRouteWithPermissions(r, http.MethodGet, "/listCertificates/:"+consts.HTTPPathAppID, permissionAppRead,
-		filter.PermissionWebAuthenticateFilter, api.AndroidWebListCertificates)
-	addRouteWithPermissions(r, http.MethodGet, "/downloadCertificate/:"+consts.HTTPPathAppID, permissionAppRead,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, api.AndroidWebDownloadCertificate)
-	addRouteWithPermissions(r, http.MethodGet, "/getGooglePlayCertificate/:"+consts.HTTPPathAppID, permissionAppAdmin,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, api.AndroidWebGetGooglePlayCertificate)
-	addRouteWithPermissions(r, http.MethodPost, "/getGooglePlayDeployCertificate/:"+consts.HTTPPathAppID,
-		permissionAppAdmin, filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter,
-		api.AndroidWebGetGooglePlayDeployCertificate)
-	addRouteWithPermissions(r, http.MethodPost, "/getGooglePlayUpgradeCertificate/:"+consts.HTTPPathAppID,
-		permissionAppAdmin, filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter,
-		api.AndroidWebGetGooglePlayUpgradeCertificate)
-	addRouteWithPermissions(r, http.MethodGet, "/getCertificateFacebookDigest/:"+consts.HTTPPathAppID,
-		permissionAppAdmin, filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter,
-		api.AndroidWebGetCertificateFacebookDigest)
-	addRouteWithPermissions(r, http.MethodPost, "/submitAPKSigningJob/:"+consts.HTTPPathAppID, permissionAppSign,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.AndroidWebSubmitAPKSigningJob)
-	addRouteWithPermissions(r, http.MethodPost, "/submitAABSigningJob/:"+consts.HTTPPathAppID, permissionAppSign,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.AndroidWebSubmitAABSigningJob)
-	addRouteWithPermissions(r, http.MethodPost, "/submitAPKPatchSigningJob/:"+consts.HTTPPathAppID, permissionAppSign,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.AndroidWebSubmitAPKPatchSigningJob)
-	addRouteWithPermissions(r, http.MethodGet, "/listSigningJobs/:"+consts.HTTPPathAppID, permissionAppRead,
-		filter.PermissionWebAuthenticateFilter, api.AndroidWebListSigningJobs)
-	addRouteWithPermissions(r, http.MethodDelete, "/removeOrganization", permissionSystem,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, api.AndroidWebRemoveOrganization)
-	addRouteWithPermissions(r, http.MethodDelete, "/deleteCertificate/:"+consts.HTTPPathAppID, permissionAppAdmin,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.AndroidWebDeleteCertificate)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/addOrganization",
+		permissionSystem,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		api.AndroidWebAddOrganization,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/listOrganizations",
+		permissionSystem,
+		filter.PermissionWebAuthenticateFilter,
+		api.AndroidWebListOrganizations,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/applyCertificate/:"+consts.HTTPPathAppID,
+		permissionApp,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.AndroidWebApplyCertificate,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/uploadCertificate/:"+consts.HTTPPathAppID,
+		permissionApp,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.AndroidWebUploadCertificate,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/listCertificates/:"+consts.HTTPPathAppID,
+		permissionAppRead,
+		filter.PermissionWebAuthenticateFilter,
+		api.AndroidWebListCertificates,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/downloadCertificate/:"+consts.HTTPPathAppID,
+		permissionAppRead,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		api.AndroidWebDownloadCertificate,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/getGooglePlayCertificate/:"+consts.HTTPPathAppID,
+		permissionAppAdmin,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		api.AndroidWebGetGooglePlayCertificate,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/getGooglePlayDeployCertificate/:"+consts.HTTPPathAppID,
+		permissionAppAdmin,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		api.AndroidWebGetGooglePlayDeployCertificate,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/getGooglePlayUpgradeCertificate/:"+consts.HTTPPathAppID,
+		permissionAppAdmin,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		api.AndroidWebGetGooglePlayUpgradeCertificate,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/getCertificateFacebookDigest/:"+consts.HTTPPathAppID,
+		permissionAppAdmin,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		api.AndroidWebGetCertificateFacebookDigest,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/submitAPKSigningJob/:"+consts.HTTPPathAppID,
+		permissionAppSign,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.AndroidWebSubmitAPKSigningJob,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/submitAABSigningJob/:"+consts.HTTPPathAppID,
+		permissionAppSign,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.AndroidWebSubmitAABSigningJob,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/submitAPKPatchSigningJob/:"+consts.HTTPPathAppID,
+		permissionAppSign,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.AndroidWebSubmitAPKPatchSigningJob,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/listSigningJobs/:"+consts.HTTPPathAppID,
+		permissionAppRead,
+		filter.PermissionWebAuthenticateFilter,
+		api.AndroidWebListSigningJobs,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodDelete,
+		"/removeOrganization",
+		permissionSystem,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		api.AndroidWebRemoveOrganization,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodDelete,
+		"/deleteCertificate/:"+consts.HTTPPathAppID,
+		permissionAppAdmin,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.AndroidWebDeleteCertificate,
+	)
 }
 
 func webWindows(r *gin.RouterGroup) {

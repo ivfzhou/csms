@@ -30,8 +30,8 @@ import (
 )
 
 var (
-	redisInitializedFlag int32
-	redisClosedFlag      int32
+	redisInitializedFlag atomic.Int32
+	redisClosedFlag      atomic.Int32
 	redisClient          = &redis.Client{}
 	lockKeyToValues      = sync.Map{}
 	redisConnectOptions  *redis.Options
@@ -43,11 +43,11 @@ var (
 // InitializeRedisConnection 初始化 Redis 服务连接。
 // 连接失败会退出程序。
 func InitializeRedisConnection(ctx context.Context) {
-	if atomic.LoadInt32(&redisClosedFlag) > 0 {
+	if redisClosedFlag.Load() > 0 {
 		return
 	}
 
-	if !atomic.CompareAndSwapInt32(&redisInitializedFlag, 0, 1) {
+	if !redisInitializedFlag.CompareAndSwap(0, 1) {
 		return
 	}
 
@@ -93,7 +93,7 @@ func CloseRedisConnection(ctx context.Context) {
 	redisUpdateLock.Lock()
 	defer redisUpdateLock.Unlock()
 
-	if !atomic.CompareAndSwapInt32(&redisClosedFlag, 0, 1) {
+	if !redisClosedFlag.CompareAndSwap(0, 1) {
 		return
 	}
 
@@ -161,7 +161,7 @@ func getRedisAddress(configurer cfg.Configurer) (*redis.Options, string, string,
 
 // 监听配置更新与重连。
 func watchRedisConfigurationUpdate(configurer cfg.Configurer) {
-	if atomic.LoadInt32(&redisClosedFlag) > 0 {
+	if redisClosedFlag.Load() > 0 {
 		return
 	}
 

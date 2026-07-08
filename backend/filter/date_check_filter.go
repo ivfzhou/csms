@@ -36,7 +36,7 @@ func DateCheckFilter(c *gin.Context) {
 	date, err := time.ParseInLocation("Mon, 02 Jan 2006 15:04:05 GMT", dateString, time.UTC)
 	if err != nil {
 		c.Abort()
-		log.Warn(ctx, "failed to parse Date", err, dateString)
+		log.Warn(ctx, "failed to parse date", err, dateString)
 		util.ResponseCode(c, consts.ErrRequestDateInvalid)
 		return
 	}

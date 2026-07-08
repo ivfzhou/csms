@@ -809,7 +809,8 @@ func getJobTestLog(ctx context.Context, jobID int, testInfo *testJobInfo2, finis
 	// 处理日志。
 	sb := &strings.Builder{}
 	for i, v := range testLogInfos {
-		sb.WriteString(v.Name + ": \n")
+		sb.WriteString(v.Name)
+		sb.WriteString(": \n")
 		_, _ = fmt.Fprintf(sb, "  %d. %s\n", i+1, v.Name)
 		for _, ts := range v.Tasks {
 			if len(ts.TaskErrorMessage) > 0 {

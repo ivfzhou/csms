@@ -301,7 +301,7 @@ func CheckAndUnmarshalBody[T any](t *testing.T, rsp *httptest.ResponseRecorder, 
 func CreatePostJSONRequest[T any](ctx context.Context, uri string, req *T) *http.Request {
 	bs, _ := json.Marshal(req)
 	request := httptest.NewRequest(http.MethodPost, uri, bytes.NewReader(bs))
-	request.Header.Set("Date", time.Now().Format("Mon, 02 Jan 2006 15:04:05 GMT"))
+	request.Header.Set("Date", time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05 GMT"))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("X-Real-IP", RequestIP)
 	request.Header.Set("Cookie",
@@ -312,7 +312,7 @@ func CreatePostJSONRequest[T any](ctx context.Context, uri string, req *T) *http
 func CreatePostJSONRequestWithApp[T any](ctx context.Context, uri, appID string, req *T) *http.Request {
 	bs, _ := json.Marshal(req)
 	request := httptest.NewRequest(http.MethodPost, uri+"/"+appID, bytes.NewReader(bs))
-	request.Header.Set("Date", time.Now().Format("Mon, 02 Jan 2006 15:04:05 GMT"))
+	request.Header.Set("Date", time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05 GMT"))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("X-Real-IP", RequestIP)
 	request.Header.Set("Cookie",
@@ -322,7 +322,7 @@ func CreatePostJSONRequestWithApp[T any](ctx context.Context, uri, appID string,
 
 func CreatePostMultiFormRequest(ctx context.Context, uri string, req io.Reader, contentType string) *http.Request {
 	request := httptest.NewRequest(http.MethodPost, uri, req)
-	request.Header.Set("Date", time.Now().Format("Mon, 02 Jan 2006 15:04:05 GMT"))
+	request.Header.Set("Date", time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05 GMT"))
 	request.Header.Set("Content-Type", contentType)
 	request.Header.Set("X-Real-IP", RequestIP)
 	request.Header.Set("Cookie", fmt.Sprintf("%s=%s; %s=%s",
@@ -332,7 +332,7 @@ func CreatePostMultiFormRequest(ctx context.Context, uri string, req io.Reader, 
 
 func CreateGetRequest(ctx context.Context, uri string, queryStruct any) *http.Request {
 	request := httptest.NewRequest(http.MethodGet, fmt.Sprintf("%s?%s", uri, util.EncodeStructToURLQuery(queryStruct)), nil)
-	request.Header.Set("Date", time.Now().Format("Mon, 02 Jan 2006 15:04:05 GMT"))
+	request.Header.Set("Date", time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05 GMT"))
 	request.Header.Set("X-Real-IP", RequestIP)
 	request.Header.Set("Cookie", fmt.Sprintf("%s=%s; %s=%s",
 		consts.HTTPHeaderSessionUser, LoginUser.NameEn, consts.HTTPHeaderSessionKey, RequestSession))
@@ -342,7 +342,7 @@ func CreateGetRequest(ctx context.Context, uri string, queryStruct any) *http.Re
 func CreateGetRequestWithApp(ctx context.Context, uri, appID string, queryStruct any) *http.Request {
 	request := httptest.NewRequest(http.MethodGet,
 		fmt.Sprintf("%s/%s?%s", uri, appID, util.EncodeStructToURLQuery(queryStruct)), nil)
-	request.Header.Set("Date", time.Now().Format("Mon, 02 Jan 2006 15:04:05 GMT"))
+	request.Header.Set("Date", time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05 GMT"))
 	request.Header.Set("X-Real-IP", RequestIP)
 	request.Header.Set("Cookie", fmt.Sprintf("%s=%s; %s=%s",
 		consts.HTTPHeaderSessionUser, LoginUser.NameEn, consts.HTTPHeaderSessionKey, RequestSession))
@@ -351,7 +351,7 @@ func CreateGetRequestWithApp(ctx context.Context, uri, appID string, queryStruct
 
 func CreateDeleteRequest(ctx context.Context, uri string, queryStruct any) *http.Request {
 	request := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("%s?%s", uri, util.EncodeStructToURLQuery(queryStruct)), nil)
-	request.Header.Set("Date", time.Now().Format("Mon, 02 Jan 2006 15:04:05 GMT"))
+	request.Header.Set("Date", time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05 GMT"))
 	request.Header.Set("X-Real-IP", RequestIP)
 	request.Header.Set("Cookie", fmt.Sprintf("%s=%s; %s=%s",
 		consts.HTTPHeaderSessionUser, LoginUser.NameEn, consts.HTTPHeaderSessionKey, RequestSession))
@@ -361,7 +361,7 @@ func CreateDeleteRequest(ctx context.Context, uri string, queryStruct any) *http
 func CreateDeleteRequestWithApp(ctx context.Context, uri, appID string, queryStruct any) *http.Request {
 	request := httptest.NewRequest(http.MethodDelete,
 		fmt.Sprintf("%s/%s?%s", uri, appID, util.EncodeStructToURLQuery(queryStruct)), nil)
-	request.Header.Set("Date", time.Now().Format("Mon, 02 Jan 2006 15:04:05 GMT"))
+	request.Header.Set("Date", time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05 GMT"))
 	request.Header.Set("X-Real-IP", RequestIP)
 	request.Header.Set("Cookie", fmt.Sprintf("%s=%s; %s=%s",
 		consts.HTTPHeaderSessionUser, LoginUser.NameEn, consts.HTTPHeaderSessionKey, RequestSession))

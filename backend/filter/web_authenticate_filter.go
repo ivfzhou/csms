@@ -69,7 +69,7 @@ func WebAuthenticateFilter(c *gin.Context) {
 			util.ResponseCode(c, consts.ErrNeedLogin)
 			return
 		}
-		log.Error(ctx, "failed to get Redis data", err)
+		log.Error(ctx, "failed to get redis data", err)
 		util.ResponseError(c, errs.NewWithError(consts.ErrSystem, err))
 		return
 	}

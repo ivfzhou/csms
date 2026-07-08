@@ -57,7 +57,7 @@ func NewWithStatus(code Code, status int) error {
 	return &Error{Code: code, Status: status, Caller: getCaller()}
 }
 
-// NewWithStatus 创建错误对象。
+// NewWithStatusMsg 创建错误对象。
 func NewWithStatusMsg(code Code, status int, msg string) error {
 	return &Error{Code: code, Status: status, Caller: getCaller(), Msg: msg}
 }

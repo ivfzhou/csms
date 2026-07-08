@@ -33,7 +33,7 @@ var (
 	configuration                     = newImpl()
 	configurationFilePath             = "config.ini"
 	configurationFileWatcher          *fsnotify.Watcher
-	closeConfigurationFileWatcherFlag int32
+	closeConfigurationFileWatcherFlag atomic.Int32
 	notifiers                         []func(cfg.Configurer)
 	notifiersLocker                   sync.Mutex
 )
@@ -104,7 +104,7 @@ func get() cfg.Configurer {
 
 // 关闭配置监听。
 func closeWatch(ctx context.Context) {
-	if !atomic.CompareAndSwapInt32(&closeConfigurationFileWatcherFlag, 0, 1) {
+	if !closeConfigurationFileWatcherFlag.CompareAndSwap(0, 1) {
 		log.Warn(ctx, "ini config already closed")
 		return
 	}

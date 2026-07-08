@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	initializedFlag int32
+	initializedFlag atomic.Int32
 	closeFunc       = func(context.Context) {}
 	addNotifierFunc = func(func(Configurer)) {}
 	getFunc         = func() Configurer { return defaultValue }
@@ -29,7 +29,7 @@ func RegisterImplement(get func() Configurer, closer func(context.Context), addN
 	if closer == nil || addNotifier == nil {
 		panic("nil is not allowed")
 	}
-	if !atomic.CompareAndSwapInt32(&initializedFlag, 0, 1) {
+	if !initializedFlag.CompareAndSwap(0, 1) {
 		panic("function has already been called")
 	}
 

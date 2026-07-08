@@ -243,12 +243,14 @@ func formatJobLog(level log.Level, format string, args ...any) string {
 }
 
 func publishMessageToQueue(ctx context.Context, queue string, body []byte) error {
-	err := conn.RabbitMQClient(ctx).PublishWithContext(ctx, "", queue, true, false, amqp.Publishing{
-		Body: body,
-		Headers: amqp.Table{
-			cc.MQHeaderSendTime: time.Now().Unix(),
+	err := conn.RabbitMQClient(ctx).PublishWithContext(ctx, "", queue, true, false,
+		amqp.Publishing{
+			Body: body,
+			Headers: amqp.Table{
+				cc.MQHeaderSendTime: time.Now().Unix(),
+			},
 		},
-	})
+	)
 	if err != nil {
 		log.Error(ctx, "failed to publish message to rabbitmq", err)
 		return errs.NewWithError(consts.ErrSystem, err)

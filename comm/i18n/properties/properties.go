@@ -36,8 +36,8 @@ var (
 	messageFileWatcher    *fsnotify.Watcher
 	messageFilesDirectory string
 	messageLocker         sync.RWMutex
-	initializedFlag       int32
-	closedFlag            int32
+	initializedFlag       atomic.Int32
+	closedFlag            atomic.Int32
 )
 
 // AddCommandFlag 添加提示语文件所在文件夹的命令参数。
@@ -49,11 +49,11 @@ func AddCommandFlag() {
 // Initialize 解析消息提示语文件，并监听文件改动。
 // 若处理失败，会退出程序。
 func Initialize(ctx context.Context) {
-	if !atomic.CompareAndSwapInt32(&initializedFlag, 0, 1) {
+	if !initializedFlag.CompareAndSwap(0, 1) {
 		return
 	}
 
-	if atomic.LoadInt32(&closedFlag) > 0 {
+	if closedFlag.Load() > 0 {
 		return
 	}
 
@@ -104,7 +104,7 @@ func get(code errs.Code, language i18n.Language) (string, bool) {
 
 // 关闭对消息提示语文件的改动监听。
 func closeWatch(ctx context.Context) {
-	if !atomic.CompareAndSwapInt32(&closedFlag, 0, 1) {
+	if !closedFlag.CompareAndSwap(0, 1) {
 		return
 	}
 

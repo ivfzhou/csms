@@ -93,8 +93,7 @@ func ResponseError(c *gin.Context, err error) {
 	language := ctxs.Language(ctx)
 
 	// 根据错误对象类型，区别处理响应数据。
-	var e vt.ValidationErrors
-	if errors.As(err, &e) {
+	if e, ok := errors.AsType[vt.ValidationErrors](err); ok {
 		c.JSON(http.StatusOK, &Response[any]{
 			Message: validator.Translate(ctx, e),
 			Code:    errs.ErrInvalidRequestParameters,
@@ -102,19 +101,18 @@ func ResponseError(c *gin.Context, err error) {
 		return
 	}
 
-	var e2 *errs.Error
-	if errors.As(err, &e2) {
-		if len(e2.Msg) > 0 {
-			c.JSON(http.StatusOK, &Response[any]{Message: e2.Msg, Code: e2.Code})
+	if e, ok := errors.AsType[*errs.Error](err); ok {
+		if len(e.Msg) > 0 {
+			c.JSON(http.StatusOK, &Response[any]{Message: e.Msg, Code: e.Code})
 		} else {
-			message, ok := i18n.Get(e2.Code, i18n.Language(language))
+			message, ok := i18n.Get(e.Code, i18n.Language(language))
 			if !ok {
-				message, ok = i18n.Get(e2.Code, i18n.LanguageEnglish)
+				message, ok = i18n.Get(e.Code, i18n.LanguageEnglish)
 			}
 			if !ok {
-				log.Warn(ctx, "cannot get i18n message", e2.Code)
+				log.Warn(ctx, "cannot get i18n message", e.Code)
 			}
-			c.JSON(http.StatusOK, &Response[any]{Message: message, Code: e2.Code})
+			c.JSON(http.StatusOK, &Response[any]{Message: message, Code: e.Code})
 		}
 		return
 	}
@@ -135,8 +133,7 @@ func ResponseAPIError(c *gin.Context, err error) {
 	c.Request = c.Request.WithContext(ctxs.WithError(ctx, err))
 
 	// 根据错误对象类型，区别处理响应数据。
-	var e vt.ValidationErrors
-	if errors.As(err, &e) {
+	if e, ok := errors.AsType[vt.ValidationErrors](err); ok {
 		c.JSON(http.StatusBadRequest, &Response[any]{
 			Message: validator.Translate(ctx, e),
 			Code:    errs.ErrInvalidRequestParameters,
@@ -144,20 +141,19 @@ func ResponseAPIError(c *gin.Context, err error) {
 		return
 	}
 
-	var e2 *errs.Error
-	if errors.As(err, &e2) {
+	if e, ok := errors.AsType[*errs.Error](err); ok {
 		httpCode := http.StatusInternalServerError
-		if e2.Status > 0 {
-			httpCode = e2.Status
+		if e.Status > 0 {
+			httpCode = e.Status
 		}
-		if len(e2.Msg) > 0 {
-			c.JSON(httpCode, &Response[any]{Message: e2.Msg, Code: e2.Code})
+		if len(e.Msg) > 0 {
+			c.JSON(httpCode, &Response[any]{Message: e.Msg, Code: e.Code})
 		} else {
-			message, ok := i18n.Get(e2.Code, i18n.LanguageEnglish)
+			message, ok := i18n.Get(e.Code, i18n.LanguageEnglish)
 			if !ok {
-				log.Warn(ctx, "cannot get i18n message", e2.Code)
+				log.Warn(ctx, "cannot get i18n message", e.Code)
 			}
-			c.JSON(httpCode, &Response[any]{Message: message, Code: e2.Code})
+			c.JSON(httpCode, &Response[any]{Message: message, Code: e.Code})
 		}
 		return
 	}

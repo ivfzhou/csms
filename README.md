@@ -45,7 +45,7 @@
     ```shell
     swag init -d ./backend,./comm -o ./backend/docs
     ```
-1. 运行单元测试：
+1. 运行单元测试（需要有 JDK 环境）：
     ```shell
     go test -count=1 -v ./backend/api
     ```

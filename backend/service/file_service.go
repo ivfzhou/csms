@@ -395,10 +395,14 @@ func FileWebUploadPart(ctx context.Context, req *protocol.FileWebUploadPartReq) 
 	{
 		log.Info(ctx, "check file chunk number")
 		var chunkNumbers []string
-		chunkNumbers, err = conn.RedisClient(ctx).ZRangeByScore(
+		chunkNumbers, err = conn.RedisClient(ctx).ZRangeArgs(
 			ctx,
-			fmt.Sprintf(consts.RedisKeyFileUploadPartInfoFmt, req.FileID),
-			&redis.ZRangeBy{Min: strconv.Itoa(req.ChunkNumber), Max: strconv.Itoa(req.ChunkNumber)},
+			redis.ZRangeArgs{
+				Key:     fmt.Sprintf(consts.RedisKeyFileUploadPartInfoFmt, req.FileID),
+				Start:   strconv.Itoa(req.ChunkNumber),
+				Stop:    strconv.Itoa(req.ChunkNumber),
+				ByScore: true,
+			},
 		).Result()
 		if err != nil && !errors.Is(err, redis.Nil) {
 			log.Error(ctx, "failed to get file chunk information from redis", err)
@@ -913,10 +917,14 @@ func FileAPIUploadPart(ctx context.Context, req *protocol.FileAPIUploadPartReq) 
 	var chunkNumbers []string
 	{
 		log.Info(ctx, "check file chunk number")
-		chunkNumbers, err = conn.RedisClient(ctx).ZRangeByScore(
+		chunkNumbers, err = conn.RedisClient(ctx).ZRangeArgs(
 			ctx,
-			fmt.Sprintf(consts.RedisKeyFileUploadPartInfoFmt, req.FileID),
-			&redis.ZRangeBy{Min: strconv.Itoa(req.ChunkNumber), Max: strconv.Itoa(req.ChunkNumber)},
+			redis.ZRangeArgs{
+				Key:     fmt.Sprintf(consts.RedisKeyFileUploadPartInfoFmt, req.FileID),
+				Start:   strconv.Itoa(req.ChunkNumber),
+				Stop:    strconv.Itoa(req.ChunkNumber),
+				ByScore: true,
+			},
 		).Result()
 		if err != nil && !errors.Is(err, redis.Nil) {
 			log.Error(ctx, "failed to get file chunk information from redis", err)
