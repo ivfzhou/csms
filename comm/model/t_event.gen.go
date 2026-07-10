@@ -12,13 +12,13 @@ const TableNameEvent = "t_event"
 
 // Event 应用事件表
 type Event struct {
-	ID          int       `gorm:"column:id;type:int(11) unsigned;primaryKey;autoIncrement:true;comment:自增主码" json:"id"`                             // 自增主码
-	AppID       int       `gorm:"column:app_id;type:int(11) unsigned;not null;index:idx_app_id,priority:1;comment:所属应用 ID" json:"app_id"`           // 所属应用 ID
-	UserID      int       `gorm:"column:user_id;type:int(11) unsigned;not null;index:idx_user_id,priority:1;comment:触发人 ID" json:"user_id"`         // 触发人 ID
-	Type        int       `gorm:"column:type;type:tinyint(4) unsigned;not null;index:idx_type,priority:1;comment:类型，见表 3-3" json:"type"`            // 类型，见表 3-3
-	CreatedTime time.Time `gorm:"column:created_time;type:timestamp;not null;index:idx_created_time,priority:1;comment:事件发生时间" json:"created_time"` // 事件发生时间
-	Source      int       `gorm:"column:source;type:tinyint(4) unsigned;not null;comment:来源，1=页面、2=OpenAPI" json:"source"`                          // 来源，1=页面、2=OpenAPI
-	Content     string    `gorm:"column:content;type:text;comment:事件内容" json:"content"`                                                             // 事件内容
+	ID          int       `gorm:"column:id;type:int(11) unsigned;primaryKey;autoIncrement:true;comment:自增主码" json:"id"`                                         // 自增主码
+	AppID       int       `gorm:"column:app_id;type:int(11) unsigned;not null;index:idx_created_time_type_app_id,priority:3;comment:所属应用 ID" json:"app_id"`     // 所属应用 ID
+	UserID      int       `gorm:"column:user_id;type:int(11) unsigned;not null;comment:触发人 ID" json:"user_id"`                                                  // 触发人 ID
+	Type        int       `gorm:"column:type;type:tinyint(4) unsigned;not null;index:idx_created_time_type_app_id,priority:2;comment:类型，见表 3-3" json:"type"`    // 类型，见表 3-3
+	CreatedTime time.Time `gorm:"column:created_time;type:timestamp;not null;index:idx_created_time_type_app_id,priority:1;comment:事件发生时间" json:"created_time"` // 事件发生时间
+	Source      int       `gorm:"column:source;type:tinyint(4) unsigned;not null;comment:来源，1=页面、2=OpenAPI" json:"source"`                                      // 来源，1=页面、2=OpenAPI
+	Content     string    `gorm:"column:content;type:text;comment:事件内容" json:"content"`                                                                         // 事件内容
 }
 
 // TableName Event's table name

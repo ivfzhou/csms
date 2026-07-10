@@ -10,8 +10,6 @@
  * See the Mulan PSL v2 for more details.
  */
 
-drop database if exists db_csms;
-
 create database if not exists db_csms character set utf8mb4 collate utf8mb4_unicode_ci;
 
 use db_csms;
@@ -27,8 +25,8 @@ create table if not exists t_user
     password_salt   char(128)     not null comment '密码盐值',
     created_time    timestamp     not null comment '注册时间',
     updated_time    timestamp comment '更新时间',
-    unique index uidx_name_en (name_en)
-) comment '用户信息表';
+    unique index uidx_name_en (name_en) using btree
+) engine innodb comment '用户信息表';
 
 create table if not exists t_app
 (
@@ -41,9 +39,9 @@ create table if not exists t_app
     status       tinyint unsigned not null comment '状态，1=有效、2=无效、3=审批中、4=审批驳回',
     created_time timestamp        not null comment '注册时间',
     updated_time timestamp comment '更新时间',
-    unique index uidx_app_id (app_id),
-    index idx_status (status)
-) comment '应用信息表';
+    unique index uidx_app_id (app_id) using btree,
+    index idx_status (status) using btree
+) engine innodb comment '应用信息表';
 
 create table if not exists t_user_role
 (
@@ -51,9 +49,9 @@ create table if not exists t_user_role
     app_id  int unsigned comment '所属应用 ID',
     user_id int unsigned     not null comment '用户 ID',
     role    tinyint unsigned not null comment '角色，1=系统运营员、2=应用管理员、3=应用成员、4=可使用签名服务',
-    unique index uidx_app_id_user_id_role (user_id, role, app_id),
-    index idx_user_id (user_id)
-) comment '用户权限表';
+    unique index uidx_app_id_user_id_role (user_id, role, app_id) using btree,
+    index idx_user_id (user_id) using btree
+) engine innodb comment '用户权限表';
 
 create table if not exists t_event
 (
@@ -64,11 +62,8 @@ create table if not exists t_event
     created_time timestamp        not null comment '事件发生时间',
     source       tinyint unsigned not null comment '来源，1=页面、2=OpenAPI',
     content      text comment '事件内容',
-    index idx_app_id (app_id),
-    index idx_user_id (user_id),
-    index idx_created_time (created_time),
-    index idx_type (type)
-) comment '应用事件表';
+    index idx_created_time_type_app_id (created_time, type, app_id) using btree
+) engine innodb comment '应用事件表';
 
 create table if not exists t_todo
 (
@@ -84,12 +79,12 @@ create table if not exists t_todo
     status          tinyint unsigned not null comment '状态，1=待处理、2=驳回、3=同意',
     created_time    timestamp comment '创建时间',
     finished_time   timestamp comment '结束时间',
-    index idx_app_id_type (app_id, type),
-    index idx_applier_id (applier_id),
-    index idx_approver_id (approver_id),
-    index idx_status (status),
-    index idx_created_time (created_time)
-) comment '待办表';
+    index idx_app_id_type (app_id, type) using btree,
+    index idx_applier_id (applier_id) using btree,
+    index idx_approver_id (approver_id) using btree,
+    index idx_status (status) using btree,
+    index idx_created_time (created_time) using btree
+) engine innodb comment '待办表';
 
 create table if not exists t_windows_certificate
 (
@@ -115,9 +110,9 @@ create table if not exists t_windows_certificate
     content                         mediumblob comment '加密了的证书内容',
     created_time                    timestamp        not null comment '创建时间',
     deleted_time                    timestamp comment '删除时间',
-    index idx_app_id (app_id),
-    unique index uidx_certificate_id (certificate_id)
-) comment 'Windows 证书信息表';
+    index idx_app_id (app_id) using btree,
+    unique index uidx_certificate_id (certificate_id) using btree
+) engine innodb comment 'Windows 证书信息表';
 
 create table if not exists t_android_certificate
 (
@@ -146,9 +141,9 @@ create table if not exists t_android_certificate
     content              mediumblob       not null comment '加密了的密钥库',
     created_time         timestamp        not null comment '创建时间',
     deleted_time         timestamp comment '删除时间',
-    index idx_app_id (app_id),
-    unique index uidx_certificate_id (certificate_id)
-) comment '安卓证书信息表';
+    index idx_app_id (app_id) using btree,
+    unique index uidx_certificate_id (certificate_id) using btree
+) engine innodb comment '安卓证书信息表';
 
 create table if not exists t_apple_certificate
 (
@@ -173,9 +168,9 @@ create table if not exists t_apple_certificate
     content              mediumblob       not null comment '加密了的证书内容',
     created_time         timestamp        not null comment '创建时间',
     deleted_time         timestamp comment '删除时间',
-    index idx_app_id (app_id),
-    unique index uidx_certificate_id (certificate_id)
-) comment '苹果相关证书信息表';
+    index idx_app_id (app_id) using btree,
+    unique index uidx_certificate_id (certificate_id) using btree
+) engine innodb comment '苹果相关证书信息表';
 
 create table if not exists t_apple_profile
 (
@@ -193,9 +188,9 @@ create table if not exists t_apple_profile
     content        mediumblob   not null comment '描述文件的内容',
     created_time   timestamp    not null comment '创建时间',
     deleted_time   timestamp comment '删除时间',
-    index idx_app_id (app_id),
-    unique index uidx_profile_id (profile_id)
-) comment '苹果描述文件信息表';
+    index idx_app_id (app_id) using btree,
+    unique index uidx_profile_id (profile_id) using btree
+) engine innodb comment '苹果描述文件信息表';
 
 create table if not exists t_apple_bundle_id
 (
@@ -209,9 +204,9 @@ create table if not exists t_apple_bundle_id
     capabilities mediumtext comment 'BundleID 的能力项，以英文逗号分隔',
     created_time timestamp        not null comment '创建时间',
     updated_time timestamp comment '更新时间',
-    index idx_app_id (app_id),
-    unique index uidx_bundle_id (bundle_id)
-) comment 'BundleID 信息表';
+    index idx_app_id (app_id) using btree,
+    unique index uidx_bundle_id (bundle_id) using btree
+) engine innodb comment 'BundleID 信息表';
 
 create table if not exists t_apple_device
 (
@@ -226,8 +221,8 @@ create table if not exists t_apple_device
     status       tinyint unsigned not null comment '状态，1=正常、2=待审核、3=未通过',
     created_time timestamp        not null comment '创建时间',
     updated_time timestamp comment '更新时间',
-    index idx_app_id (app_id)
-) comment '苹果测试设备信息表';
+    index idx_app_id (app_id) using btree
+) engine innodb comment '苹果测试设备信息表';
 
 create table if not exists t_api_account
 (
@@ -241,16 +236,16 @@ create table if not exists t_api_account
     expired_time timestamp    not null comment '失效时间',
     created_time timestamp    not null comment '创建时间',
     updated_time timestamp comment '创建时间',
-    unique index idx_app_id_account_id (app_id, account_id)
-) comment 'OpenAPI 凭证信息表';
+    unique index idx_app_id_account_id (app_id, account_id) using btree
+) engine innodb comment 'OpenAPI 凭证信息表';
 
 create table if not exists t_api_authorization
 (
     id             int unsigned primary key auto_increment comment '自增主码',
     api_account_id int unsigned comment 'OpenAPI 凭证信息表 ID',
     capability     tinyint unsigned not null comment '权限项，对应表 3-5',
-    index idx_api_account_id (api_account_id)
-) comment 'OpenAPI 凭证授权表';
+    index idx_api_account_id (api_account_id) using btree
+) engine innodb comment 'OpenAPI 凭证授权表';
 
 create table if not exists t_windows_signing_job
 (
@@ -271,10 +266,10 @@ create table if not exists t_windows_signing_job
     status         tinyint unsigned not null comment '状态，1=签名中、2=等待 Cab 签名、3=Cab 签名中、4=待 Attestation 签名、5=Attestation 签名中、6=失败、7=成功',
     created_time   timestamp        not null comment '提交时间',
     updated_time   timestamp on update current_timestamp() comment '更新时间',
-    index idx_app_id (app_id),
-    index idx_status (status),
-    unique index uidx_job_id (job_id)
-) comment 'Windows 签名任务表';
+    index idx_app_id (app_id) using btree,
+    index idx_status (status) using btree,
+    unique index uidx_job_id (job_id) using btree
+) engine innodb comment 'Windows 签名任务表';
 
 create table if not exists t_whql_job
 (
@@ -302,10 +297,10 @@ create table if not exists t_whql_job
     status            tinyint unsigned not null comment '状态，1=待HLK测试、2=测试机初始化中、3=测试机初始化完毕，4=启动HLK测试中，5=HLK测试中，6=HLK测试完毕、7=HLKX 文件签名中、8=等待 WHQL认证结果中、9=失败、10=成功',
     created_time      timestamp        not null comment '提交时间',
     updated_time      timestamp on update current_timestamp() comment '更新时间',
-    index idx_app_id (app_id),
-    index idx_status (status),
-    unique index uidx_job_id (job_id)
-) comment 'WHQL 签名任务表';
+    index idx_app_id (app_id) using btree,
+    index idx_status (status) using btree,
+    unique index uidx_job_id (job_id) using btree
+) engine innodb comment 'WHQL 签名任务表';
 
 create table if not exists t_android_signing_job
 (
@@ -324,9 +319,9 @@ create table if not exists t_android_signing_job
     finished_time     timestamp comment '结束时间',
     status            tinyint unsigned not null comment '状态，1=进行中，2=成功，3=失败',
     created_time      timestamp        not null comment '提交时间',
-    index idx_app_id (app_id),
-    unique index uidx_job_id (job_id)
-) comment '安卓签名任务表';
+    index idx_app_id (app_id) using btree,
+    unique index uidx_job_id (job_id) using btree
+) engine innodb comment '安卓签名任务表';
 
 create table if not exists t_apple_signing_job
 (
@@ -342,9 +337,9 @@ create table if not exists t_apple_signing_job
     finished_time  timestamp comment '结束时间',
     status         tinyint unsigned not null comment '状态，1=进行中、2=成功、3=失败',
     created_time   timestamp        not null comment '提交时间',
-    index idx_app_id (app_id),
-    unique index uidx_job_id (job_id)
-) comment '苹果签名任务表';
+    index idx_app_id (app_id) using btree,
+    unique index uidx_job_id (job_id) using btree
+) engine innodb comment '苹果签名任务表';
 
 create table if not exists t_file
 (
@@ -359,9 +354,9 @@ create table if not exists t_file
     size           int unsigned comment '文件大小',
     type           tinyint unsigned not null comment '类型；1=用户头像、2=应用图标、3=Android 签名文件、4=Windows 签名文件、5=Apple 签名文件、6=HLK 日志文件、7=微软方的结果文件',
     created_time   timestamp        not null comment '上传时间',
-    index idx_md5 (md5),
-    unique index idx_file_id (file_id)
-) comment '文件信息表';
+    index idx_md5 (md5) using btree,
+    unique index idx_file_id (file_id) using btree
+) engine innodb comment '文件信息表';
 
 create table if not exists t_windows_certificate_authorization
 (
@@ -370,8 +365,8 @@ create table if not exists t_windows_certificate_authorization
     user_id        int unsigned not null comment '操作人 ID',
     certificate_id int unsigned not null comment 'Windows 证书表 ID',
     created_time   timestamp    not null comment '授权时间',
-    unique index idx_certificate_id_app_id (certificate_id, app_id)
-) comment '授权应用 EV 证书表';
+    unique index idx_certificate_id_app_id (certificate_id, app_id) using btree
+) engine innodb comment '授权应用 EV 证书表';
 
 create table if not exists t_android_organization
 (
@@ -380,7 +375,7 @@ create table if not exists t_android_organization
     user_id      int unsigned not null comment '添加人 ID',
     owner        varchar(256) not null unique comment '所有者，用于 keytool 中的 dname 参数值',
     created_time timestamp    not null comment '创建时间'
-) comment '安卓证书主体表';
+) engine innodb comment '安卓证书主体表';
 
 create table if not exists t_notice
 (
@@ -390,18 +385,19 @@ create table if not exists t_notice
     expired_time   timestamp    not null comment '失效时间',
     activated_time timestamp    not null comment '生效时间',
     created_time   timestamp    not null comment '创建时间',
-    index idx_created_time (created_time)
-) comment '公告信息表';
+    index idx_created_time (created_time) using btree
+) engine innodb comment '公告信息表';
 
 create table if not exists t_aes_key
 (
     id           int unsigned primary key auto_increment comment '自增主码',
     secret       binary(16) check (length(secret) = 16) not null comment '密钥',
     created_time timestamp                              not null default current_timestamp() comment '创建时间'
-) comment '证书加密密钥表';
+) engine innodb comment '证书加密密钥表';
 
-insert into t_user (id, name_en, name_zh, avatar_file_id, department, password_digest, password_salt, created_time)
+insert ignore into t_user (id, name_en, name_zh, avatar_file_id, department, password_digest, password_salt,
+                           created_time)
 values (1, 'admin', '系统管理员', '', '', '21232f297a57a5a743894a0e4a801fc3', '', now());
 
-insert into t_user_role (user_id, role)
+insert ignore into t_user_role (user_id, role)
 values (1, 1);

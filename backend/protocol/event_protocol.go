@@ -98,8 +98,6 @@ type EventWebStatisticRsp struct {
 type EventWebStatisticItem struct {
 	// 开始时间
 	BeginTime string `json:"beginTime,omitempty"`
-	// 结束时间
-	EndTime string `json:"endTime,omitempty"`
 	// 应用新建数量
 	CreateAppTimes int `json:"createAppTimes,omitempty"`
 	// 上传 Windows 个人 OV 证书数量

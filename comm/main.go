@@ -29,7 +29,7 @@ func main() {
 	flag.Parse()
 
 	generator := gen.NewGenerator(gen.Config{
-		OutPath:           "comm/query",
+		OutPath:           "query",
 		ModelPkgPath:      "model",
 		WithUnitTest:      false,
 		FieldWithIndexTag: true,
@@ -102,35 +102,60 @@ func main() {
 	type EventQuery interface {
 		// select * from (
 		// {{ for i, t := range tables }}
-		//    select * from @@t {{ if len(tables) - 1 != i }} union all {{ end }}
-		// {{ end }} ) t
-		// where 1 = 1
-		// {{ if !begin.IsZero() }} and t.created_time >= @begin {{ end }}
-		// {{ if !end.IsZero() }} and t.created_time <= @end {{ end }}
-		// {{ if len(appIDs) > 0 }} and t.app_id in (@appIDs) {{ end }}
-		// {{ if len(userIDs) > 0 }} and t.user_id in (@userIDs) {{ end }}
+		//    select * from @@t
+		//    {{ if len(tables) - 1 != i }} union all {{ end }}
+		//    where 1 = 1
+		//    {{ if !begin.IsZero() }} and created_time >= @begin {{ end }}
+		//    {{ if !end.IsZero() }} and created_time <= @end {{ end }}
+		//    {{ if len(appIDs) > 0 }} and app_id in (@appIDs) {{ end }}
+		//    {{ if typ > 0 }} and type = @typ {{ end }}
+		//    {{ if len(userIDs) > 0 }} and user_id in (@userIDs) {{ end }}
+		//    {{ end }} ) t
 		// order by t.created_time desc, t.id desc limit @limit offset @offset
-		List(tables []string, appIDs, userIDs []int, begin, end time.Time, limit, offset int) ([]*gen.T, error)
+		List(tables []string, appIDs, userIDs []int, begin, end time.Time, typ int, limit, offset int) ([]*gen.T, error)
 
-		// select count(*) from (
+		// select sum(count) from (
 		// {{ for i, t := range tables }}
-		//     select * from @@t {{ if len(tables) - 1 != i }} union all {{ end }}
+		//     select count(*) `count` from @@t
+		//     where 1 = 1
+		//     {{ if !begin.IsZero() }} and created_time >= @begin {{ end }}
+		//     {{ if !end.IsZero() }} and created_time <= @end {{ end }}
+		//     {{ if len(appIDs) > 0 }} and app_id in (@appIDs) {{ end }}
+		//     {{ if typ > 0 }} and type = @typ {{ end }}
+		//     {{ if len(userIDs) > 0 }} and user_id in (@userIDs) {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
 		// {{ end }} ) t
-		// where 1 = 1
-		// {{ if !begin.IsZero() }} and t.created_time >= @begin {{ end }}
-		// {{ if !end.IsZero() }} and t.created_time <= @end {{ end }}
-		// {{ if len(appIDs) > 0 }} and t.app_id in (@appIDs) {{ end }}
-		// {{ if len(userIDs) > 0 }} and t.user_id in (@userIDs) {{ end }}
-		Count2(tables []string, appIDs, userIDs []int, begin, end time.Time) (int, error)
+		Count2(tables []string, appIDs, userIDs []int, begin, end time.Time, typ int) (int, error)
 
-		// select t.type `type`, count(*) `count` from (
+		// select t.type `type`, count(*) `count`, date_format(t.created_time, '%Y%m%d') `day` from (
 		// {{ for i, t := range tables }}
-		//     select * from @@t {{ if len(tables) - 1 != i }} union all {{ end }}
+		//     select * from @@t where created_time between @begin and @end and type in (@types)
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
 		// {{ end }} ) t
-		// where t.created_time >= @begin and t.created_time <= @end and t.type in (@types)
-		// {{ if appID > 0 }} and t.app_id = @appID {{ end }}
-		// group by t.type
-		CountByTypes(tables []string, types []int, appID int, begin, end time.Time) ([]*gen.M, error)
+		// group by `day`, `type`
+		// order by `day`
+		CountTypesWithDay(tables []string, types []int, appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select t.type `type`, count(*) `count`, date_format(date_sub(t.created_time, INTERVAL (dayofweek(t.created_time)-2) DAY), '%Y%m%d') `day` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end and type in (@types)
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`, `type`
+		// order by `day`
+		CountTypesWithWeek(tables []string, types []int, appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select t.type `type`, count(*) `count`, date_format(t.created_time, '%Y%m') `day` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end and type in (@types)
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`, `type`
+		// order by `day`
+		CountTypesWithMonth(tables []string, types []int, appID int, begin, end time.Time) ([]gen.M, error)
 
 		// select TABLE_NAME from information_schema.TABLES where TABLE_SCHEMA = @db and TABLE_NAME like 't_event%'
 		GetTables(db string) ([]string, error)

@@ -49,8 +49,8 @@ func AppWebRegister(c *gin.Context) {
 	log.Info(ctx, "request parameters for registering app",
 		req.Name, req.Members, req.Admins, req.Platform, req.Logo.Filename, req.Logo.Size)
 	if err = service.AppWebRegister(ctx, &req); err != nil {
-		log.Warn(ctx, "failed to register app", err,
-			req.Name, req.Members, req.Admins, req.Platform, req.Logo.Filename, req.Logo.Size)
+		log.Warn(ctx, "failed to register app",
+			err, req.Name, req.Members, req.Admins, req.Platform, req.Logo.Filename, req.Logo.Size)
 		util.ResponseError(c, err)
 		return
 	}

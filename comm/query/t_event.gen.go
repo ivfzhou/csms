@@ -179,25 +179,29 @@ type IEventDo interface {
 	UnderlyingDB() *gorm.DB
 	schema.Tabler
 
-	List(tables []string, appIDs []int, userIDs []int, begin time.Time, end time.Time, limit int, offset int) (result []*model.Event, err error)
-	Count2(tables []string, appIDs []int, userIDs []int, begin time.Time, end time.Time) (result int, err error)
-	CountByTypes(tables []string, types []int, appID int, begin time.Time, end time.Time) (result []*map[string]interface{}, err error)
+	List(tables []string, appIDs []int, userIDs []int, begin time.Time, end time.Time, typ int, limit int, offset int) (result []*model.Event, err error)
+	Count2(tables []string, appIDs []int, userIDs []int, begin time.Time, end time.Time, typ int) (result int, err error)
+	CountTypesWithDay(tables []string, types []int, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
+	CountTypesWithWeek(tables []string, types []int, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
+	CountTypesWithMonth(tables []string, types []int, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
 	GetTables(db string) (result []string, err error)
 }
 
 // select * from (
 // {{ for i, t := range tables }}
 //
-//	select * from @@t {{ if len(tables) - 1 != i }} union all {{ end }}
+//	select * from @@t
+//	{{ if len(tables) - 1 != i }} union all {{ end }}
+//	where 1 = 1
+//	{{ if !begin.IsZero() }} and created_time >= @begin {{ end }}
+//	{{ if !end.IsZero() }} and created_time <= @end {{ end }}
+//	{{ if len(appIDs) > 0 }} and app_id in (@appIDs) {{ end }}
+//	{{ if typ > 0 }} and type = @typ {{ end }}
+//	{{ if len(userIDs) > 0 }} and user_id in (@userIDs) {{ end }}
+//	{{ end }} ) t
 //
-// {{ end }} ) t
-// where 1 = 1
-// {{ if !begin.IsZero() }} and t.created_time >= @begin {{ end }}
-// {{ if !end.IsZero() }} and t.created_time <= @end {{ end }}
-// {{ if len(appIDs) > 0 }} and t.app_id in (@appIDs) {{ end }}
-// {{ if len(userIDs) > 0 }} and t.user_id in (@userIDs) {{ end }}
 // order by t.created_time desc, t.id desc limit @limit offset @offset
-func (e eventDo) List(tables []string, appIDs []int, userIDs []int, begin time.Time, end time.Time, limit int, offset int) (result []*model.Event, err error) {
+func (e eventDo) List(tables []string, appIDs []int, userIDs []int, begin time.Time, end time.Time, typ int, limit int, offset int) (result []*model.Event, err error) {
 	var params []interface{}
 
 	var generateSQL strings.Builder
@@ -207,27 +211,31 @@ func (e eventDo) List(tables []string, appIDs []int, userIDs []int, begin time.T
 		if len(tables)-1 != i {
 			generateSQL.WriteString("union all ")
 		}
-	}
-	generateSQL.WriteString(") t where 1 = 1 ")
-	if !begin.IsZero() {
-		params = append(params, begin)
-		generateSQL.WriteString("and t.created_time >= ? ")
-	}
-	if !end.IsZero() {
-		params = append(params, end)
-		generateSQL.WriteString("and t.created_time <= ? ")
-	}
-	if len(appIDs) > 0 {
-		params = append(params, appIDs)
-		generateSQL.WriteString("and t.app_id in (?) ")
-	}
-	if len(userIDs) > 0 {
-		params = append(params, userIDs)
-		generateSQL.WriteString("and t.user_id in (?) ")
+		generateSQL.WriteString("where 1 = 1 ")
+		if !begin.IsZero() {
+			params = append(params, begin)
+			generateSQL.WriteString("and created_time >= ? ")
+		}
+		if !end.IsZero() {
+			params = append(params, end)
+			generateSQL.WriteString("and created_time <= ? ")
+		}
+		if len(appIDs) > 0 {
+			params = append(params, appIDs)
+			generateSQL.WriteString("and app_id in (?) ")
+		}
+		if typ > 0 {
+			params = append(params, typ)
+			generateSQL.WriteString("and type = ? ")
+		}
+		if len(userIDs) > 0 {
+			params = append(params, userIDs)
+			generateSQL.WriteString("and user_id in (?) ")
+		}
 	}
 	params = append(params, limit)
 	params = append(params, offset)
-	generateSQL.WriteString("order by t.created_time desc, t.id desc limit ? offset ? ")
+	generateSQL.WriteString(") t order by t.created_time desc, t.id desc limit ? offset ? ")
 
 	var executeSQL *gorm.DB
 	executeSQL = e.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
@@ -236,45 +244,51 @@ func (e eventDo) List(tables []string, appIDs []int, userIDs []int, begin time.T
 	return
 }
 
-// select count(*) from (
+// select sum(count) from (
 // {{ for i, t := range tables }}
 //
-//	select * from @@t {{ if len(tables) - 1 != i }} union all {{ end }}
+//	select count(*) `count` from @@t
+//	where 1 = 1
+//	{{ if !begin.IsZero() }} and created_time >= @begin {{ end }}
+//	{{ if !end.IsZero() }} and created_time <= @end {{ end }}
+//	{{ if len(appIDs) > 0 }} and app_id in (@appIDs) {{ end }}
+//	{{ if typ > 0 }} and type = @typ {{ end }}
+//	{{ if len(userIDs) > 0 }} and user_id in (@userIDs) {{ end }}
+//	{{ if len(tables) - 1 != i }} union all {{ end }}
 //
 // {{ end }} ) t
-// where 1 = 1
-// {{ if !begin.IsZero() }} and t.created_time >= @begin {{ end }}
-// {{ if !end.IsZero() }} and t.created_time <= @end {{ end }}
-// {{ if len(appIDs) > 0 }} and t.app_id in (@appIDs) {{ end }}
-// {{ if len(userIDs) > 0 }} and t.user_id in (@userIDs) {{ end }}
-func (e eventDo) Count2(tables []string, appIDs []int, userIDs []int, begin time.Time, end time.Time) (result int, err error) {
+func (e eventDo) Count2(tables []string, appIDs []int, userIDs []int, begin time.Time, end time.Time, typ int) (result int, err error) {
 	var params []interface{}
 
 	var generateSQL strings.Builder
-	generateSQL.WriteString("select count(*) from ( ")
+	generateSQL.WriteString("select sum(count) from ( ")
 	for i, t := range tables {
-		generateSQL.WriteString("select * from " + e.Quote(t) + " ")
+		generateSQL.WriteString("select count(*) `count` from " + e.Quote(t) + " where 1 = 1 ")
+		if !begin.IsZero() {
+			params = append(params, begin)
+			generateSQL.WriteString("and created_time >= ? ")
+		}
+		if !end.IsZero() {
+			params = append(params, end)
+			generateSQL.WriteString("and created_time <= ? ")
+		}
+		if len(appIDs) > 0 {
+			params = append(params, appIDs)
+			generateSQL.WriteString("and app_id in (?) ")
+		}
+		if typ > 0 {
+			params = append(params, typ)
+			generateSQL.WriteString("and type = ? ")
+		}
+		if len(userIDs) > 0 {
+			params = append(params, userIDs)
+			generateSQL.WriteString("and user_id in (?) ")
+		}
 		if len(tables)-1 != i {
 			generateSQL.WriteString("union all ")
 		}
 	}
-	generateSQL.WriteString(") t where 1 = 1 ")
-	if !begin.IsZero() {
-		params = append(params, begin)
-		generateSQL.WriteString("and t.created_time >= ? ")
-	}
-	if !end.IsZero() {
-		params = append(params, end)
-		generateSQL.WriteString("and t.created_time <= ? ")
-	}
-	if len(appIDs) > 0 {
-		params = append(params, appIDs)
-		generateSQL.WriteString("and t.app_id in (?) ")
-	}
-	if len(userIDs) > 0 {
-		params = append(params, userIDs)
-		generateSQL.WriteString("and t.user_id in (?) ")
-	}
+	generateSQL.WriteString(") t ")
 
 	var executeSQL *gorm.DB
 	executeSQL = e.UnderlyingDB().Raw(generateSQL.String(), params...).Take(&result) // ignore_security_alert
@@ -283,35 +297,109 @@ func (e eventDo) Count2(tables []string, appIDs []int, userIDs []int, begin time
 	return
 }
 
-// select t.type `type`, count(*) `count` from (
+// select t.type `type`, count(*) `count`, date_format(t.created_time, '%Y%m%d') `day` from (
 // {{ for i, t := range tables }}
 //
-//	select * from @@t {{ if len(tables) - 1 != i }} union all {{ end }}
+//	select * from @@t where created_time between @begin and @end and type in (@types)
+//	{{ if appID > 0 }} and app_id = @appID {{ end }}
+//	{{ if len(tables) - 1 != i }} union all {{ end }}
 //
 // {{ end }} ) t
-// where t.created_time >= @begin and t.created_time <= @end and t.type in (@types)
-// {{ if appID > 0 }} and t.app_id = @appID {{ end }}
-// group by t.type
-func (e eventDo) CountByTypes(tables []string, types []int, appID int, begin time.Time, end time.Time) (result []*map[string]interface{}, err error) {
+// group by `day`, `type`
+// order by `day`
+func (e eventDo) CountTypesWithDay(tables []string, types []int, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error) {
 	var params []interface{}
 
 	var generateSQL strings.Builder
-	generateSQL.WriteString("select t.type `type`, count(*) `count` from ( ")
+	generateSQL.WriteString("select t.type `type`, count(*) `count`, date_format(t.created_time, '%Y%m%d') `day` from ( ")
 	for i, t := range tables {
-		generateSQL.WriteString("select * from " + e.Quote(t) + " ")
+		params = append(params, begin)
+		params = append(params, end)
+		params = append(params, types)
+		generateSQL.WriteString("select * from " + e.Quote(t) + " where created_time between ? and ? and type in (?) ")
+		if appID > 0 {
+			params = append(params, appID)
+			generateSQL.WriteString("and app_id = ? ")
+		}
 		if len(tables)-1 != i {
 			generateSQL.WriteString("union all ")
 		}
 	}
-	params = append(params, begin)
-	params = append(params, end)
-	params = append(params, types)
-	generateSQL.WriteString(") t where t.created_time >= ? and t.created_time <= ? and t.type in (?) ")
-	if appID > 0 {
-		params = append(params, appID)
-		generateSQL.WriteString("and t.app_id = ? ")
+	generateSQL.WriteString(") t group by `day`, `type` order by `day` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = e.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// select t.type `type`, count(*) `count`, date_format(date_sub(t.created_time, INTERVAL (dayofweek(t.created_time)-2) DAY), '%Y%m%d') `day` from (
+// {{ for i, t := range tables }}
+//
+//	select * from @@t where created_time between @begin and @end and type in (@types)
+//	{{ if appID > 0 }} and app_id = @appID {{ end }}
+//	{{ if len(tables) - 1 != i }} union all {{ end }}
+//
+// {{ end }} ) t
+// group by `day`, `type`
+// order by `day`
+func (e eventDo) CountTypesWithWeek(tables []string, types []int, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	generateSQL.WriteString("select t.type `type`, count(*) `count`, date_format(date_sub(t.created_time, INTERVAL (dayofweek(t.created_time)-2) DAY), '%Y%m%d') `day` from ( ")
+	for i, t := range tables {
+		params = append(params, begin)
+		params = append(params, end)
+		params = append(params, types)
+		generateSQL.WriteString("select * from " + e.Quote(t) + " where created_time between ? and ? and type in (?) ")
+		if appID > 0 {
+			params = append(params, appID)
+			generateSQL.WriteString("and app_id = ? ")
+		}
+		if len(tables)-1 != i {
+			generateSQL.WriteString("union all ")
+		}
 	}
-	generateSQL.WriteString("group by t.type ")
+	generateSQL.WriteString(") t group by `day`, `type` order by `day` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = e.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// select t.type `type`, count(*) `count`, date_format(t.created_time, '%Y%m') `day` from (
+// {{ for i, t := range tables }}
+//
+//	select * from @@t where created_time between @begin and @end and type in (@types)
+//	{{ if appID > 0 }} and app_id = @appID {{ end }}
+//	{{ if len(tables) - 1 != i }} union all {{ end }}
+//
+// {{ end }} ) t
+// group by `day`, `type`
+// order by `day`
+func (e eventDo) CountTypesWithMonth(tables []string, types []int, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	generateSQL.WriteString("select t.type `type`, count(*) `count`, date_format(t.created_time, '%Y%m') `day` from ( ")
+	for i, t := range tables {
+		params = append(params, begin)
+		params = append(params, end)
+		params = append(params, types)
+		generateSQL.WriteString("select * from " + e.Quote(t) + " where created_time between ? and ? and type in (?) ")
+		if appID > 0 {
+			params = append(params, appID)
+			generateSQL.WriteString("and app_id = ? ")
+		}
+		if len(tables)-1 != i {
+			generateSQL.WriteString("union all ")
+		}
+	}
+	generateSQL.WriteString(") t group by `day`, `type` order by `day` ")
 
 	var executeSQL *gorm.DB
 	executeSQL = e.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert

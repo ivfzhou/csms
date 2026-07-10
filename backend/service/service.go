@@ -131,6 +131,13 @@ func formatTime(t *time.Time) string {
 	return t.Format(cc.TimeFormat)
 }
 
+func formatDate(t *time.Time) string {
+	if t == nil || t.IsZero() {
+		return ""
+	}
+	return t.Format(cc.TimeFormat)[:10]
+}
+
 func getLastAESSecret(ctx context.Context) (*model.AesKey, error) {
 	aesKeyQuery := conn.MySQLClient(ctx).AesKey
 	aesKeyInfo, err := aesKeyQuery.WithContext(ctx).Where(

@@ -3856,6 +3856,72 @@ const docTemplate = `{
                 }
             }
         },
+        "/web/event/statistic": {
+            "get": {
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Event-WebAPI"
+                ],
+                "summary": "获取应用事件统计数量",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "Mon, 02 Jan 2006 15:04:05 GMT",
+                        "description": "请求日期",
+                        "name": "Date",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "csms_user=; csms_seesion=",
+                        "description": "会话凭据",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "应用 ID",
+                        "name": "appId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "开始时间",
+                        "name": "beginTime",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "结束时间",
+                        "name": "endTime",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 3,
+                        "type": "integer",
+                        "description": "时间粒度。",
+                        "name": "timeStep",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/util.Response-protocol_EventWebStatisticRsp"
+                        }
+                    }
+                }
+            }
+        },
         "/web/file/download": {
             "get": {
                 "consumes": [
@@ -7465,6 +7531,55 @@ const docTemplate = `{
                 }
             }
         },
+        "protocol.EventWebStatisticItem": {
+            "type": "object",
+            "properties": {
+                "applyAndroidCertificateTimes": {
+                    "description": "申请安卓证书数量",
+                    "type": "integer"
+                },
+                "applyAppleProfileTimes": {
+                    "description": "申请苹果描述文件数量",
+                    "type": "integer"
+                },
+                "applyApplePushCertificateTimes": {
+                    "description": "申请苹果推送证书数量",
+                    "type": "integer"
+                },
+                "beginTime": {
+                    "description": "开始时间",
+                    "type": "string"
+                },
+                "createAppTimes": {
+                    "description": "应用新建数量",
+                    "type": "integer"
+                },
+                "invalidAppTimes": {
+                    "description": "应用无效化数量",
+                    "type": "integer"
+                },
+                "uploadAndroidCertificateTimes": {
+                    "description": "上传安卓证书数量",
+                    "type": "integer"
+                },
+                "uploadWindowsCertificateTimes": {
+                    "description": "上传 Windows 个人 OV 证书数量",
+                    "type": "integer"
+                }
+            }
+        },
+        "protocol.EventWebStatisticRsp": {
+            "type": "object",
+            "properties": {
+                "list": {
+                    "description": "数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/protocol.EventWebStatisticItem"
+                    }
+                }
+            }
+        },
         "protocol.FileAPIInitialReq": {
             "type": "object",
             "required": [
@@ -9639,6 +9754,33 @@ const docTemplate = `{
                     "allOf": [
                         {
                             "$ref": "#/definitions/protocol.EventWebListRsp"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "提示语",
+                    "type": "string",
+                    "example": "失败时的提示语"
+                }
+            }
+        },
+        "util.Response-protocol_EventWebStatisticRsp": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应码，大于 0 表示错误",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/errs.Code"
+                        }
+                    ],
+                    "example": 0
+                },
+                "data": {
+                    "description": "响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/protocol.EventWebStatisticRsp"
                         }
                     ]
                 },

@@ -32,55 +32,161 @@ func initApiRoute(r *gin.RouterGroup) {
 func apiFile(r *gin.RouterGroup) {
 	r = r.Group("/file", filter.APIAuthenticateFilter, filter.PermissionAPIAuthenticateFilter)
 
-	addRoute(r, http.MethodGet, "/download", api.FileAPIDownload)
-	addRoute(r, http.MethodPost, "/initial", api.FileAPIInitial)
-	addRoute(r, http.MethodPost, "/uploadPart", api.FileAPIUploadPart)
-	addRoute(r, http.MethodGet, "/mergeParts", api.FileAPIMergeParts)
+	addRoute(
+		r,
+		http.MethodGet,
+		"/download",
+		api.FileAPIDownload,
+	)
+	addRoute(
+		r,
+		http.MethodPost,
+		"/initial",
+		api.FileAPIInitial,
+	)
+	addRoute(
+		r,
+		http.MethodPost,
+		"/uploadPart",
+		api.FileAPIUploadPart,
+	)
+	addRoute(
+		r,
+		http.MethodGet,
+		"/mergeParts",
+		api.FileAPIMergeParts,
+	)
 }
 
 func apiAndroid(r *gin.RouterGroup) {
 	r = r.Group("/android", filter.APIAuthenticateFilter, filter.PermissionAPIAuthenticateFilter)
 
-	addRouteWithPermissions(r, http.MethodGet, "/downloadCertificate",
-		[]int{model.CapabilityDownloadAndroidCertificate}, api.AndroidAPIDownloadCertificate)
-	addRouteWithPermissions(r, http.MethodPost, "/submitAPKSigningJob", []int{model.CapabilitySubmitAndroidSignJob},
-		filter.DatabaseTransactionFilter, api.AndroidAPISubmitAPKSigningJob)
-	addRouteWithPermissions(r, http.MethodPost, "/submitAABSigningJob", []int{model.CapabilitySubmitAndroidSignJob},
-		filter.DatabaseTransactionFilter, api.AndroidAPISubmitAABSigningJob)
-	addRouteWithPermissions(r, http.MethodPost, "/submitAPKPatchSigningJob",
-		[]int{model.CapabilitySubmitAndroidSignJob}, filter.DatabaseTransactionFilter, api.AndroidAPISubmitAPKPatchSigningJob)
-	addRouteWithPermissions(r, http.MethodGet, "/getSigningJobInformation", []int{model.CapabilityGetSignJobInfo},
-		api.AndroidAPIGetSigningJobInformation)
-	addRouteWithPermissions(r, http.MethodGet, "/listCertificates", []int{model.CapabilityGetCertificateInfo},
-		api.AndroidAPIListCertificates)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/downloadCertificate",
+		[]int{model.CapabilityDownloadAndroidCertificate},
+		api.AndroidAPIDownloadCertificate,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/submitAPKSigningJob",
+		[]int{model.CapabilitySubmitAndroidSignJob},
+		filter.DatabaseTransactionFilter,
+		api.AndroidAPISubmitAPKSigningJob,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/submitAABSigningJob",
+		[]int{model.CapabilitySubmitAndroidSignJob},
+		filter.DatabaseTransactionFilter,
+		api.AndroidAPISubmitAABSigningJob,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/submitAPKPatchSigningJob",
+		[]int{model.CapabilitySubmitAndroidSignJob},
+		filter.DatabaseTransactionFilter,
+		api.AndroidAPISubmitAPKPatchSigningJob,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/getSigningJobInformation",
+		[]int{model.CapabilityGetSignJobInfo},
+		api.AndroidAPIGetSigningJobInformation,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/listCertificates",
+		[]int{model.CapabilityGetCertificateInfo},
+		api.AndroidAPIListCertificates,
+	)
 }
 
 func apiWindows(r *gin.RouterGroup) {
 	r = r.Group("/windows", filter.APIAuthenticateFilter, filter.PermissionAPIAuthenticateFilter)
 
-	addRouteWithPermissions(r, http.MethodGet, "/downloadCertificate",
-		[]int{model.CapabilityDownloadWindowsOVCertificate}, api.WindowsAPIDownloadCertificate)
-	addRouteWithPermissions(r, http.MethodGet, "/getCertificatePassword",
-		[]int{model.CapabilityGetWindowsOVCertificatePassword}, api.WindowsAPIGetCertificatePassword)
-	addRouteWithPermissions(r, http.MethodPost, "/submitSigningJob", []int{model.CapabilitySubmitWindowsPESignJob},
-		filter.DatabaseTransactionFilter, api.WindowsAPISubmitSigningJob)
-	addRouteWithPermissions(r, http.MethodPost, "/submitWHQLJob", []int{model.CapabilitySubmitWHQLSignJob},
-		filter.DatabaseTransactionFilter, api.WindowsAPISubmitWHQLJob)
-	addRouteWithPermissions(r, http.MethodGet, "/listCertificates", []int{model.CapabilityGetCertificateInfo},
-		api.WindowsAPIListCertificates)
-	addRouteWithPermissions(r, http.MethodGet, "/getSigningJobInformation", []int{model.CapabilityGetSignJobInfo},
-		api.WindowsAPIGetSigningJobInformation)
-	addRouteWithPermissions(r, http.MethodGet, "/getWHQLJobInformation", []int{model.CapabilityGetSignJobInfo},
-		api.WindowsAPIGetWHQLJobInformation)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/downloadCertificate",
+		[]int{model.CapabilityDownloadWindowsOVCertificate},
+		api.WindowsAPIDownloadCertificate,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/getCertificatePassword",
+		[]int{model.CapabilityGetWindowsOVCertificatePassword},
+		api.WindowsAPIGetCertificatePassword,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/submitSigningJob",
+		[]int{model.CapabilitySubmitWindowsPESignJob},
+		filter.DatabaseTransactionFilter,
+		api.WindowsAPISubmitSigningJob,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/submitWHQLJob",
+		[]int{model.CapabilitySubmitWHQLSignJob},
+		filter.DatabaseTransactionFilter,
+		api.WindowsAPISubmitWHQLJob,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/listCertificates",
+		[]int{model.CapabilityGetCertificateInfo},
+		api.WindowsAPIListCertificates,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/getSigningJobInformation",
+		[]int{model.CapabilityGetSignJobInfo},
+		api.WindowsAPIGetSigningJobInformation,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/getWHQLJobInformation",
+		[]int{model.CapabilityGetSignJobInfo},
+		api.WindowsAPIGetWHQLJobInformation,
+	)
 }
 
 func apiApple(r *gin.RouterGroup) {
 	r = r.Group("/apple", filter.APIAuthenticateFilter, filter.PermissionAPIAuthenticateFilter)
 
-	addRouteWithPermissions(r, http.MethodGet, "/downloadCertificate",
-		[]int{model.CapabilityDownloadAppleCertAndProvision}, api.AppleAPIDownloadCertificate)
-	addRouteWithPermissions(r, http.MethodPost, "/submitSigningJob", []int{model.CapabilitySubmitAppleSignJob},
-		filter.DatabaseTransactionFilter, api.AppleAPISubmitSigningJob)
-	addRouteWithPermissions(r, http.MethodGet, "/getSigningJobInformation", []int{model.CapabilityGetSignJobInfo},
-		api.AppleAPIGetSigningJobInformation)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/downloadCertificate",
+		[]int{model.CapabilityDownloadAppleCertAndProvision},
+		api.AppleAPIDownloadCertificate,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/submitSigningJob",
+		[]int{model.CapabilitySubmitAppleSignJob},
+		filter.DatabaseTransactionFilter,
+		api.AppleAPISubmitSigningJob,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/getSigningJobInformation",
+		[]int{model.CapabilityGetSignJobInfo},
+		api.AppleAPIGetSigningJobInformation,
+	)
 }

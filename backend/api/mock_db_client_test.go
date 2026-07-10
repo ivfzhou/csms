@@ -54,6 +54,9 @@ const (
 	methodTypeEventGetTables
 	methodTypeEventCount2
 	methodTypeEventList
+	methodTypeEventCountTypesWithDay
+	methodTypeEventCountTypesWithWeek
+	methodTypeEventCountTypesWithMonth
 	methodTypeAndroidSigningJobGetTables
 	methodTypeAppleSigningJobGetTables
 	methodTypeAndroidSigningJobCount2
@@ -76,6 +79,9 @@ type DBClientMocker[Table any] interface {
 	EventCount2Once(r int, err error) DBClientMocker[Table]
 	AndroidSigningJobCount2Once(r int, err error) DBClientMocker[Table]
 	EventListOnce(r []*Table, err error) DBClientMocker[Table]
+	EventCountTypesWithDayOnce(r []map[string]any, err error) DBClientMocker[Table]
+	EventCountTypesWithWeekOnce(r []map[string]any, err error) DBClientMocker[Table]
+	EventCountTypesWithMonthOnce(r []map[string]any, err error) DBClientMocker[Table]
 	AndroidSigningJobListOnce(r []*Table, err error) DBClientMocker[Table]
 	LastOnce(t *Table, err error) DBClientMocker[Table]
 	Reset()
@@ -304,6 +310,21 @@ func (m *dbClientMocker[Table, Do]) LastOnce(t *Table, err error) DBClientMocker
 
 func (m *dbClientMocker[Table, Do]) EventListOnce(r []*Table, err error) DBClientMocker[Table] {
 	m.do.append(&doResultData{method: methodTypeEventList, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) EventCountTypesWithDayOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeEventCountTypesWithDay, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) EventCountTypesWithWeekOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeEventCountTypesWithWeek, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) EventCountTypesWithMonthOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeEventCountTypesWithMonth, values: []any{r, err}})
 	return m
 }
 
@@ -619,7 +640,7 @@ func (c *commonDo[Table, Do]) append(d *doResultData) {
 	c.datas = append(c.datas, d)
 }
 
-func (c *eventDo[Do]) List([]string, []int, []int, time.Time, time.Time, int, int) ([]*model.Event, error) {
+func (c *eventDo[Do]) List([]string, []int, []int, time.Time, time.Time, int, int, int) ([]*model.Event, error) {
 	data := c.getResultData(methodTypeEventList)
 	if data != nil {
 		r, _ := data[0].([]*model.Event)
@@ -629,7 +650,7 @@ func (c *eventDo[Do]) List([]string, []int, []int, time.Time, time.Time, int, in
 	panic(fmt.Sprintf("unhandle db %s List", c.typeName))
 }
 
-func (c *eventDo[Do]) Count2([]string, []int, []int, time.Time, time.Time) (int, error) {
+func (c *eventDo[Do]) Count2([]string, []int, []int, time.Time, time.Time, int) (int, error) {
 	data := c.getResultData(methodTypeEventCount2)
 	if data != nil {
 		r, _ := data[0].(int)
@@ -639,8 +660,34 @@ func (c *eventDo[Do]) Count2([]string, []int, []int, time.Time, time.Time) (int,
 	panic(fmt.Sprintf("unhandle db %s Count2", c.typeName))
 }
 
-func (c *eventDo[Do]) CountByTypes([]string, []int, int, time.Time, time.Time) ([]*map[string]any, error) {
-	panic(fmt.Sprintf("unhandle db %s CountByTypes", c.typeName))
+func (c *eventDo[Do]) CountTypesWithDay([]string, []int, int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeEventCountTypesWithDay)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s CountTypesWithDay", c.typeName))
+}
+
+func (c *eventDo[Do]) CountTypesWithWeek([]string, []int, int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeEventCountTypesWithWeek)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s CountTypesWithWeek", c.typeName))
+}
+
+func (c *eventDo[Do]) CountTypesWithMonth([]string, []int, int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeEventCountTypesWithMonth)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s CountTypesWithMonth", c.typeName))
 }
 
 func (c *eventDo[Do]) GetTables(string) ([]string, error) {

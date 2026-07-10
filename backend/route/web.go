@@ -47,87 +47,283 @@ func initWebRoute(r *gin.RouterGroup) {
 func webUser(r *gin.RouterGroup) {
 	r = r.Group("/user")
 
-	addRoute(r, http.MethodPost, "/register", filter.AntiShakeFilter, filter.DatabaseTransactionFilter,
-		api.UserWebRegister)
-	addRoute(r, http.MethodPost, "/login", filter.AntiShakeFilter, api.UserWebLogin)
-	addRoute(r, http.MethodGet, "/getInformation", filter.WebAuthenticateFilter, api.UserWebGetInformation)
-	addRoute(r, http.MethodPost, "/update", filter.WebAuthenticateFilter, filter.AntiShakeFilter,
-		filter.DatabaseTransactionFilter, api.UserWebUpdate)
-	addRoute(r, http.MethodGet, "/search", filter.WebAuthenticateFilter, api.UserWebSearch)
-	addRoute(r, http.MethodDelete, "/logout", filter.WebAuthenticateFilter, filter.AntiShakeFilter, api.UserWebLogout)
+	addRoute(
+		r,
+		http.MethodPost,
+		"/register",
+		filter.AntiShakeFilter,
+		filter.DatabaseTransactionFilter,
+		api.UserWebRegister,
+	)
+	addRoute(
+		r,
+		http.MethodPost,
+		"/login",
+		filter.AntiShakeFilter,
+		api.UserWebLogin,
+	)
+	addRoute(
+		r,
+		http.MethodGet,
+		"/getInformation",
+		filter.WebAuthenticateFilter,
+		api.UserWebGetInformation,
+	)
+	addRoute(
+		r,
+		http.MethodPost,
+		"/update",
+		filter.WebAuthenticateFilter,
+		filter.AntiShakeFilter,
+		filter.DatabaseTransactionFilter,
+		api.UserWebUpdate,
+	)
+	addRoute(
+		r,
+		http.MethodGet,
+		"/search",
+		filter.WebAuthenticateFilter,
+		api.UserWebSearch,
+	)
+	addRoute(
+		r,
+		http.MethodDelete,
+		"/logout",
+		filter.WebAuthenticateFilter,
+		filter.AntiShakeFilter,
+		api.UserWebLogout,
+	)
 }
 
 func webApp(r *gin.RouterGroup) {
 	r = r.Group("/app", filter.WebAuthenticateFilter)
 
-	addRoute(r, http.MethodPost, "/register", filter.AntiShakeFilter, filter.DatabaseTransactionFilter,
-		api.AppWebRegister)
-	addRoute(r, http.MethodPost, "/search", api.AppWebSearch)
-	addRouteWithPermissions(r, http.MethodPost, "/update/:"+consts.HTTPPathAppID, permissionAppAdmin,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.AppWebUpdate)
-	addRouteWithPermissions(r, http.MethodGet, "/getInformation/:"+consts.HTTPPathAppID, permissionAppRead,
-		filter.PermissionWebAuthenticateFilter, api.AppWebGetInformation)
-	addRouteWithPermissions(r, http.MethodGet, "/invalidate/:"+consts.HTTPPathAppID, permissionAppAdmin,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.AppWebInvalidate)
-	addRouteWithPermissions(r, http.MethodGet, "/enable/:"+consts.HTTPPathAppID, permissionAppAdmin,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.AppWebEnable)
-	addRoute(r, http.MethodGet, "/count", api.AppWebCount)
+	addRoute(
+		r,
+		http.MethodPost,
+		"/register",
+		filter.AntiShakeFilter,
+		filter.DatabaseTransactionFilter,
+		api.AppWebRegister,
+	)
+	addRoute(
+		r,
+		http.MethodPost,
+		"/search",
+		api.AppWebSearch,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/update/:"+consts.HTTPPathAppID,
+		permissionAppAdmin,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.AppWebUpdate,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/getInformation/:"+consts.HTTPPathAppID,
+		permissionAppRead,
+		filter.PermissionWebAuthenticateFilter,
+		api.AppWebGetInformation,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/invalidate/:"+consts.HTTPPathAppID,
+		permissionAppAdmin,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.AppWebInvalidate,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/enable/:"+consts.HTTPPathAppID,
+		permissionAppAdmin,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.AppWebEnable,
+	)
+	addRoute(
+		r,
+		http.MethodGet,
+		"/count",
+		api.AppWebCount,
+	)
 }
 
 func webFile(r *gin.RouterGroup) {
 	r = r.Group("/file", filter.WebAuthenticateFilter)
 
-	addRoute(r, http.MethodGet, "/download", api.FileWebDownload)
-	addRoute(r, http.MethodPost, "/initial", filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter,
-		api.FileWebInitial)
-	addRoute(r, http.MethodPost, "/uploadPart", api.FileWebUploadPart)
-	addRoute(r, http.MethodGet, "/mergeParts", filter.AntiShakeFilter, api.FileWebMergeParts)
+	addRoute(
+		r,
+		http.MethodGet,
+		"/download",
+		api.FileWebDownload,
+	)
+	addRoute(
+		r,
+		http.MethodPost,
+		"/initial",
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		api.FileWebInitial,
+	)
+	addRoute(
+		r,
+		http.MethodPost,
+		"/uploadPart",
+		api.FileWebUploadPart,
+	)
+	addRoute(
+		r,
+		http.MethodGet,
+		"/mergeParts",
+		filter.AntiShakeFilter,
+		api.FileWebMergeParts,
+	)
 }
 
 func webEvent(r *gin.RouterGroup) {
 	r = r.Group("/event", filter.WebAuthenticateFilter)
 
-	addRoute(r, http.MethodGet, "/list", api.EventWebList)
-	addRouteWithPermissions(r, http.MethodGet, "/statistic", permissionSystem, filter.AntiShakeFilter,
-		filter.PermissionWebAuthenticateFilter, api.EventWebStatistic)
+	addRoute(
+		r,
+		http.MethodGet,
+		"/list",
+		api.EventWebList,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/statistic",
+		permissionSystem,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		api.EventWebStatistic,
+	)
 }
 
 func webTodo(r *gin.RouterGroup) {
 	r = r.Group("/todo", filter.WebAuthenticateFilter)
 
-	addRoute(r, http.MethodGet, "/count", api.TodoWebCount)
-	addRoute(r, http.MethodGet, "/list", api.TodoWebList)
-	addRoute(r, http.MethodGet, "/listDealt", api.TodoWebListDealt)
-	addRoute(r, http.MethodPost, "/create", filter.AntiShakeFilter, filter.DatabaseTransactionFilter, api.TodoWebCreate)
-	addRoute(r, http.MethodGet, "/getDetail", api.TodoWebGetDetail)
-	addRoute(r, http.MethodPost, "/deal", filter.AntiShakeFilter, filter.DatabaseTransactionFilter, api.TodoWebDeal)
+	addRoute(
+		r,
+		http.MethodGet,
+		"/count",
+		api.TodoWebCount,
+	)
+	addRoute(
+		r,
+		http.MethodGet,
+		"/list",
+		api.TodoWebList,
+	)
+	addRoute(
+		r,
+		http.MethodGet,
+		"/listDealt",
+		api.TodoWebListDealt,
+	)
+	addRoute(
+		r,
+		http.MethodPost,
+		"/create",
+		filter.AntiShakeFilter,
+		filter.DatabaseTransactionFilter,
+		api.TodoWebCreate,
+	)
+	addRoute(
+		r,
+		http.MethodGet,
+		"/getDetail",
+		api.TodoWebGetDetail,
+	)
+	addRoute(
+		r,
+		http.MethodPost,
+		"/deal",
+		filter.AntiShakeFilter,
+		filter.DatabaseTransactionFilter,
+		api.TodoWebDeal,
+	)
 }
 
 func webOpen(r *gin.RouterGroup) {
 	r = r.Group("/open", filter.WebAuthenticateFilter)
 
-	addRouteWithPermissions(r, http.MethodPost, "/apply/:"+consts.HTTPPathAppID, permissionAppAdmin,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.OpenWebApply)
-	addRouteWithPermissions(r, http.MethodPost, "/update/:"+consts.HTTPPathAppID, permissionAppAdmin,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.OpenWebUpdate)
-	addRouteWithPermissions(r, http.MethodGet, "/getInformation/:"+consts.HTTPPathAppID, permissionAppRead,
-		filter.PermissionWebAuthenticateFilter, api.OpenWebGetInformation)
-	addRouteWithPermissions(r, http.MethodGet, "/list/:"+consts.HTTPPathAppID, permissionAppRead,
-		filter.PermissionWebAuthenticateFilter, api.OpenWebList)
-	addRouteWithPermissions(r, http.MethodGet, "/renewal/:"+consts.HTTPPathAppID, permissionAppAdmin,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.OpenWebRenewal)
-	addRouteWithPermissions(r, http.MethodGet, "/reset/:"+consts.HTTPPathAppID, permissionAppAdmin,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.OpenWebReset)
-	addRouteWithPermissions(r, http.MethodDelete, "/remove/:"+consts.HTTPPathAppID, permissionAppAdmin,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.OpenWebRemove)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/apply/:"+consts.HTTPPathAppID,
+		permissionAppAdmin,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.OpenWebApply,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/update/:"+consts.HTTPPathAppID,
+		permissionAppAdmin,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.OpenWebUpdate,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/getInformation/:"+consts.HTTPPathAppID,
+		permissionAppRead,
+		filter.PermissionWebAuthenticateFilter,
+		api.OpenWebGetInformation,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/list/:"+consts.HTTPPathAppID,
+		permissionAppRead,
+		filter.PermissionWebAuthenticateFilter,
+		api.OpenWebList,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/renewal/:"+consts.HTTPPathAppID,
+		permissionAppAdmin,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.OpenWebRenewal,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/reset/:"+consts.HTTPPathAppID,
+		permissionAppAdmin,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.OpenWebReset,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodDelete,
+		"/remove/:"+consts.HTTPPathAppID,
+		permissionAppAdmin,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.OpenWebRemove,
+	)
 }
 
 func webAndroid(r *gin.RouterGroup) {
@@ -285,103 +481,340 @@ func webAndroid(r *gin.RouterGroup) {
 func webWindows(r *gin.RouterGroup) {
 	r = r.Group("/windows", filter.WebAuthenticateFilter)
 
-	addRouteWithPermissions(r, http.MethodPost, "/uploadCertificate/:"+consts.HTTPPathAppID, permissionApp,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.WindowsWebUploadCertificate)
-	addRouteWithPermissions(r, http.MethodGet, "/listCertificates/:"+consts.HTTPPathAppID, permissionAppRead,
-		filter.PermissionWebAuthenticateFilter, api.WindowsWebListCertificates)
-	addRouteWithPermissions(r, http.MethodGet, "/downloadCertificate/:"+consts.HTTPPathAppID, permissionAppRead,
-		filter.PermissionWebAuthenticateFilter, api.WindowsWebDownloadCertificate)
-	addRouteWithPermissions(r, http.MethodPost, "/addEVCertificate", permissionSystem,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, api.WindowsWebAddEVCertificate)
-	addRouteWithPermissions(r, http.MethodPost, "/uploadCompanyCertificate", permissionSystem,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, api.WindowsWebUploadCompanyCertificate)
-	addRouteWithPermissions(r, http.MethodGet, "/listCompanyCertificates", permissionSystem,
-		filter.PermissionWebAuthenticateFilter, api.WindowsWebListCompanyCertificates)
-	addRouteWithPermissions(r, http.MethodPost, "/grantAppEVCertificate", permissionSystem,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, api.WindowsWebGrantAppEVCertificate)
-	addRouteWithPermissions(r, http.MethodGet, "/getCertificatePassword/:"+consts.HTTPPathAppID, permissionAppRead,
-		filter.PermissionWebAuthenticateFilter, api.WindowsWebGetCertificatePassword)
-	addRouteWithPermissions(r, http.MethodGet, "/downloadCompanyCertificate", permissionSystem,
-		filter.PermissionWebAuthenticateFilter, api.WindowsWebDownloadCompanyCertificate)
-	addRouteWithPermissions(r, http.MethodGet, "/listGrantCertificateApps", permissionSystem,
-		filter.PermissionWebAuthenticateFilter, api.WindowsWebListGrantCertificateApps)
-	addRouteWithPermissions(r, http.MethodPost, "/submitSigningJob/:"+consts.HTTPPathAppID, permissionAppSign,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.WindowsWebSubmitSigningJob)
-	addRouteWithPermissions(r, http.MethodGet, "/listSigningJobs/:"+consts.HTTPPathAppID, permissionAppRead,
-		filter.PermissionWebAuthenticateFilter, api.WindowsWebListSigningJobs)
-	addRouteWithPermissions(r, http.MethodPost, "/submitWHQLJob/:"+consts.HTTPPathAppID, permissionAppSign,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.WindowsWebSubmitWHQLJob)
-	addRouteWithPermissions(r, http.MethodGet, "/listWHQLJobs/:"+consts.HTTPPathAppID, permissionAppRead,
-		filter.PermissionWebAuthenticateFilter, api.WindowsWebListWHQLJobs)
-	addRouteWithPermissions(r, http.MethodDelete, "/removeCompanyCertificate", permissionSystem,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.WindowsWebRemoveCompanyCertificate)
-	addRouteWithPermissions(r, http.MethodDelete, "/deleteCertificate/:"+consts.HTTPPathAppID, permissionAppAdmin,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.WindowsWebDeleteCertificate)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/uploadCertificate/:"+consts.HTTPPathAppID,
+		permissionApp,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.WindowsWebUploadCertificate,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/listCertificates/:"+consts.HTTPPathAppID,
+		permissionAppRead,
+		filter.PermissionWebAuthenticateFilter,
+		api.WindowsWebListCertificates,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/downloadCertificate/:"+consts.HTTPPathAppID,
+		permissionAppRead,
+		filter.PermissionWebAuthenticateFilter,
+		api.WindowsWebDownloadCertificate,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/addEVCertificate",
+		permissionSystem,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		api.WindowsWebAddEVCertificate,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/uploadCompanyCertificate",
+		permissionSystem,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		api.WindowsWebUploadCompanyCertificate,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/listCompanyCertificates",
+		permissionSystem,
+		filter.PermissionWebAuthenticateFilter,
+		api.WindowsWebListCompanyCertificates,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/grantAppEVCertificate",
+		permissionSystem,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		api.WindowsWebGrantAppEVCertificate,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/getCertificatePassword/:"+consts.HTTPPathAppID,
+		permissionAppRead,
+		filter.PermissionWebAuthenticateFilter,
+		api.WindowsWebGetCertificatePassword,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/downloadCompanyCertificate",
+		permissionSystem,
+		filter.PermissionWebAuthenticateFilter,
+		api.WindowsWebDownloadCompanyCertificate,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/listGrantCertificateApps",
+		permissionSystem,
+		filter.PermissionWebAuthenticateFilter,
+		api.WindowsWebListGrantCertificateApps,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/submitSigningJob/:"+consts.HTTPPathAppID,
+		permissionAppSign,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.WindowsWebSubmitSigningJob,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/listSigningJobs/:"+consts.HTTPPathAppID,
+		permissionAppRead,
+		filter.PermissionWebAuthenticateFilter,
+		api.WindowsWebListSigningJobs,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/submitWHQLJob/:"+consts.HTTPPathAppID,
+		permissionAppSign,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.WindowsWebSubmitWHQLJob,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/listWHQLJobs/:"+consts.HTTPPathAppID,
+		permissionAppRead,
+		filter.PermissionWebAuthenticateFilter,
+		api.WindowsWebListWHQLJobs,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodDelete,
+		"/removeCompanyCertificate",
+		permissionSystem,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.WindowsWebRemoveCompanyCertificate,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodDelete,
+		"/deleteCertificate/:"+consts.HTTPPathAppID,
+		permissionAppAdmin,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.WindowsWebDeleteCertificate,
+	)
 }
 
 func webApple(r *gin.RouterGroup) {
 	r = r.Group("/apple", filter.WebAuthenticateFilter)
 
-	addRouteWithPermissions(r, http.MethodPost, "/applyBundleID/:"+consts.HTTPPathAppID, permissionAppAdmin,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.AppleWebApplyBundleID)
-	addRouteWithPermissions(r, http.MethodPost, "/modifyBundleID/:"+consts.HTTPPathAppID, permissionAppAdmin,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.AppleWebModifyBundleID)
-	addRouteWithPermissions(r, http.MethodPost, "/applyCertificate", permissionSystem,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, api.AppleWebApplyCertificate)
-	addRouteWithPermissions(r, http.MethodGet, "/listBundleIDs/:"+consts.HTTPPathAppID, permissionAppRead,
-		filter.PermissionWebAuthenticateFilter, api.AppleWebListBundleIDs)
-	addRouteWithPermissions(r, http.MethodGet, "/listCertificates", permissionSystem,
-		filter.PermissionWebAuthenticateFilter, api.AppleWebListCertificates)
-	addRouteWithPermissions(r, http.MethodPost, "/registerDevice/:"+consts.HTTPPathAppID, permissionApp,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.AppleWebRegisterDevice)
-	addRouteWithPermissions(r, http.MethodGet, "/listDevices/:"+consts.HTTPPathAppID, permissionAppRead,
-		filter.PermissionWebAuthenticateFilter, api.AppleWebListDevices)
-	addRouteWithPermissions(r, http.MethodPost, "/applyProfile/:"+consts.HTTPPathAppID, permissionApp,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.AppleWebApplyProfile)
-	addRouteWithPermissions(r, http.MethodPost, "/applyInHouseProfile/:"+consts.HTTPPathAppID, permissionApp,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.AppleWebApplyInHouseProfile)
-	addRouteWithPermissions(r, http.MethodPost, "/applyCommonProfile/:"+consts.HTTPPathAppID, permissionApp,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.AppleWebApplyCommonProfile)
-	addRouteWithPermissions(r, http.MethodPost, "/applyPushCertificate/:"+consts.HTTPPathAppID, permissionApp,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.AppleWebApplyPushCertificate)
-	addRouteWithPermissions(r, http.MethodDelete, "/deleteBundleID/:"+consts.HTTPPathAppID, permissionAppAdmin,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.AppleWebDeleteBundleID)
-	addRouteWithPermissions(r, http.MethodDelete, "/removeCertificate", permissionSystem,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, api.AppleWebRemoveCertificate)
-	addRouteWithPermissions(r, http.MethodGet, "/listAppCertificates/:"+consts.HTTPPathAppID, permissionAppRead,
-		filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter, api.AppleWebListAppCertificates)
-	addRouteWithPermissions(r, http.MethodPost, "/submitSigningJob/:"+consts.HTTPPathAppID, permissionAppSign,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.AppleWebSubmitSigningJob)
-	addRouteWithPermissions(r, http.MethodGet, "/listSigningJobs/:"+consts.HTTPPathAppID, permissionAppRead,
-		filter.PermissionWebAuthenticateFilter, api.AppleWebListSigningJobs)
-	addRouteWithPermissions(r, http.MethodDelete, "/removeProfile/:"+consts.HTTPPathAppID, permissionAppAdmin,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.AppleWebRemoveProfile)
-	addRouteWithPermissions(r, http.MethodDelete, "/removePushCertificate/:"+consts.HTTPPathAppID, permissionAppAdmin,
-		filter.AntiShakeFilter, filter.PermissionWebAuthenticateFilter, filter.DatabaseTransactionFilter,
-		api.AppleWebRemovePushCertificate)
-	addRouteWithPermissions(r, http.MethodGet, "/downloadCertificate/:"+consts.HTTPPathAppID, permissionAppRead,
-		filter.PermissionWebAuthenticateFilter, api.AppleWebDownloadCertificate)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/applyBundleID/:"+consts.HTTPPathAppID,
+		permissionAppAdmin,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.AppleWebApplyBundleID,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/modifyBundleID/:"+consts.HTTPPathAppID,
+		permissionAppAdmin,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.AppleWebModifyBundleID,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/applyCertificate",
+		permissionSystem,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		api.AppleWebApplyCertificate,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/listBundleIDs/:"+consts.HTTPPathAppID,
+		permissionAppRead,
+		filter.PermissionWebAuthenticateFilter,
+		api.AppleWebListBundleIDs,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/listCertificates",
+		permissionSystem,
+		filter.PermissionWebAuthenticateFilter,
+		api.AppleWebListCertificates,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/registerDevice/:"+consts.HTTPPathAppID,
+		permissionApp,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.AppleWebRegisterDevice,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/listDevices/:"+consts.HTTPPathAppID,
+		permissionAppRead,
+		filter.PermissionWebAuthenticateFilter,
+		api.AppleWebListDevices,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/applyProfile/:"+consts.HTTPPathAppID,
+		permissionApp,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.AppleWebApplyProfile,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/applyInHouseProfile/:"+consts.HTTPPathAppID,
+		permissionApp,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.AppleWebApplyInHouseProfile,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/applyCommonProfile/:"+consts.HTTPPathAppID,
+		permissionApp,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.AppleWebApplyCommonProfile,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/applyPushCertificate/:"+consts.HTTPPathAppID,
+		permissionApp,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.AppleWebApplyPushCertificate,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodDelete,
+		"/deleteBundleID/:"+consts.HTTPPathAppID,
+		permissionAppAdmin,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.AppleWebDeleteBundleID,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodDelete,
+		"/removeCertificate",
+		permissionSystem,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		api.AppleWebRemoveCertificate,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/listAppCertificates/:"+consts.HTTPPathAppID,
+		permissionAppRead,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.AppleWebListAppCertificates,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/submitSigningJob/:"+consts.HTTPPathAppID,
+		permissionAppSign,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.AppleWebSubmitSigningJob,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/listSigningJobs/:"+consts.HTTPPathAppID,
+		permissionAppRead,
+		filter.PermissionWebAuthenticateFilter,
+		api.AppleWebListSigningJobs,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodDelete,
+		"/removeProfile/:"+consts.HTTPPathAppID,
+		permissionAppAdmin,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.AppleWebRemoveProfile,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodDelete,
+		"/removePushCertificate/:"+consts.HTTPPathAppID,
+		permissionAppAdmin,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		filter.DatabaseTransactionFilter,
+		api.AppleWebRemovePushCertificate,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/downloadCertificate/:"+consts.HTTPPathAppID,
+		permissionAppRead,
+		filter.PermissionWebAuthenticateFilter,
+		api.AppleWebDownloadCertificate,
+	)
 }
 
 func webNotice(r *gin.RouterGroup) {
 	r = r.Group("/notice")
 
-	addRoute(r, http.MethodGet, "/last", api.NoticeWebLast)
+	addRoute(
+		r,
+		http.MethodGet,
+		"/last",
+		api.NoticeWebLast,
+	)
 }
 
 func addRoute(r *gin.RouterGroup, method string, path string, handlers ...gin.HandlerFunc) {

@@ -6,10 +6,6 @@
 
 关于 HTTP 接口测试：在第三方服务接口能实际使用的情况下，测试业务功能逻辑。在单机环境下，运行各类服务，然后发送 HTTP 请求模拟客户端行为，确保服务功能的表现符合预期。比单测环境更接近实际生产环境。
 
-**！！严正声明！！**
-
-**<span style="color: red">本仓库每行代码皆是本人设计编码，无任何 CV/AI 代码。使用实际业务资源测试，通过了测试。阅读以下章节，可直接部署服务运行使用。</span>**
-
 # 二、运行环境
 
 |       工具       |        版本号        |
@@ -39,15 +35,15 @@
     ```
 1. 生成 GORM 代码：
     ```shell
-    go run ./comm -database ./comm/database.sql
+    go run -C ./comm ./ -database ./database.sql
     ```
-1. 生成 Swagger API 文档：
+1. 生成 Swagger API 文档（[swag 命令](https://github.com/swaggo/swag)）：
     ```shell
     swag init -d ./backend,./comm -o ./backend/docs
     ```
 1. 运行单元测试（需要有 JDK 环境）：
     ```shell
-    go test -count=1 -v ./backend/api
+    go test -C ./backend -count=1 -v ./api
     ```
 1. 编译代码：
     ```shell
@@ -72,15 +68,15 @@
     mkdir -p $HOME/fastlane
     cp ./fastlane_proxy/Fastfile.rb $HOME/fastlane/Fastfile
     ````
-1. 启动主服务：
+1. 启动主服务（本地测试可添加参数 -localTestMode -skipRateLimit）：
     ```shell
     cd ./backend
-    ./backend -config ./config.ini -messageFilesDirectory ./ -javaBinaryPath $JAVA_HOME/bin/java -javaBinaryPathForPepk $JAVA_HOME/bin/java -keytoolBinaryPath $JAVA_HOME/bin/keytool -localIP 127.0.0.1 -pepkJarPath ./pepk.jar -cabextractFilePath ./cabextract -localTestMode -skipRateLimit
+    ./backend -config ./config.ini -messageFilesDirectory ./ -javaBinaryPath $JAVA_HOME/bin/java -javaBinaryPathForPepk $JAVA_HOME/bin/java -keytoolBinaryPath $JAVA_HOME/bin/keytool -localIP 127.0.0.1 -pepkJarPath ./pepk.jar -cabextractFilePath ./cabextract
     ```
-1. 启动 fastlane_proxy 服务：
+1. 启动 fastlane_proxy 服务（本地测试可添加参数 -localTestMode）：
     ```shell
     cd ./fastlane_proxy
-    ./fastlane_proxy -config ./config.ini -messageFilesDirectory ./ -localIP 127.0.0.1 -localTestMode
+    ./fastlane_proxy -config ./config.ini -messageFilesDirectory ./ -localIP 127.0.0.1
     ```
 1. 启动 hlk_manager 服务：
     - Hyper-V 虚拟机中将 hlk_manager.exe 程序注册为系统服务，且设置开机自启，以 Administrator 用户运行。
@@ -129,13 +125,13 @@
 1. 运行在操作系统 Linux 下。
 1. 清空并重新创建数据库和表。
 1. 启动各中间件服务。
-1. backend 服务添加参数 `-skipRateLimit`。
+1. backend 服务添加参数。
 1. 启动各类服务。
 1. 如果 Nginx 使用了自签名证书，须先将证书添加到 Java 证书信任库中：
     ```shell
     keytool -import -alias csms_ca -keystore $JAVA_HOME/lib/security/cacerts -file ca.crt
     ```
-1. 然后运行 ijhttp 脚本：
+1. 然后运行 [ijhttp](https://www.jetbrains.com/ijhttp/download) 脚本：
     ```shell
     ijhttp ./testdata/all_api_test.http
     ```

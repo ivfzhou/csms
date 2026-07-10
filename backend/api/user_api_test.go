@@ -100,69 +100,65 @@ func TestUserAPI_WebRegister(t *testing.T) {
 
 	t.Run("正常请求", func(t *testing.T) {
 		ctx := context.Background()
-		nameZh, nameEn, password, passwordConfirmation, department, avatarName, avatarBytes :=
-			"张三", "zhangsan", "123456", "123456", "/技术部", "zhangsan.jpg", GenerateJPEG(t, 10, 10)
 
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbFileMocker := MockDBClient[model.File](ctx)
 		redisMocker := MockRedis(ctx)
 		tusdMocker := MockTusdClient(ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.EvalshaOnce(true, nil)
-		dbUserMocker = dbUserMocker.CountOnce(0, nil)
-		tusdMocker = tusdMocker.UploadFileOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.SAddOnce(1, nil)
-		dbUserMocker = dbUserMocker.CreateOnce(nil)
-		dbFileMocker = dbFileMocker.CreateOnce(nil)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
+		dbUserMocker = dbUserMocker.CountOnce(0, nil)                                       // 检查用户名是否已存在。
+		tusdMocker = tusdMocker.UploadFileOnce(util.FastRandomAlphaNumberString(32), nil)   // 上传用户头像文件到存储服务。
+		redisMocker = redisMocker.SAddOnce(1, nil)                                          // 添加文件 ID 到 Redis。
+		dbUserMocker = dbUserMocker.CreateOnce(nil)                                         // 添加用户信息到数据库。
+		dbFileMocker = dbFileMocker.CreateOnce(nil)                                         // 保存头像文件信息到数据库。
 		defer dbUserMocker.Reset()
 		defer dbFileMocker.Reset()
 		defer redisMocker.Reset()
 		defer tusdMocker.Reset()
 
 		reqBody, contentType := createRequestBody(
-			&nameZh,
-			&nameEn,
-			&password,
-			&passwordConfirmation,
-			&department,
-			&avatarName,
-			avatarBytes,
+			new("张三"),
+			new("zhangsan"),
+			new("123456"),
+			new("123456"),
+			new("/技术部"),
+			new("zhangsan.jpg"),
+			GenerateJPEG(t, 10, 10),
 		)
 		CheckAndUnmarshalBody[any](t, ServeHTTP(ctx,
 			CreatePostMultiFormRequest(ctx, reqPath, reqBody, contentType)), consts.AlertRegisterUser)
 	})
 
-	t.Run("正常请求_使用PNG格式头像", func(t *testing.T) {
+	t.Run("正常请求_使用 PNG 格式头像", func(t *testing.T) {
 		ctx := context.Background()
-		nameZh, nameEn, password, passwordConfirmation, department, avatarName, avatarBytes := "张三", "zhangsan",
-			"123456", "123456", "/技术部", "zhangsan.png", GeneratePNG(t, 10, 10)
 
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbFileMocker := MockDBClient[model.File](ctx)
 		redisMocker := MockRedis(ctx)
 		tusdMocker := MockTusdClient(ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.EvalshaOnce(true, nil)
-		dbUserMocker = dbUserMocker.CountOnce(0, nil)
-		tusdMocker = tusdMocker.UploadFileOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.SAddOnce(1, nil)
-		dbUserMocker = dbUserMocker.CreateOnce(nil)
-		dbFileMocker = dbFileMocker.CreateOnce(nil)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
+		dbUserMocker = dbUserMocker.CountOnce(0, nil)                                       // 检查用户名是否已存在。
+		tusdMocker = tusdMocker.UploadFileOnce(util.FastRandomAlphaNumberString(32), nil)   // 上传用户头像文件到存储服务。
+		redisMocker = redisMocker.SAddOnce(1, nil)                                          // 添加文件 ID 到 Redis。
+		dbUserMocker = dbUserMocker.CreateOnce(nil)                                         // 添加用户信息到数据库。
+		dbFileMocker = dbFileMocker.CreateOnce(nil)                                         // 保存头像文件信息到数据库。
 		defer dbUserMocker.Reset()
 		defer dbFileMocker.Reset()
 		defer redisMocker.Reset()
 		defer tusdMocker.Reset()
 
 		reqBody, contentType := createRequestBody(
-			&nameZh,
-			&nameEn,
-			&password,
-			&passwordConfirmation,
-			&department,
-			&avatarName,
-			avatarBytes,
+			new("张三"),
+			new("zhangsan"),
+			new("123456"),
+			new("123456"),
+			new("/技术部"),
+			new("zhangsan.png"),
+			GeneratePNG(t, 10, 10),
 		)
 		CheckAndUnmarshalBody[any](
 			t,
@@ -171,25 +167,23 @@ func TestUserAPI_WebRegister(t *testing.T) {
 		)
 	})
 
-	t.Run("异常测试_使用GIF格式头像", func(t *testing.T) {
+	t.Run("异常测试_使用 GIF 格式头像", func(t *testing.T) {
 		ctx := context.Background()
-		nameZh, nameEn, password, passwordConfirmation, department, avatarName, avatarBytes :=
-			"张三", "zhangsan", "123456", "123456", "/技术部", "zhangsan.gif", GenerateGIF(t, 10, 10)
 
 		redisMocker := MockRedis(ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.EvalshaOnce(true, nil)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
 		defer redisMocker.Reset()
 
 		reqBody, contentType := createRequestBody(
-			&nameZh,
-			&nameEn,
-			&password,
-			&passwordConfirmation,
-			&department,
-			&avatarName,
-			avatarBytes,
+			new("张三"),
+			new("zhangsan"),
+			new("123456"),
+			new("123456"),
+			new("/技术部"),
+			new("zhangsan.gif"),
+			GenerateGIF(t, 10, 10),
 		)
 		CheckAndUnmarshalBody[any](
 			t,
@@ -201,9 +195,6 @@ func TestUserAPI_WebRegister(t *testing.T) {
 	t.Run("异常测试_头像过大", func(t *testing.T) {
 		ctx := context.Background()
 
-		nameZh, nameEn, password, passwordConfirmation, department, avatarName, avatarBytes :=
-			"张三", "zhangsan", "123456", "123456", "/技术部", "zhangsan.jpg", GenerateJPEG(t, 10, 10)
-
 		defer mvt.Chain(cfg.Get()).
 			Elem().
 			FieldByName("Server").
@@ -211,19 +202,19 @@ func TestUserAPI_WebRegister(t *testing.T) {
 			Set(1).
 			Reset()
 		redisMocker := MockRedis(ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.EvalshaOnce(true, nil)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
 		defer redisMocker.Reset()
 
 		reqBody, contentType := createRequestBody(
-			&nameZh,
-			&nameEn,
-			&password,
-			&passwordConfirmation,
-			&department,
-			&avatarName,
-			avatarBytes,
+			new("张三"),
+			new("zhangsan"),
+			new("123456"),
+			new("123456"),
+			new("/技术部"),
+			new("zhangsan.jpg"),
+			GenerateJPEG(t, 10, 10),
 		)
 		CheckAndUnmarshalBody[any](
 			t,
@@ -234,26 +225,24 @@ func TestUserAPI_WebRegister(t *testing.T) {
 
 	t.Run("异常测试_名字重复", func(t *testing.T) {
 		ctx := context.Background()
-		nameZh, nameEn, password, passwordConfirmation, department, avatarName, avatarBytes :=
-			"张三", "zhangsan", "123456", "123456", "/技术部", "zhangsan.jpg", GenerateJPEG(t, 10, 10)
 
 		dbUserMocker := MockDBClient[model.User](ctx)
 		redisMocker := MockRedis(ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.EvalshaOnce(true, nil)
-		dbUserMocker = dbUserMocker.CountOnce(1, nil)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
+		dbUserMocker = dbUserMocker.CountOnce(1, nil)                                       // 检查用户名是否已存在。
 		defer dbUserMocker.Reset()
 		defer redisMocker.Reset()
 
 		reqBody, contentType := createRequestBody(
-			&nameZh,
-			&nameEn,
-			&password,
-			&passwordConfirmation,
-			&department,
-			&avatarName,
-			avatarBytes,
+			new("张三"),
+			new("zhangsan"),
+			new("123456"),
+			new("123456"),
+			new("/技术部"),
+			new("zhangsan.jpg"),
+			GenerateJPEG(t, 10, 10),
 		)
 		CheckAndUnmarshalBody[any](
 			t,
@@ -266,9 +255,9 @@ func TestUserAPI_WebRegister(t *testing.T) {
 		nameZh, nameEn, password, passwordConfirmation, department, avatarName *string, fileData []byte) {
 		ctx := context.Background()
 		redisMocker := MockRedis(ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.EvalshaOnce(true, nil)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
 		defer redisMocker.Reset()
 		reqBody, contentType := createRequestBody(
 			nameZh,
@@ -338,11 +327,11 @@ func TestUserAPI_WebLogin(t *testing.T) {
 
 		dbUserMocker := MockDBClient[model.User](ctx)
 		redisMocker := MockRedis(ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.EvalshaOnce(true, nil)
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)
-		redisMocker = redisMocker.SetOnce("", nil)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 获取数据库登录用户数据。
+		redisMocker = redisMocker.SetOnce("", nil)                                          // 缓存用户会话数据到 Redis。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 
@@ -362,10 +351,10 @@ func TestUserAPI_WebLogin(t *testing.T) {
 
 		dbUserMocker := MockDBClient[model.User](ctx)
 		redisMocker := MockRedis(ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.EvalshaOnce(true, nil)
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 获取数据库登录用户数据。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 
@@ -381,23 +370,21 @@ func TestUserAPI_WebLogin(t *testing.T) {
 
 	t.Run("异常测试_用户不存在", func(t *testing.T) {
 		ctx := context.Background()
-		nameEn := "zhangsan"
-		password := util.FastRandomAlphaNumberString(6)
 
 		dbUserMocker := MockDBClient[model.User](ctx)
 		redisMocker := MockRedis(ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.EvalshaOnce(true, nil)
-		dbUserMocker = dbUserMocker.TakeOnce(nil, gorm.ErrRecordNotFound)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
+		dbUserMocker = dbUserMocker.TakeOnce(nil, gorm.ErrRecordNotFound)                   // 查询数据库用户（不存在）。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,
 			ServeHTTP(ctx, CreatePostJSONRequest(ctx, reqPath, &protocol.UserWebLoginReq{
-				NameEn:   nameEn,
-				Password: password,
+				NameEn:   "zhangsan",
+				Password: util.FastRandomAlphaNumberString(6),
 			})),
 			consts.ErrUserLoginFailed,
 		)
@@ -411,15 +398,15 @@ func TestUserAPI_WebLogin(t *testing.T) {
 		digest := md5.Sum([]byte(password))
 		dbUserMocker := MockDBClient[model.User](ctx)
 		redisMocker := MockRedis(ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.EvalshaOnce(true, nil)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
 		dbUserMocker = dbUserMocker.TakeOnce(&model.User{
 			ID:             1,
 			NameEn:         nameEn,
 			PasswordDigest: hex.EncodeToString(digest[:]),
-		}, nil)
-		redisMocker = redisMocker.SetOnce("", nil)
+		}, nil) // 获取数据库 admin 用户数据。
+		redisMocker = redisMocker.SetOnce("", nil) // 缓存用户会话数据到 Redis。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 
@@ -437,9 +424,9 @@ func TestUserAPI_WebLogin(t *testing.T) {
 	validateErrorRequest := func(t *testing.T, nameEn, password string) {
 		ctx := context.Background()
 		redisMocker := MockRedis(ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.EvalshaOnce(true, nil)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
 		defer redisMocker.Reset()
 		CheckAndUnmarshalBody[any](
 			t,
@@ -474,10 +461,10 @@ func TestUserAPI_WebGetInformation(t *testing.T) {
 
 		dbUserMocker := MockDBClient[model.User](ctx)
 		redisMocker := MockRedis(ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.GetOnce(Session, nil)
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 获取数据库登录用户数据。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 
@@ -505,9 +492,9 @@ func TestUserAPI_WebGetInformation(t *testing.T) {
 		ctx := context.Background()
 
 		redisMocker := MockRedis(ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.GetOnce("", redis.Nil)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.GetOnce("", redis.Nil)                                    // 获取 Redis 用户会话数据（未登录）。
 		defer redisMocker.Reset()
 
 		CheckAndUnmarshalBody[protocol.UserWebGetInformationRsp](
@@ -523,44 +510,41 @@ func TestUserAPI_WebUpdate(t *testing.T) {
 
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
-		nameZh := "张三"
 		newAvatarID := util.FastRandomAlphaNumberString(38)
-		department := "/技术部"
 		avatarBytes := GenerateJPEG(t, 10, 10)
-		password := "123456"
 
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbFileMocker := MockDBClient[model.File](ctx)
 		redisMocker := MockRedis(ctx)
 		tusdMocker := MockTusdClient(ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)
-		redisMocker = redisMocker.GetOnce(Session, nil)
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)
-		redisMocker = redisMocker.EvalshaOnce(true, nil)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 获取数据库登录用户数据。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
 		dbFileMocker = dbFileMocker.TakeOnce(&model.File{
 			ID:     1,
 			FileID: newAvatarID,
 			TusdID: util.FastRandomAlphaNumberString(32),
 			Type:   model.FileTypeUserAvatar,
 			UserID: 1,
-		}, nil)
+		}, nil) // 获取数据库中新头像文件信息。
 		tusdMocker = tusdMocker.GetOnce(&tus.GetResult{
 			HTTPStatus:    http.StatusOK,
 			Body:          io.NopCloser(bytes.NewReader(avatarBytes)),
 			ContentLength: len(avatarBytes),
-		}, nil)
-		dbUserMocker = dbUserMocker.UpdateColumnSimpleOnce(gen.ResultInfo{RowsAffected: 1}, nil)
+		}, nil) // 从存储服务下载新头像文件。
+		dbUserMocker = dbUserMocker.UpdateColumnSimpleOnce(gen.ResultInfo{RowsAffected: 1}, nil) // 更新数据库用户信息。
 		dbFileMocker = dbFileMocker.TakeOnce(&model.File{
 			ID:     1,
 			FileID: util.FastRandomAlphaNumberString(38),
 			TusdID: util.FastRandomAlphaNumberString(32),
 			Type:   model.FileTypeUserAvatar,
 			UserID: 1,
-		}, nil)
-		dbFileMocker = dbFileMocker.DeleteOnce(gen.ResultInfo{RowsAffected: 1}, nil)
-		tusdMocker = tusdMocker.DeleteFileOnce(nil)
-		redisMocker = redisMocker.SRemOnce(1, nil)
+		}, nil) // 获取数据库中旧的头像文件信息。
+		dbFileMocker = dbFileMocker.DeleteOnce(gen.ResultInfo{RowsAffected: 1}, nil) // 删除数据库中旧的头像文件信息。
+		tusdMocker = tusdMocker.DeleteFileOnce(nil)                                  // 删除存储服务中旧的头像文件。
+		redisMocker = redisMocker.SRemOnce(1, nil)                                   // 删除 Redis 中旧的文件 ID。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbFileMocker.Reset()
@@ -570,10 +554,10 @@ func TestUserAPI_WebUpdate(t *testing.T) {
 			t,
 			ServeHTTP(ctx, CreatePostJSONRequest(ctx, reqPath, &protocol.UserWebUpdateReq{
 				AvatarFileID:         newAvatarID,
-				NameZh:               nameZh,
-				Password:             password,
-				PasswordConfirmation: password,
-				Department:           department,
+				NameZh:               "张三",
+				Password:             "123456",
+				PasswordConfirmation: "123456",
+				Department:           "/技术部",
 			})),
 			consts.AlertSuccess,
 		)
@@ -594,37 +578,38 @@ func TestUserAPI_WebUpdate(t *testing.T) {
 			FieldByName("UserAvatarMaximumSize").
 			Set(1).
 			Reset()
-		defer MockDBClient[model.File](ctx).
-			TakeOnce(&model.File{
-				ID:     1,
-				FileID: newAvatarID,
-				TusdID: util.FastRandomAlphaNumberString(32),
-				Type:   model.FileTypeUserAvatar,
-				UserID: 1,
-			}, nil).
-			Reset()
-		defer MockDBClient[model.User](ctx).
-			TakeOnce(&model.User{
-				ID:           1,
-				NameEn:       LoginUser.NameEn,
-				NameZh:       nameZh,
-				AvatarFileID: avatarID,
-				Department:   department,
-			}, nil).
-			Reset()
-		defer MockRedis(ctx).
-			ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil).
-			ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil).
-			EvalshaOnce(true, nil).
-			GetOnce(Session, nil).
-			Reset()
-		defer MockTusdClient(ctx).
-			GetOnce(&tus.GetResult{
-				HTTPStatus:    http.StatusOK,
-				Body:          io.NopCloser(bytes.NewReader(avatarBytes)),
-				ContentLength: len(avatarBytes),
-			}, nil).
-			Reset()
+
+		dbUserMocker := MockDBClient[model.User](ctx)
+		dbFileMocker := MockDBClient[model.File](ctx)
+		redisMocker := MockRedis(ctx)
+		tusdMocker := MockTusdClient(ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(&model.User{
+			ID:           1,
+			NameEn:       LoginUser.NameEn,
+			NameZh:       nameZh,
+			AvatarFileID: avatarID,
+			Department:   department,
+		}, nil) // 查询数据库登录用户信息。
+		dbFileMocker = dbFileMocker.TakeOnce(&model.File{
+			ID:     1,
+			FileID: newAvatarID,
+			TusdID: util.FastRandomAlphaNumberString(32),
+			Type:   model.FileTypeUserAvatar,
+			UserID: 1,
+		}, nil) // 查询数据库中新头像文件信息。
+		tusdMocker = tusdMocker.GetOnce(&tus.GetResult{
+			HTTPStatus:    http.StatusOK,
+			Body:          io.NopCloser(bytes.NewReader(avatarBytes)),
+			ContentLength: len(avatarBytes),
+		}, nil) // 从存储服务下载新头像文件。
+		defer dbUserMocker.Reset()
+		defer dbFileMocker.Reset()
+		defer redisMocker.Reset()
+		defer tusdMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,
@@ -648,37 +633,37 @@ func TestUserAPI_WebUpdate(t *testing.T) {
 		avatarBytes := GenerateGIF(t, 10, 10)
 		password := "123456"
 
-		defer MockDBClient[model.User](ctx).
-			TakeOnce(&model.User{
-				ID:           1,
-				NameEn:       LoginUser.NameEn,
-				NameZh:       nameZh,
-				AvatarFileID: avatarID,
-				Department:   department,
-			}, nil).
-			Reset()
-		defer MockDBClient[model.File](ctx).
-			TakeOnce(&model.File{
-				ID:     1,
-				FileID: newAvatarID,
-				TusdID: util.FastRandomAlphaNumberString(32),
-				Type:   model.FileTypeUserAvatar,
-				UserID: 1,
-			}, nil).
-			Reset()
-		defer MockRedis(ctx).
-			ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil).
-			ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil).
-			EvalshaOnce(true, nil).
-			GetOnce(Session, nil).
-			Reset()
-		defer MockTusdClient(ctx).
-			GetOnce(&tus.GetResult{
-				HTTPStatus:    http.StatusOK,
-				Body:          io.NopCloser(bytes.NewReader(avatarBytes)),
-				ContentLength: len(avatarBytes),
-			}, nil).
-			Reset()
+		dbUserMocker := MockDBClient[model.User](ctx)
+		dbFileMocker := MockDBClient[model.File](ctx)
+		redisMocker := MockRedis(ctx)
+		tusdMocker := MockTusdClient(ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(&model.User{
+			ID:           1,
+			NameEn:       LoginUser.NameEn,
+			NameZh:       nameZh,
+			AvatarFileID: avatarID,
+			Department:   department,
+		}, nil) // 查询数据库登录用户信息。
+		dbFileMocker = dbFileMocker.TakeOnce(&model.File{
+			ID:     1,
+			FileID: newAvatarID,
+			TusdID: util.FastRandomAlphaNumberString(32),
+			Type:   model.FileTypeUserAvatar,
+			UserID: 1,
+		}, nil) // 查询数据库中新头像文件信息。
+		tusdMocker = tusdMocker.GetOnce(&tus.GetResult{
+			HTTPStatus:    http.StatusOK,
+			Body:          io.NopCloser(bytes.NewReader(avatarBytes)),
+			ContentLength: len(avatarBytes),
+		}, nil) // 从存储服务下载新头像文件。
+		defer dbUserMocker.Reset()
+		defer dbFileMocker.Reset()
+		defer redisMocker.Reset()
+		defer tusdMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,
@@ -695,25 +680,21 @@ func TestUserAPI_WebUpdate(t *testing.T) {
 
 	t.Run("异常测试_未登录", func(t *testing.T) {
 		ctx := context.Background()
-		nameZh := "张三"
-		newAvatarID := util.FastRandomAlphaNumberString(38)
-		department := "/技术部"
-		password := "123456"
 
-		defer MockRedis(ctx).
-			ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil).
-			ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil).
-			GetOnce("", redis.Nil).
-			Reset()
+		redisMocker := MockRedis(ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.GetOnce("", redis.Nil)                                    // 获取 Redis 用户会话数据（未登录）。
+		defer redisMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,
 			ServeHTTP(ctx, CreatePostJSONRequest(ctx, reqPath, &protocol.UserWebUpdateReq{
-				AvatarFileID:         newAvatarID,
-				NameZh:               nameZh,
-				Password:             password,
-				PasswordConfirmation: password,
-				Department:           department,
+				AvatarFileID:         util.FastRandomAlphaNumberString(38),
+				NameZh:               "张三",
+				Password:             "123456",
+				PasswordConfirmation: "123456",
+				Department:           "/技术部",
 			})),
 			consts.ErrNeedLogin,
 		)
@@ -724,21 +705,23 @@ func TestUserAPI_WebUpdate(t *testing.T) {
 		nameZh, avatarFileID, department, password, password2, newAvatarFileID string,
 	) {
 		ctx := context.Background()
-		defer MockDBClient[model.User](ctx).
-			TakeOnce(&model.User{
-				ID:           1,
-				NameEn:       LoginUser.NameEn,
-				NameZh:       nameZh,
-				AvatarFileID: avatarFileID,
-				Department:   department,
-			}, nil).
-			Reset()
-		defer MockRedis(ctx).
-			ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil).
-			ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil).
-			EvalshaOnce(true, nil).
-			GetOnce(Session, nil).
-			Reset()
+
+		dbUserMocker := MockDBClient[model.User](ctx)
+		redisMocker := MockRedis(ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(&model.User{
+			ID:           1,
+			NameEn:       LoginUser.NameEn,
+			NameZh:       nameZh,
+			AvatarFileID: avatarFileID,
+			Department:   department,
+		}, nil) // 查询数据库登录用户信息。
+		defer dbUserMocker.Reset()
+		defer redisMocker.Reset()
+
 		CheckAndUnmarshalBody[any](
 			t,
 			ServeHTTP(ctx, CreatePostJSONRequest(ctx, reqPath, &protocol.UserWebUpdateReq{
@@ -757,8 +740,8 @@ func TestUserAPI_WebUpdate(t *testing.T) {
 		NameZh, AvatarFileID, Department, Password, Password2, NewAvatarFileID string
 	}{
 		{"头像缺失", "张三", util.FastRandomAlphaNumberString(38), "/技术部", "123456", "123456", ""},
-		{"头像ID格式错误", "张三", util.FastRandomAlphaNumberString(38), "/技术部", "123456", "123456", "汉" + util.FastRandomAlphaNumberString(37)},
-		{"头像ID长度错误", "张三", util.FastRandomAlphaNumberString(38), "/技术部", "123456", "123456", util.FastRandomAlphaNumberString(32)},
+		{"头像 ID 格式错误", "张三", util.FastRandomAlphaNumberString(38), "/技术部", "123456", "123456", "汉" + util.FastRandomAlphaNumberString(37)},
+		{"头像 ID 长度错误", "张三", util.FastRandomAlphaNumberString(38), "/技术部", "123456", "123456", util.FastRandomAlphaNumberString(32)},
 		{"中文名缺失", "", util.FastRandomAlphaNumberString(38), "/技术部", "123456", "123456", util.FastRandomAlphaNumberString(38)},
 		{"中文名过长", "张三一二三四五六七八九十一二三四五", util.FastRandomAlphaNumberString(38), "/技术部", "123456", "123456", util.FastRandomAlphaNumberString(38)},
 		{"中文名包含非法字符", "张3", util.FastRandomAlphaNumberString(38), "/技术部", "123456", "123456", util.FastRandomAlphaNumberString(38)},
@@ -790,31 +773,30 @@ func TestUserAPI_WebSearch(t *testing.T) {
 
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
-		name := "z"
 		result := map[string]string{
 			"1": "2",
 			"3": "4",
 		}
 
-		defer MockRedis(ctx).
-			ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil).
-			ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil).
-			EvalshaOnce(true, nil).
-			GetOnce(Session, nil).
-			Reset()
-		defer MockDBClient[model.User](ctx).
-			TakeOnce(LoginUser, nil).
-			UserSearchByNameOnce(util.MapToList(result, func(k, v string) *model.User {
-				return &model.User{
-					NameEn: k,
-					NameZh: v,
-				}
-			}), nil).
-			Reset()
+		dbUserMocker := MockDBClient[model.User](ctx)
+		redisMocker := MockRedis(ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
+		dbUserMocker = dbUserMocker.UserSearchByNameOnce(util.MapToList(result, func(k, v string) *model.User {
+			return &model.User{
+				NameEn: k,
+				NameZh: v,
+			}
+		}), nil) // 搜索数据库中用户信息。
+		defer dbUserMocker.Reset()
+		defer redisMocker.Reset()
 
 		rspBodyObj := CheckAndUnmarshalBody[protocol.UserWebSearchRsp](
 			t,
-			ServeHTTP(ctx, CreateGetRequest(ctx, reqPath, &protocol.UserWebSearchReq{Name: name})),
+			ServeHTTP(ctx, CreateGetRequest(ctx, reqPath, &protocol.UserWebSearchReq{Name: "z"})),
 			0,
 		)
 
@@ -830,18 +812,17 @@ func TestUserAPI_WebSearch(t *testing.T) {
 
 	t.Run("异常测试_未登录", func(t *testing.T) {
 		ctx := context.Background()
-		name := "z"
 
-		defer MockRedis(ctx).
-			ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil).
-			ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil).
-			EvalshaOnce(true, nil).
-			GetOnce("", redis.Nil).
-			Reset()
+		redisMocker := MockRedis(ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce("", redis.Nil)                                    // 获取 Redis 用户会话数据（未登录）。
+		defer redisMocker.Reset()
 
 		CheckAndUnmarshalBody[protocol.UserWebSearchRsp](
 			t,
-			ServeHTTP(ctx, CreateGetRequest(ctx, reqPath, &protocol.UserWebSearchReq{Name: name})),
+			ServeHTTP(ctx, CreateGetRequest(ctx, reqPath, &protocol.UserWebSearchReq{Name: "z"})),
 			consts.ErrNeedLogin,
 		)
 	})
@@ -849,21 +830,21 @@ func TestUserAPI_WebSearch(t *testing.T) {
 	validateErrorRequest := func(t *testing.T, nameEn string) {
 		ctx := context.Background()
 
-		defer MockDBClient[model.User](ctx).
-			TakeOnce(&model.User{
-				ID:           1,
-				NameEn:       LoginUser.NameEn,
-				NameZh:       "张三",
-				AvatarFileID: util.FastRandomAlphaNumberString(38),
-				Department:   "/技术部",
-			}, nil).
-			Reset()
-		defer MockRedis(ctx).
-			ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil).
-			ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil).
-			EvalshaOnce(true, nil).
-			GetOnce(Session, nil).
-			Reset()
+		dbUserMocker := MockDBClient[model.User](ctx)
+		redisMocker := MockRedis(ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(&model.User{
+			ID:           1,
+			NameEn:       LoginUser.NameEn,
+			NameZh:       "张三",
+			AvatarFileID: util.FastRandomAlphaNumberString(38),
+			Department:   "/技术部",
+		}, nil) // 查询数据库登录用户信息。
+		defer dbUserMocker.Reset()
+		defer redisMocker.Reset()
 
 		CheckAndUnmarshalBody[protocol.UserWebSearchRsp](
 			t,
@@ -906,15 +887,15 @@ func TestUserAPI_WebLogout(t *testing.T) {
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
 
-		defer MockDBClient[model.User](ctx).
-			TakeOnce(LoginUser, nil).
-			Reset()
-		defer MockRedis(ctx).
-			ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil).
-			ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil).
-			GetOnce(Session, nil).
-			DelOnce(1, nil).
-			Reset()
+		dbUserMocker := MockDBClient[model.User](ctx)
+		redisMocker := MockRedis(ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
+		redisMocker = redisMocker.DelOnce(1, nil)                                           // 删除 Redis 用户会话数据。
+		defer dbUserMocker.Reset()
+		defer redisMocker.Reset()
 
 		rsp := ServeHTTP(ctx, CreateDeleteRequest(ctx, reqPath, nil))
 		CheckAndUnmarshalBody[any](t, rsp, consts.AlertLogout)
@@ -924,11 +905,11 @@ func TestUserAPI_WebLogout(t *testing.T) {
 	t.Run("异常测试_未登录", func(t *testing.T) {
 		ctx := context.Background()
 
-		defer MockRedis(ctx).
-			ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil).
-			ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil).
-			GetOnce("", redis.Nil).
-			Reset()
+		redisMocker := MockRedis(ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.GetOnce("", redis.Nil)                                    // 获取 Redis 用户会话数据（未登录）。
+		defer redisMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,

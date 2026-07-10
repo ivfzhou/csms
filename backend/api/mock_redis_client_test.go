@@ -40,6 +40,7 @@ const (
 	redisZrangeWithScore
 	redisHdel
 	redisZrem
+	redisZrangeArgs
 )
 
 type RedisMocker interface {
@@ -54,6 +55,7 @@ type RedisMocker interface {
 	HGetOnce(result string, err error) RedisMocker
 	SetNXOnce(result bool, err error) RedisMocker
 	ZRangeByScoreOnce(result []string, err error) RedisMocker
+	ZRangeArgsOnce(result []string, err error) RedisMocker
 	ZAddOnce(result int64, err error) RedisMocker
 	EvalOnce(result any, err error) RedisMocker
 	ZRangeWithScores(result []redis.Z, err error) RedisMocker
@@ -166,6 +168,11 @@ func (m *redisMockerImpl) ZRangeByScoreOnce(result []string, err error) RedisMoc
 	return m
 }
 
+func (m *redisMockerImpl) ZRangeArgsOnce(result []string, err error) RedisMocker {
+	m.datas = append(m.datas, &redisResultData{action: redisZrangeArgs, result: result, err: err})
+	return m
+}
+
 func (m *redisMockerImpl) SAddOnce(result int64, err error) RedisMocker {
 	m.datas = append(m.datas, &redisResultData{action: redisSadd, result: result, err: err})
 	return m
@@ -235,6 +242,9 @@ func (m *redisMockerImpl) do(_ context.Context, cmd redis.Cmder) error {
 	case *redis.StringSliceCmd:
 		if len(c.Args()) >= 1 && c.Args()[0] == "zrangebyscore" {
 			return dealRedisCmd[[]string](m.getRedisCmdData(redisZrangeByScore), c)
+		}
+		if len(c.Args()) >= 1 && c.Args()[0] == "zrange" {
+			return dealRedisCmd[[]string](m.getRedisCmdData(redisZrangeArgs), c)
 		}
 	case *redis.ZSliceCmd:
 		if len(c.Args()) >= 5 && c.Args()[0] == "zrange" && c.Args()[4] == "withscores" {

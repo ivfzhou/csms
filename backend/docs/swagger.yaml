@@ -1086,6 +1086,41 @@ definitions:
           $ref: '#/definitions/protocol.EventWebListItem'
         type: array
     type: object
+  protocol.EventWebStatisticItem:
+    properties:
+      applyAndroidCertificateTimes:
+        description: 申请安卓证书数量
+        type: integer
+      applyAppleProfileTimes:
+        description: 申请苹果描述文件数量
+        type: integer
+      applyApplePushCertificateTimes:
+        description: 申请苹果推送证书数量
+        type: integer
+      beginTime:
+        description: 开始时间
+        type: string
+      createAppTimes:
+        description: 应用新建数量
+        type: integer
+      invalidAppTimes:
+        description: 应用无效化数量
+        type: integer
+      uploadAndroidCertificateTimes:
+        description: 上传安卓证书数量
+        type: integer
+      uploadWindowsCertificateTimes:
+        description: 上传 Windows 个人 OV 证书数量
+        type: integer
+    type: object
+  protocol.EventWebStatisticRsp:
+    properties:
+      list:
+        description: 数据
+        items:
+          $ref: '#/definitions/protocol.EventWebStatisticItem'
+        type: array
+    type: object
   protocol.FileAPIInitialReq:
     properties:
       md5:
@@ -2657,6 +2692,22 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/protocol.EventWebListRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_EventWebStatisticRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.EventWebStatisticRsp'
         description: 响应数据
       message:
         description: 提示语
@@ -5666,6 +5717,51 @@ paths:
           schema:
             $ref: '#/definitions/util.Response-protocol_EventWebListRsp'
       summary: 获取应用事件列表
+      tags:
+      - Event-WebAPI
+  /web/event/statistic:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        in: query
+        name: appId
+        type: string
+      - description: 开始时间
+        in: query
+        name: beginTime
+        required: true
+        type: string
+      - description: 结束时间
+        in: query
+        name: endTime
+        type: string
+      - description: 时间粒度。
+        in: query
+        maximum: 3
+        name: timeStep
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_EventWebStatisticRsp'
+      summary: 获取应用事件统计数量
       tags:
       - Event-WebAPI
   /web/file/download:

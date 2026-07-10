@@ -11,9 +11,7 @@
  */
 
 export function initWebAPI() {
-    const date = new Date()
-    date.setUTCHours(date.getUTCHours() + 8)
-    request.variables.set('date', date.toUTCString())
+    request.variables.set('date', new Date().toUTCString())
     let language = 'zh'
     if (Math.random() >= 0.5) language = 'en'
     request.variables.set('language', language)

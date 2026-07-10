@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strconv"
 	"time"
 
 	"gorm.io/gorm"
@@ -156,14 +157,15 @@ func EventWebList(ctx context.Context, req *protocol.EventWebListReq) (rsp *prot
 		log.Info(ctx, "get app events from database")
 		rsp = &protocol.EventWebListRsp{}
 		eventQuery := conn.MySQLClient(ctx).Event
-		rsp.Count, err = eventQuery.WithContext(ctx).Count2(eventTables, appIDs, userIDs, req.BeginTime, req.EndTime)
+		rsp.Count, err = eventQuery.WithContext(ctx).Count2(
+			eventTables, appIDs, userIDs, req.BeginTime, req.EndTime, req.Type)
 		if err != nil {
 			log.Error(ctx, "failed to query app event information from database", err)
 			err = errs.NewWithError(consts.ErrSystem, err)
 			return
 		}
 		eventInfos, err = eventQuery.WithContext(ctx).List(eventTables, appIDs, userIDs, req.BeginTime, req.EndTime,
-			req.PageSize, (req.PageNumber-1)*req.PageSize)
+			req.Type, req.PageSize, (req.PageNumber-1)*req.PageSize)
 		if err != nil {
 			log.Error(ctx, "failed to query app events from database", err)
 			err = errs.NewWithError(consts.ErrSystem, err)
@@ -237,56 +239,160 @@ func EventWebStatistic(ctx context.Context, req *protocol.EventWebStatisticReq) 
 	rsp *protocol.EventWebStatisticRsp, err error) {
 
 	// 获取上下文信息。
-	log.Info(ctx, "get context information")
 	userInfo := ctxs.User(ctx)
-	if userInfo == nil {
-		log.Warn(ctx, "unknown context")
-		return nil, errs.New(consts.ErrSystem)
+	{
+		log.Info(ctx, "get context information")
+		if userInfo == nil {
+			log.Warn(ctx, "unknown context")
+			return nil, errs.New(consts.ErrSystem)
+		}
 	}
 
 	// 查询应用信息。
 	var appID int
-	if len(req.AppID) > 0 {
-		log.Info(ctx, "get app information")
-		appQuery := conn.MySQLClient(ctx).App
-		var appInfo *model.App
-		appInfo, err = appQuery.WithContext(ctx).Select(
-			appQuery.ID,
-		).Where(
-			appQuery.AppID.Eq(req.AppID),
-		).Take()
-		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				log.Warn(ctx, "app not found")
-				return nil, errs.New(consts.ErrParameterInvalid)
+	{
+		if len(req.AppID) > 0 {
+			log.Info(ctx, "get app information")
+			appQuery := conn.MySQLClient(ctx).App
+			err = appQuery.WithContext(ctx).Select(
+				appQuery.ID,
+			).Where(
+				appQuery.AppID.Eq(req.AppID),
+			).Scan(&appID)
+			if err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					log.Warn(ctx, "app not found")
+					return nil, errs.New(consts.ErrParameterInvalid)
+				}
+				log.Error(ctx, "failed to retrieve app information from database", err)
+				return nil, errs.NewWithError(consts.ErrSystem, err)
 			}
-			log.Error(ctx, "failed to retrieve app information from database", err)
-			return nil, errs.NewWithError(consts.ErrSystem, err)
 		}
-		appID = appInfo.ID
 	}
 
 	// 查询数据库，获取事件数量。
-	log.Info(ctx, "get app events")
-	tableNames, err := filterEventTables(ctx, req.BeginTime, req.EndTime)
-	if err != nil {
-		return nil, err
+	var sqlResult []map[string]any
+	{
+		log.Info(ctx, "get app events")
+
+		// 包含结束日期的记录。
+		req.EndTime = req.EndTime.AddDate(0, 0, 1).Add(-time.Second)
+
+		var tableNames []string
+		tableNames, err = filterEventTables(ctx, req.BeginTime, req.EndTime)
+		if err != nil {
+			return nil, err
+		}
+		if len(tableNames) <= 0 {
+			return &protocol.EventWebStatisticRsp{}, nil
+		}
+		eventQuery := conn.MySQLClient(ctx).Event
+		switch req.TimeStep {
+		case protocol.TimeStepDay:
+			sqlResult, err = eventQuery.WithContext(ctx).CountTypesWithDay(tableNames, []int{
+				model.EventTypeRegisterApp,
+				model.EventTypeUploadWindowsCertificate,
+				model.EventTypeInvalidateApp,
+				model.EventTypeApplyAndroidCertificate,
+				model.EventTypeApplyProvision,
+				model.EventTypeApplyPushCertificate,
+				model.EventTypeUploadAndroidCertificate,
+			}, appID, req.BeginTime, req.EndTime)
+		case protocol.TimeStepWeek:
+			sqlResult, err = eventQuery.WithContext(ctx).CountTypesWithWeek(tableNames, []int{
+				model.EventTypeRegisterApp,
+				model.EventTypeUploadWindowsCertificate,
+				model.EventTypeInvalidateApp,
+				model.EventTypeApplyAndroidCertificate,
+				model.EventTypeApplyProvision,
+				model.EventTypeApplyPushCertificate,
+				model.EventTypeUploadAndroidCertificate,
+			}, appID, req.BeginTime, req.EndTime)
+		case protocol.TimeStepMonth:
+			sqlResult, err = eventQuery.WithContext(ctx).CountTypesWithMonth(tableNames, []int{
+				model.EventTypeRegisterApp,
+				model.EventTypeUploadWindowsCertificate,
+				model.EventTypeInvalidateApp,
+				model.EventTypeApplyAndroidCertificate,
+				model.EventTypeApplyProvision,
+				model.EventTypeApplyPushCertificate,
+				model.EventTypeUploadAndroidCertificate,
+			}, appID, req.BeginTime, req.EndTime)
+		default:
+			log.Warn(ctx, "unknown time step", req.TimeStep)
+			return nil, errs.New(consts.ErrParameterInvalid)
+		}
+		if err != nil {
+			log.Error(ctx, "failed to count event information from database", err)
+			return nil, errs.NewWithError(consts.ErrSystem, err)
+		}
 	}
-	eventQuery := conn.MySQLClient(ctx).Event
-	result, err := eventQuery.WithContext(ctx).CountByTypes(tableNames, []int{
-		model.EventTypeRegisterApp,
-		model.EventTypeUploadWindowsCertificate,
-		model.EventTypeInvalidateApp,
-		model.EventTypeApplyAndroidCertificate,
-		model.EventTypeApplyProvision,
-		model.EventTypeApplyPushCertificate,
-		model.EventTypeUploadAndroidCertificate,
-	}, appID, req.BeginTime, req.EndTime)
-	if err != nil {
-		log.Error(ctx, "failed to count event information from database", err)
-		return nil, errs.NewWithError(consts.ErrSystem, err)
+
+	// 处理数据。
+	var items []*protocol.EventWebStatisticItem
+	{
+		log.Info(ctx, "deal sql data")
+		items = make([]*protocol.EventWebStatisticItem, 0, len(sqlResult)/2)
+		item := &protocol.EventWebStatisticItem{}
+		for _, v := range sqlResult {
+			if v == nil {
+				continue
+			}
+			day := fmt.Sprintf("%s", v["day"])
+			var typ int
+			typ, err = strconv.Atoi(fmt.Sprintf("%v", v["type"]))
+			if err != nil {
+				log.Error(ctx, "failed to convert event type to int", err, v["type"])
+			}
+			var count int
+			count, err = strconv.Atoi(fmt.Sprintf("%v", v["count"]))
+			if err != nil {
+				log.Error(ctx, "failed to convert event count to int", err, v["count"])
+			}
+			var t time.Time
+			switch req.TimeStep {
+			case protocol.TimeStepDay:
+				t, err = time.Parse("20060102", day)
+			case protocol.TimeStepWeek:
+				t, err = time.Parse("20060102", day)
+			case protocol.TimeStepMonth:
+				t, err = time.Parse("200601", day)
+			}
+			if err != nil {
+				log.Error(ctx, "failed to parse day", err, day)
+				continue
+			}
+			if len(item.BeginTime) <= 0 {
+				item.BeginTime = formatDate(&t)
+				items = append(items, item)
+			}
+			beginTime := formatDate(&t)
+			if beginTime != item.BeginTime {
+				item = &protocol.EventWebStatisticItem{BeginTime: beginTime}
+				items = append(items, item)
+			}
+			switch typ {
+			case model.EventTypeRegisterApp:
+				item.CreateAppTimes = count
+			case model.EventTypeUploadWindowsCertificate:
+				item.UploadWindowsCertificateTimes = count
+			case model.EventTypeInvalidateApp:
+				item.InvalidAppTimes = count
+			case model.EventTypeApplyAndroidCertificate:
+				item.ApplyAndroidCertificateTimes = count
+			case model.EventTypeApplyProvision:
+				item.ApplyAppleProfileTimes = count
+			case model.EventTypeApplyPushCertificate:
+				item.ApplyApplePushCertificateTimes = count
+			case model.EventTypeUploadAndroidCertificate:
+				item.UploadAndroidCertificateTimes = count
+			default: // noop
+			}
+		}
 	}
-	_ = result
+
+	rsp = &protocol.EventWebStatisticRsp{List: items}
+
 	return
 }
 

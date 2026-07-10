@@ -53,6 +53,16 @@ func EventWebList(c *gin.Context) {
 }
 
 // EventWebStatistic 获取应用事件统计数量。
+//
+//	@Summary	获取应用事件统计数量
+//	@Tags		Event-WebAPI
+//	@Accept		application/x-www-form-urlencoded
+//	@Produce	application/json
+//	@Param		Date	header		string							true	"请求日期"	example(Mon, 02 Jan 2006 15:04:05 GMT)
+//	@Param		Cookie	header		string							true	"会话凭据"	example(csms_user=; csms_seesion=)
+//	@Param		_		query		protocol.EventWebStatisticReq	true	"请求参数"
+//	@Response	200		{object}	util.Response[protocol.EventWebStatisticRsp]
+//	@Router		/web/event/statistic [get]
 func EventWebStatistic(c *gin.Context) {
 	ctx := c.Request.Context()
 	var req protocol.EventWebStatisticReq
