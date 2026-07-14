@@ -19,7 +19,11 @@ import (
 	"crypto/elliptic"
 	"crypto/md5"
 	"crypto/rand"
+	"crypto/rsa"
 	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/base64"
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
@@ -30,17 +34,22 @@ import (
 	"image/jpeg"
 	"image/png"
 	"io"
+	"math/big"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 
 	"gitee.com/ivfzhou/csms/backend/consts"
 	"gitee.com/ivfzhou/csms/backend/protocol"
 	"gitee.com/ivfzhou/csms/backend/route"
 	"gitee.com/ivfzhou/csms/backend/service"
+	"gitee.com/ivfzhou/csms/comm/cfg"
 	"gitee.com/ivfzhou/csms/comm/errs"
 	"gitee.com/ivfzhou/csms/comm/model"
 	"gitee.com/ivfzhou/csms/comm/util"
@@ -96,6 +105,8 @@ var (
 		CreatedTime: time.Now(),
 		UpdatedTime: time.Now(),
 	}
+	// AppleCertificateCertDERBase64 苹果证书申请的测试用证书（DER 格式 Base64 编码）。
+	AppleCertificateCertDERBase64 string
 )
 
 func init() {
@@ -112,6 +123,25 @@ func init() {
 	Session = string(sessionBytes)
 	md5Sum := md5.Sum([]byte(LoginUser.PasswordSalt + UserPassword))
 	LoginUser.PasswordDigest = hex.EncodeToString(md5Sum[:])
+
+	// 设置 Apple API 配置，使 generateAppleAPIToken 在单测中可用。
+	privateKeyPEM, _, _ := GenerateECDSAKeyPEM("P256")
+	appleAPIConfig := reflect.ValueOf(cfg.Get().AppleAPI())
+	if appleAPIConfig.Kind() == reflect.Pointer {
+		appleAPIConfig = appleAPIConfig.Elem()
+		appleAPIConfig.FieldByName("SecretValue").SetString(privateKeyPEM)
+		appleAPIConfig.FieldByName("KeyIDValue").SetString("test-key-id")
+		appleAPIConfig.FieldByName("IssuerIDValue").SetString("test-issuer-id")
+	}
+
+	// 设置 Apple 证书私钥配置，使 AppleWebApplyCertificate 在单测中可用。
+	certDER, keyPEM := GenerateSelfSignedRSACertAndKey()
+	AppleCertificateCertDERBase64 = base64.StdEncoding.EncodeToString(certDER)
+	appleConfig := reflect.ValueOf(cfg.Get().Apple())
+	if appleConfig.Kind() == reflect.Pointer {
+		appleConfig = appleConfig.Elem()
+		appleConfig.FieldByName("CertificatePrivateKeyValue").SetString(keyPEM)
+	}
 }
 
 func GenerateBytes(length int) []byte {
@@ -167,6 +197,42 @@ func GenerateECDSAKeyPEM(curve string) (string, string, error) {
 	})
 
 	return string(privateKeyPEM), string(publicKeyPEM), nil
+}
+
+// 生成 RSA 自签名证书及对应私钥，供 AppleWebApplyCertificate 单测使用。
+// 返回 DER 格式证书和 PEM 格式私钥。
+func GenerateSelfSignedRSACertAndKey() (certDER []byte, keyPEM string) {
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		panic(fmt.Sprintf("failed to generate RSA key: %v", err))
+	}
+
+	keyPEMBytes := pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
+	})
+	keyPEM = string(keyPEMBytes)
+
+	serialNumber, err := rand.Int(rand.Reader, big.NewInt(1<<63-1))
+	if err != nil {
+		panic(fmt.Sprintf("failed to generate serial number: %v", err))
+	}
+
+	template := &x509.Certificate{
+		SerialNumber: serialNumber,
+		Subject:      pkix.Name{CommonName: "test.apple.signing.certificate"},
+		NotBefore:    time.Now().Add(-time.Hour),
+		NotAfter:     time.Now().Add(24 * time.Hour),
+		KeyUsage:     x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageCodeSigning},
+	}
+
+	certDER, err = x509.CreateCertificate(rand.Reader, template, template, &privateKey.PublicKey, privateKey)
+	if err != nil {
+		panic(fmt.Sprintf("failed to create self-signed certificate: %v", err))
+	}
+
+	return certDER, keyPEM
 }
 
 func GenerateJPEG(t *testing.T, width, height int) []byte {
@@ -276,6 +342,73 @@ func GenerateGIF(t *testing.T, width, height int) []byte {
 	return buf.Bytes()
 }
 
+// 生成一个最小的有效 PE32+ 二进制文件，用于测试 PE 文件格式校验。
+func GenerateMinimalPE() []byte {
+	buf := new(bytes.Buffer)
+	// DOS 头部（64 字节）。
+	buf.Write([]byte("MZ"))
+	buf.Write(make([]byte, 58))                              // 填充其余 DOS 头部。
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0x80)) // e_lfanew 指向 PE 签名偏移。
+
+	// DOS Stub（填充至偏移 0x80）。
+	buf.Write(make([]byte, 0x80-64))
+
+	// PE 签名。
+	buf.Write([]byte("PE\x00\x00"))
+
+	// COFF 文件头（20 字节）。
+	_ = binary.Write(buf, binary.LittleEndian, uint16(0x8664)) // Machine: AMD64。
+	_ = binary.Write(buf, binary.LittleEndian, uint16(0))      // NumberOfSections: 0。
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))      // TimeDateStamp。
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))      // PointerToSymbolTable。
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))      // NumberOfSymbols。
+	_ = binary.Write(buf, binary.LittleEndian, uint16(112))    // SizeOfOptionalHeader: PE32+。
+	_ = binary.Write(buf, binary.LittleEndian, uint16(0x2022)) // Characteristics。
+
+	// 可选头 PE32+（112 字节）。
+	_ = binary.Write(buf, binary.LittleEndian, uint16(0x020B)) // Magic。
+	buf.Write([]byte{0, 0})                                    // LMajor, LMinor。
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))      // CodeSize。
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))      // InitializedDataSize。
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))      // UninitializedDataSize。
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))      // EntryPointRVA。
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))      // BaseOfCode。
+	_ = binary.Write(buf, binary.LittleEndian, uint64(0))      // ImageBase。
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))      // SectionAlignment。
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))      // FileAlignment。
+	_ = binary.Write(buf, binary.LittleEndian, uint16(0))      // OSMajor。
+	_ = binary.Write(buf, binary.LittleEndian, uint16(0))      // OSMinor。
+	_ = binary.Write(buf, binary.LittleEndian, uint16(0))      // UserMajor。
+	_ = binary.Write(buf, binary.LittleEndian, uint16(0))      // UserMinor。
+	_ = binary.Write(buf, binary.LittleEndian, uint16(0))      // SubSysMajor。
+	_ = binary.Write(buf, binary.LittleEndian, uint16(0))      // SubSysMinor。
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))      // Win32Version。
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))      // SizeOfImage。
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))      // SizeOfHeaders。
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))      // CheckSum。
+	_ = binary.Write(buf, binary.LittleEndian, uint16(0))      // Subsystem。
+	_ = binary.Write(buf, binary.LittleEndian, uint16(0))      // DLLCharacteristics。
+	_ = binary.Write(buf, binary.LittleEndian, uint64(0))      // StackReserveSize。
+	_ = binary.Write(buf, binary.LittleEndian, uint64(0))      // StackCommitSize。
+	_ = binary.Write(buf, binary.LittleEndian, uint64(0))      // HeapReserveSize。
+	_ = binary.Write(buf, binary.LittleEndian, uint64(0))      // HeapCommitSize。
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))      // LoaderFlags。
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))      // NumberOfRvaAndSizes。
+
+	return buf.Bytes()
+}
+
+// 生成一个模拟的 Apple API HTTP 响应。
+func MockAppleAPIResponse(body string) *http.Response {
+	return &http.Response{
+		StatusCode: http.StatusOK,
+		Body:       io.NopCloser(strings.NewReader(body)),
+		Header: http.Header{
+			"Content-Type": []string{"application/json;charset=UTF-8"},
+		},
+	}
+}
+
 func CheckAndReadBody(t *testing.T, rsp *httptest.ResponseRecorder) ([]byte, string) {
 	if rsp.Code != http.StatusOK {
 		t.Errorf("expect http code %d, but got %d", http.StatusOK, rsp.Code)
@@ -368,6 +501,40 @@ func CreateDeleteRequestWithApp(ctx context.Context, uri, appID string, queryStr
 	return request.WithContext(ctx)
 }
 
+// CreateAPIAuthorization 创建 API 请求凭证（Bearer JWT Token）。
+func CreateAPIAuthorization(appID, accountID, secret string) string {
+	now := time.Now()
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &jwt.RegisteredClaims{
+		Issuer:    appID,
+		Subject:   accountID,
+		ExpiresAt: jwt.NewNumericDate(now.Add(cfg.Get().Backend().OpenAPIMaximumExpirationDuration() - time.Minute)),
+		NotBefore: jwt.NewNumericDate(now.Add(-time.Minute)),
+		IssuedAt:  jwt.NewNumericDate(now.Add(-time.Minute)),
+	})
+	tokenString, _ := token.SignedString([]byte(secret))
+	return "Bearer " + tokenString
+}
+
+// CreateAPIGetRequest 创建 OpenAPI GET 请求（携带 Authorization 头）。
+func CreateAPIGetRequest(ctx context.Context, uri, token string, queryStruct any) *http.Request {
+	request := httptest.NewRequest(http.MethodGet, fmt.Sprintf("%s?%s", uri, util.EncodeStructToURLQuery(queryStruct)), nil)
+	request.Header.Set("Date", time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05 GMT"))
+	request.Header.Set("X-Real-IP", RequestIP)
+	request.Header.Set("Authorization", token)
+	return request.WithContext(ctx)
+}
+
+// CreateAPIPostJSONRequest 创建 OpenAPI POST JSON 请求（携带 Authorization 头）。
+func CreateAPIPostJSONRequest[T any](ctx context.Context, uri, token string, req *T) *http.Request {
+	bs, _ := json.Marshal(req)
+	request := httptest.NewRequest(http.MethodPost, uri, bytes.NewReader(bs))
+	request.Header.Set("Date", time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05 GMT"))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("X-Real-IP", RequestIP)
+	request.Header.Set("Authorization", token)
+	return request.WithContext(ctx)
+}
+
 func ServeHTTP(ctx context.Context, req *http.Request) *httptest.ResponseRecorder {
 	rsp := httptest.NewRecorder()
 	route.Initialize(ctx).ServeHTTP(rsp, req)
@@ -376,8 +543,4 @@ func ServeHTTP(ctx context.Context, req *http.Request) *httptest.ResponseRecorde
 
 func TakeIntPtr(i int) *int {
 	return &i
-}
-
-func TakeStringPtr(s string) *string {
-	return &s
 }

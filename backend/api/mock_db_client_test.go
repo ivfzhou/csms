@@ -62,6 +62,11 @@ const (
 	methodTypeAndroidSigningJobCount2
 	methodTypeAndroidSigningJobList
 	methodTypeWindowsSigningJobGetTables
+	methodTypeWindowsSigningJobCount2
+	methodTypeWindowsSigningJobList
+	methodTypeWindowsSigningJobGetJobIDByStatus
+	methodTypeAppleSigningJobCount2
+	methodTypeAppleSigningJobList
 )
 
 type DBClientMocker[Table any] interface {
@@ -76,6 +81,8 @@ type DBClientMocker[Table any] interface {
 	FindOnce(u []*Table, err error) DBClientMocker[Table]
 	EventGetTablesOnce([]string, error) DBClientMocker[Table]
 	AndroidSigningJobGetTablesOnce([]string, error) DBClientMocker[Table]
+	WindowsSigningJobGetTablesOnce([]string, error) DBClientMocker[Table]
+	AppleSigningJobGetTablesOnce([]string, error) DBClientMocker[Table]
 	EventCount2Once(r int, err error) DBClientMocker[Table]
 	AndroidSigningJobCount2Once(r int, err error) DBClientMocker[Table]
 	EventListOnce(r []*Table, err error) DBClientMocker[Table]
@@ -83,6 +90,11 @@ type DBClientMocker[Table any] interface {
 	EventCountTypesWithWeekOnce(r []map[string]any, err error) DBClientMocker[Table]
 	EventCountTypesWithMonthOnce(r []map[string]any, err error) DBClientMocker[Table]
 	AndroidSigningJobListOnce(r []*Table, err error) DBClientMocker[Table]
+	WindowsSigningJobCount2Once(r int, err error) DBClientMocker[Table]
+	WindowsSigningJobListOnce(r []*Table, err error) DBClientMocker[Table]
+	WindowsSigningJobGetJobIDByStatusOnce(r []string, err error) DBClientMocker[Table]
+	AppleSigningJobCount2Once(r int, err error) DBClientMocker[Table]
+	AppleSigningJobListOnce(r []*Table, err error) DBClientMocker[Table]
 	LastOnce(t *Table, err error) DBClientMocker[Table]
 	Reset()
 }
@@ -330,6 +342,41 @@ func (m *dbClientMocker[Table, Do]) EventCountTypesWithMonthOnce(r []map[string]
 
 func (m *dbClientMocker[Table, Do]) AndroidSigningJobListOnce(r []*Table, err error) DBClientMocker[Table] {
 	m.do.append(&doResultData{method: methodTypeAndroidSigningJobList, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) WindowsSigningJobGetTablesOnce(r []string, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeWindowsSigningJobGetTables, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) WindowsSigningJobCount2Once(r int, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeWindowsSigningJobCount2, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) WindowsSigningJobListOnce(r []*Table, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeWindowsSigningJobList, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) WindowsSigningJobGetJobIDByStatusOnce(r []string, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeWindowsSigningJobGetJobIDByStatus, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) AppleSigningJobGetTablesOnce(r []string, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeAppleSigningJobGetTables, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) AppleSigningJobCount2Once(r int, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeAppleSigningJobCount2, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) AppleSigningJobListOnce(r []*Table, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeAppleSigningJobList, values: []any{r, err}})
 	return m
 }
 
@@ -741,15 +788,33 @@ func (c *userDo[Do]) SearchByName(string) ([]*model.User, error) {
 }
 
 func (c *windowsSigningJobDo[Do]) GetJobIDByStatus([]string, int) ([]string, error) {
-	panic("not implement yet")
+	data := c.getResultData(methodTypeWindowsSigningJobGetJobIDByStatus)
+	if data != nil {
+		r, _ := data[0].([]string)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s WindowsSigningJobGetJobIDByStatus", c.typeName))
 }
 
-func (c *windowsSigningJobDo[Do]) List([]string, int, string, int, []int, []int, int) ([]*model.WindowsSigningJob, error) {
-	panic("not implement yet")
+func (c *windowsSigningJobDo[Do]) List([]string, int, string, int, int, []int, []int, int, int) ([]*model.WindowsSigningJob, error) {
+	data := c.getResultData(methodTypeWindowsSigningJobList)
+	if data != nil {
+		r, _ := data[0].([]*model.WindowsSigningJob)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s List", c.typeName))
 }
 
-func (c *windowsSigningJobDo[Do]) Count2([]string, int, string, int, []int, []int) (int, error) {
-	panic("not implement yet")
+func (c *windowsSigningJobDo[Do]) Count2([]string, int, string, int, int, []int, []int) (int, error) {
+	data := c.getResultData(methodTypeWindowsSigningJobCount2)
+	if data != nil {
+		r, _ := data[0].(int)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s Count2", c.typeName))
 }
 
 func (c *windowsSigningJobDo[Do]) GetTables(string) ([]string, error) {
@@ -762,12 +827,24 @@ func (c *windowsSigningJobDo[Do]) GetTables(string) ([]string, error) {
 	panic(fmt.Sprintf("unhandle db %s WindowsSigningJobGetTables", c.typeName))
 }
 
-func (c *appleSigningJobDo[Do]) List([]string, int, int) ([]*model.AppleSigningJob, error) {
-	panic("not implement yet")
+func (c *appleSigningJobDo[Do]) List(_ []string, _ int, _ int, _ int) ([]*model.AppleSigningJob, error) {
+	data := c.getResultData(methodTypeAppleSigningJobList)
+	if data != nil {
+		r, _ := data[0].([]*model.AppleSigningJob)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s List", c.typeName))
 }
 
 func (c *appleSigningJobDo[Do]) Count2([]string, int) (int, error) {
-	panic("not implement yet")
+	data := c.getResultData(methodTypeAppleSigningJobCount2)
+	if data != nil {
+		r, _ := data[0].(int)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s Count2", c.typeName))
 }
 
 func (c *appleSigningJobDo[Do]) GetTables(string) ([]string, error) {

@@ -268,13 +268,13 @@ type AppleWebListSigningJobsItem struct {
 // AppleWebRemoveProfileReq 删除描述文件请求体。
 type AppleWebRemoveProfileReq struct {
 	// 描述文件 ID。
-	ProfileID string `form:"profileId,omitempty" binding:"len=32,alphanum" example:"93aa1dc7f4ab32bdc5a3b0b78ecc35b5"`
+	ProfileID string `form:"profileId" binding:"len=32,alphanum" example:"93aa1dc7f4ab32bdc5a3b0b78ecc35b5"`
 }
 
 // AppleWebRemovePushCertificateReq 删除 Push 证书请求体。
 type AppleWebRemovePushCertificateReq struct {
 	// 证书 ID。
-	CertificateID string `form:"certificateId,omitempty" binding:"len=32,alphanum" example:"93aa1dc7f4ab32bdc5a3b0b78ecc35b5"`
+	CertificateID string `form:"certificateId" binding:"len=32,alphanum" example:"93aa1dc7f4ab32bdc5a3b0b78ecc35b5"`
 }
 
 // AppleWebDownloadCertificateReq 下载证书和描述文件请求体。

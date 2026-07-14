@@ -35,13 +35,31 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func TestFileAPI_WebDownload(t *testing.T) {
+func TestFileWebDownload(t *testing.T) {
 	const reqPath = "/web/file/download"
 
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
 		fileID, fileData, fileName :=
 			util.FastRandomAlphaNumberString(38), GenerateBytes(4096), util.FastRandomAlphaNumberString(16)
+		// 模拟数据库中的文件记录。
+		mockFile := &model.File{
+			ID:     1,
+			FileID: fileID,
+			TusdID: util.FastRandomAlphaNumberString(32),
+			UserID: LoginUser.ID,
+			AppID:  AppInfo.ID,
+			Name:   fileName,
+			Md5:    util.FastRandomAlphaNumberString(32),
+			Size:   len(fileData),
+			Type:   model.FileTypeUserAvatar,
+		}
+		// 模拟存储服务返回的文件下载结果。
+		mockTusResult := &tus.GetResult{
+			HTTPStatus:    http.StatusOK,
+			Body:          io.NopCloser(bytes.NewReader(fileData)),
+			ContentLength: len(fileData),
+		}
 
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
@@ -52,22 +70,8 @@ func TestFileAPI_WebDownload(t *testing.T) {
 		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
 		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
 		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		dbFileMocker = dbFileMocker.TakeOnce(&model.File{
-			ID:     1,
-			FileID: fileID,
-			TusdID: util.FastRandomAlphaNumberString(32),
-			UserID: LoginUser.ID,
-			AppID:  AppInfo.ID,
-			Name:   fileName,
-			Md5:    util.FastRandomAlphaNumberString(32),
-			Size:   len(fileData),
-			Type:   model.FileTypeUserAvatar,
-		}, nil) // 查询数据库文件记录。
-		tusdMocker = tusdMocker.GetOnce(&tus.GetResult{
-			HTTPStatus:    http.StatusOK,
-			Body:          io.NopCloser(bytes.NewReader(fileData)),
-			ContentLength: len(fileData),
-		}, nil) // 从存储服务获取文件内容。
+		dbFileMocker = dbFileMocker.TakeOnce(mockFile, nil)                                 // 查询数据库文件记录。
+		tusdMocker = tusdMocker.GetOnce(mockTusResult, nil)                                 // 从存储服务获取文件内容。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbFileMocker.Reset()
@@ -121,11 +125,16 @@ func TestFileAPI_WebDownload(t *testing.T) {
 	}
 }
 
-func TestFileAPI_WebInitial(t *testing.T) {
+func TestFileWebInitial(t *testing.T) {
 	const reqPath = "/web/file/initial"
 
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
+		// 文件初始化请求参数。
+		initName := "文件名.jpg"
+		initSize := 1024
+		initMD5 := "01234567890123456789012345678901"
+		initType := model.FileTypeUserAvatar
 
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
@@ -149,10 +158,10 @@ func TestFileAPI_WebInitial(t *testing.T) {
 			t,
 			ServeHTTP(ctx, CreatePostJSONRequest(ctx, reqPath+"?"+consts.HTTPPathAppID+"="+AppInfo.AppID,
 				&protocol.FileWebInitialReq{
-					Name: "文件名.jpg",
-					Size: 1024,
-					MD5:  "01234567890123456789012345678901",
-					Type: model.FileTypeUserAvatar,
+					Name: initName,
+					Size: int64(initSize),
+					MD5:  initMD5,
+					Type: initType,
 				},
 			)),
 			0,
@@ -169,6 +178,13 @@ func TestFileAPI_WebInitial(t *testing.T) {
 	t.Run("正常测试_文件存在", func(t *testing.T) {
 		ctx := context.Background()
 		fileID := util.FastRandomAlphaNumberString(38)
+		// 文件初始化请求参数。
+		initName := "文件名.jpg"
+		initSize := 1024
+		initMD5 := "01234567890123456789012345678901"
+		initType := model.FileTypeUserAvatar
+		// 模拟数据库中已存在的文件记录。
+		mockFile := &model.File{ID: 1, FileID: fileID}
 
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
@@ -180,10 +196,7 @@ func TestFileAPI_WebInitial(t *testing.T) {
 		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
 		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
 		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbFileMocker = dbFileMocker.TakeOnce(&model.File{
-			ID:     1,
-			FileID: fileID,
-		}, nil) // 检查文件已存在（命中秒传）。
+		dbFileMocker = dbFileMocker.TakeOnce(mockFile, nil)                                 // 检查文件已存在（命中秒传）。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
@@ -193,10 +206,10 @@ func TestFileAPI_WebInitial(t *testing.T) {
 			t,
 			ServeHTTP(ctx, CreatePostJSONRequest(ctx, reqPath+"?"+consts.HTTPPathAppID+"="+AppInfo.AppID,
 				&protocol.FileWebInitialReq{
-					Name: "文件名.jpg",
-					Size: 1024,
-					MD5:  "01234567890123456789012345678901",
-					Type: model.FileTypeUserAvatar,
+					Name: initName,
+					Size: int64(initSize),
+					MD5:  initMD5,
+					Type: initType,
 				},
 			)),
 			0,
@@ -257,7 +270,7 @@ func TestFileAPI_WebInitial(t *testing.T) {
 	}
 }
 
-func TestFileAPI_WebUploadPart(t *testing.T) {
+func TestFileWebUploadPart(t *testing.T) {
 	const reqPath = "/web/file/uploadPart"
 	createRequestBody := func(fileID *string, chunkNumber *int, fileData []byte) (io.Reader, string) {
 		reqBody := &bytes.Buffer{}
@@ -300,6 +313,10 @@ func TestFileAPI_WebUploadPart(t *testing.T) {
 
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
+		// 上传分片请求参数。
+		uploadFileID := new(util.FastRandomAlphaNumberString(38))
+		chunkNumber := new(1)
+		chunkData := GenerateBytes(4096)
 		bs, _ := json.Marshal(map[string]any{"user": LoginUser.ID, "timeSecond": time.Now().Unix()})
 
 		redisMocker := MockRedis(ctx)
@@ -319,7 +336,7 @@ func TestFileAPI_WebUploadPart(t *testing.T) {
 		defer dbUserMocker.Reset()
 		defer tusdMocker.Reset()
 
-		reqBody, contentType := createRequestBody(new(util.FastRandomAlphaNumberString(38)), new(1), GenerateBytes(4096))
+		reqBody, contentType := createRequestBody(uploadFileID, chunkNumber, chunkData)
 		CheckAndUnmarshalBody[any](t, ServeHTTP(ctx, CreatePostMultiFormRequest(ctx, reqPath, reqBody, contentType)), 0)
 	})
 
@@ -361,13 +378,13 @@ func TestFileAPI_WebUploadPart(t *testing.T) {
 	}
 }
 
-func TestFileAPI_WebMergeParts(t *testing.T) {
+func TestFileWebMergeParts(t *testing.T) {
 	const reqPath = "/web/file/mergeParts"
 
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
 		fileID := util.FastRandomAlphaNumberString(38)
-
+		// 模拟 Redis 中的分片列表数据。
 		redisZ := make([]redis.Z, 0, 3)
 		for i := range cap(redisZ) {
 			redisZ = append(redisZ, redis.Z{
@@ -375,6 +392,7 @@ func TestFileAPI_WebMergeParts(t *testing.T) {
 				Member: fmt.Sprintf("%s,%d", util.FastRandomAlphaNumberString(32), 1024),
 			})
 		}
+		// 模拟 Redis 中的上传文件缓存信息。
 		bs, _ := json.Marshal(map[string]any{"user": LoginUser.ID, "timeSecond": time.Now().Unix(), "size": 3 * 1024})
 
 		redisMocker := MockRedis(ctx)

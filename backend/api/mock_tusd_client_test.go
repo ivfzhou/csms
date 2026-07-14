@@ -15,6 +15,7 @@ package api_test
 import (
 	"context"
 	"io"
+	"os"
 	"sync"
 
 	"gitee.com/ivfzhou/csms/comm/conn"
@@ -27,6 +28,7 @@ const (
 	tusDeleteFile
 	tusUploadPartByIO
 	tusMergeParts
+	tusDownloadToFile
 )
 
 type TusdMocker interface {
@@ -35,6 +37,7 @@ type TusdMocker interface {
 	DeleteFileOnce(e error) TusdMocker
 	UploadPartByIOOnce(id string, e error) TusdMocker
 	MergePartsOnce(id string, e error) TusdMocker
+	DownloadToFileOnce(data []byte, e error) TusdMocker
 	Reset()
 }
 
@@ -99,6 +102,14 @@ func (c *tusdMockerImpl) MergePartsOnce(id string, e error) TusdMocker {
 	return c
 }
 
+func (c *tusdMockerImpl) DownloadToFileOnce(data []byte, e error) TusdMocker {
+	c.datas = append(c.datas, &tusdResultData{
+		fn:     tusDownloadToFile,
+		result: []any{data, e},
+	})
+	return c
+}
+
 func (c *tusdMockerImpl) Reset() {
 	c.reset()
 }
@@ -141,7 +152,16 @@ func (c *tusdMockerImpl) MultipleUploadFromReader(context.Context, io.Reader) (s
 	panic("not implement yet")
 }
 
-func (c *tusdMockerImpl) DownloadToFile(context.Context, string, string) error {
+func (c *tusdMockerImpl) DownloadToFile(_ context.Context, _ string, filePath string) error {
+	data := c.getTusdData(tusDownloadToFile)
+	if data != nil {
+		err, _ := data[1].(error)
+		if err != nil {
+			return err
+		}
+		fileData, _ := data[0].([]byte)
+		return os.WriteFile(filePath, fileData, 0644)
+	}
 	panic("not implement yet")
 }
 

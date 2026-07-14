@@ -29,45 +29,46 @@ import (
 	mvt "gitee.com/ivfzhou/modify-variables-temporarily/v3"
 )
 
-func TestWindowsAPI_WebUploadCertificate(t *testing.T) {
+func TestWindowsWebUploadCertificate(t *testing.T) {
 	const reqPath = "/web/windows/uploadCertificate"
 
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
 		certificate := windowsCertificate
 		password := windowsCertificatePassword
+		// 模拟数据库中的 AES 加密密钥记录。
+		mockAesKey := &model.AesKey{CreatedTime: time.Now(), Secret: util.RandomBytes(16)}
 
 		defer mvt.Chain(AppInfo).
 			Elem().
 			FieldByName("Platform").
 			Set(model.AppPlatformWindows).
 			Reset()
-
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
-		aesKeyMocker := MockDBClient[model.AesKey](ctx)
-		windowsCertMocker := MockDBClient[model.WindowsCertificate](ctx)
-		eventMocker := MockDBClient[model.Event](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                             // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                             // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                                                // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                                                 // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                                            // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                                                // 查询数据库应用信息。
-		userRoleMocker = userRoleMocker.ScanOnce(func(v any) { *v.(*[]int) = []int{model.UserRoleAppAdmin} }, nil)      // 校验应用管理员权限。
-		aesKeyMocker = aesKeyMocker.LastOnce(&model.AesKey{CreatedTime: time.Now(), Secret: util.RandomBytes(16)}, nil) // 查询数据库中加密密钥。
-		redisMocker = redisMocker.SAddOnce(1, nil)                                                                      // 缓存证书 ID 到 Redis。
-		windowsCertMocker = windowsCertMocker.CreateOnce(nil)                                                           // 创建证书记录。
-		eventMocker = eventMocker.CreateOnce(nil)                                                                       // 添加应用事件到数据库。
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbAesKeyMocker := MockDBClient[model.AesKey](ctx)
+		dbWindowsCertificateMocker := MockDBClient[model.WindowsCertificate](ctx)
+		dbEventMocker := MockDBClient[model.Event](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验应用管理员权限。
+		dbAesKeyMocker = dbAesKeyMocker.LastOnce(mockAesKey, nil)                           // 查询数据库中加密密钥。
+		redisMocker = redisMocker.SAddOnce(1, nil)                                          // 缓存证书 ID 到 Redis。
+		dbWindowsCertificateMocker = dbWindowsCertificateMocker.CreateOnce(nil)             // 创建证书记录。
+		dbEventMocker = dbEventMocker.CreateOnce(nil)                                       // 添加应用事件到数据库。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
-		defer userRoleMocker.Reset()
-		defer aesKeyMocker.Reset()
-		defer windowsCertMocker.Reset()
-		defer eventMocker.Reset()
+		defer dbUserRoleMocker.Reset()
+		defer dbAesKeyMocker.Reset()
+		defer dbWindowsCertificateMocker.Reset()
+		defer dbEventMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,
@@ -79,90 +80,94 @@ func TestWindowsAPI_WebUploadCertificate(t *testing.T) {
 		)
 	})
 
-	validateErrorRequest := func(t *testing.T, certificate, password string) {
-		ctx := context.Background()
-
-		defer mvt.Chain(AppInfo).
-			Elem().
-			FieldByName("Platform").
-			Set(model.AppPlatformWindows).
-			Reset()
-
-		redisMocker := MockRedis(ctx)
-		dbUserMocker := MockDBClient[model.User](ctx)
-		dbAppMocker := MockDBClient[model.App](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                        // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                        // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                                           // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                                            // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                                       // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                                           // 查询数据库应用信息。
-		userRoleMocker = userRoleMocker.ScanOnce(func(v any) { *v.(*[]int) = []int{model.UserRoleAppAdmin} }, nil) // 校验应用管理员权限。
-		defer redisMocker.Reset()
-		defer dbUserMocker.Reset()
-		defer dbAppMocker.Reset()
-		defer userRoleMocker.Reset()
-
-		CheckAndUnmarshalBody[any](
-			t,
-			ServeHTTP(ctx, CreatePostJSONRequestWithApp(ctx, reqPath, AppInfo.AppID, &protocol.WindowsWebUploadCertificateReq{
-				Certificate: certificate,
-				Password:    password,
-			})),
-			errs.ErrInvalidRequestParameters,
-		)
-	}
-
 	for _, v := range []struct {
 		Name        string
 		Certificate string
 		Password    string
+		ErrCode     errs.Code
 	}{
-		{"证书缺失", "", windowsCertificatePassword},
-		{"证书非法", "汉", "123456"},
-		{"密码缺失", windowsCertificate, ""},
-		{"密码过长", windowsCertificate, util.FastRandomAlphaNumberString(65)},
+		{"证书缺失", "", windowsCertificatePassword, errs.ErrInvalidRequestParameters},
+		{"证书非法", "汉", "123456", consts.ErrParameterInvalid},
+		{"密码缺失", windowsCertificate, "", errs.ErrInvalidRequestParameters},
+		{"密码过长", windowsCertificate, util.FastRandomAlphaNumberString(65), errs.ErrInvalidRequestParameters},
 	} {
+		validateErrorRequest := func(t *testing.T, certificate, password string, errCode errs.Code) {
+			ctx := context.Background()
+
+			defer mvt.Chain(AppInfo).
+				Elem().
+				FieldByName("Platform").
+				Set(model.AppPlatformWindows).
+				Reset()
+
+			redisMocker := MockRedis(ctx)
+			dbUserMocker := MockDBClient[model.User](ctx)
+			dbAppMocker := MockDBClient[model.App](ctx)
+			dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+			redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+			redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+			redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
+			redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
+			dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
+			dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
+			dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验应用管理员权限。
+			defer redisMocker.Reset()
+			defer dbUserMocker.Reset()
+			defer dbAppMocker.Reset()
+			defer dbUserRoleMocker.Reset()
+
+			CheckAndUnmarshalBody[any](
+				t,
+				ServeHTTP(ctx, CreatePostJSONRequestWithApp(ctx, reqPath, AppInfo.AppID, &protocol.WindowsWebUploadCertificateReq{
+					Certificate: certificate,
+					Password:    password,
+				})),
+				errCode,
+			)
+		}
+
 		t.Run("异常测试_"+v.Name, func(t *testing.T) {
-			validateErrorRequest(t, v.Certificate, v.Password)
+			validateErrorRequest(t, v.Certificate, v.Password, v.ErrCode)
 		})
 	}
 }
 
-func TestWindowsAPI_WebListCertificates(t *testing.T) {
+func TestWindowsWebListCertificates(t *testing.T) {
 	const reqPath = "/web/windows/listCertificates"
 
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
+		// 模拟数据库中的用户列表数据（空结构体，仅占位）。
+		mockUserList := []*model.User{{}, {}}
+		// 模拟数据库中的 Windows 证书列表数据（空结构体，仅占位）。
+		mockCertList := []*model.WindowsCertificate{{}, {}}
 
 		defer mvt.Chain(AppInfo).
 			Elem().
 			FieldByName("Platform").
 			Set(model.AppPlatformWindows).
 			Reset()
-
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
-		windowsCertAuthMocker := MockDBClient[model.WindowsCertificateAuthorization](ctx)
-		windowsCertMocker := MockDBClient[model.WindowsCertificate](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                        // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                        // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                                            // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                                       // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                                           // 查询数据库应用信息。
-		userRoleMocker = userRoleMocker.ScanOnce(func(v any) { *v.(*[]int) = []int{model.UserRoleAppAdmin} }, nil) // 校验应用管理员权限。
-		windowsCertAuthMocker = windowsCertAuthMocker.ScanOnce(func(v any) { *v.(*[]int) = []int{1} }, nil)        // 查询已授权证书 IDs。
-		dbUserMocker = dbUserMocker.FindOnce([]*model.User{{}, {}}, nil)                                           // 查询上传人英文名。
-		windowsCertMocker = windowsCertMocker.FindOnce([]*model.WindowsCertificate{{}, {}}, nil)                   // 批量查询证书记录。
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbWindowsCertificateAuthorizationMocker := MockDBClient[model.WindowsCertificateAuthorization](ctx)
+		dbWindowsCertificateMocker := MockDBClient[model.WindowsCertificate](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                                                     // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                                                     // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                                                                         // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                                                                    // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                                                                        // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                                                                                   // 校验应用管理员权限。
+		dbWindowsCertificateAuthorizationMocker = dbWindowsCertificateAuthorizationMocker.ScanOnce(func(v any) { *v.(*[]int) = []int{1} }, nil) // 查询已授权证书 IDs。
+		dbUserMocker = dbUserMocker.FindOnce(mockUserList, nil)                                                                                 // 查询上传人英文名。
+		dbWindowsCertificateMocker = dbWindowsCertificateMocker.FindOnce(mockCertList, nil)                                                     // 批量查询证书记录。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
-		defer userRoleMocker.Reset()
-		defer windowsCertAuthMocker.Reset()
-		defer windowsCertMocker.Reset()
+		defer dbUserRoleMocker.Reset()
+		defer dbWindowsCertificateAuthorizationMocker.Reset()
+		defer dbWindowsCertificateMocker.Reset()
 
 		rspBodyObj := CheckAndUnmarshalBody[protocol.WindowsWebListCertificatesRsp](
 			t,
@@ -176,46 +181,48 @@ func TestWindowsAPI_WebListCertificates(t *testing.T) {
 	})
 }
 
-func TestWindowsAPI_WebDownloadCertificate(t *testing.T) {
+func TestWindowsWebDownloadCertificate(t *testing.T) {
 	const reqPath = "/web/windows/downloadCertificate"
 
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
 		certificateID := util.FastRandomAlphaNumberString(32)
+		secret := util.RandomBytes(16)
+		encrypt, _ := util.AESCBCEncrypt(secret, []byte("123"))
+		// 模拟数据库中的 Windows 证书记录。
+		mockCert := &model.WindowsCertificate{Content: encrypt}
+		// 模拟数据库中的 AES 加密密钥记录。
+		mockAesKey := &model.AesKey{Secret: secret}
 
 		defer mvt.Chain(AppInfo).
 			Elem().
 			FieldByName("Platform").
 			Set(model.AppPlatformWindows).
 			Reset()
-
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
-		windowsCertMocker := MockDBClient[model.WindowsCertificate](ctx)
-		eventMocker := MockDBClient[model.Event](ctx)
-		aesKeyMocker := MockDBClient[model.AesKey](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                        // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                        // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                                           // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                                            // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                                       // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                                           // 查询数据库应用信息。
-		userRoleMocker = userRoleMocker.ScanOnce(func(v any) { *v.(*[]int) = []int{model.UserRoleAppAdmin} }, nil) // 校验应用管理员权限。
-
-		secret := util.RandomBytes(16)
-		encrypt, _ := util.AESCBCEncrypt(secret, []byte("123"))
-		windowsCertMocker = windowsCertMocker.TakeOnce(&model.WindowsCertificate{Content: encrypt}, nil) // 查询数据库证书记录。
-		eventMocker = eventMocker.CreateOnce(nil)                                                        // 添加应用事件到数据库。
-		aesKeyMocker = aesKeyMocker.TakeOnce(&model.AesKey{Secret: secret}, nil)                         // 查询数据库解密密钥。
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbWindowsCertificateMocker := MockDBClient[model.WindowsCertificate](ctx)
+		dbEventMocker := MockDBClient[model.Event](ctx)
+		dbAesKeyMocker := MockDBClient[model.AesKey](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验应用管理员权限。
+		dbWindowsCertificateMocker = dbWindowsCertificateMocker.TakeOnce(mockCert, nil)     // 查询数据库证书记录。
+		dbEventMocker = dbEventMocker.CreateOnce(nil)                                       // 添加应用事件到数据库。
+		dbAesKeyMocker = dbAesKeyMocker.TakeOnce(mockAesKey, nil)                           // 查询数据库解密密钥。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
-		defer userRoleMocker.Reset()
-		defer windowsCertMocker.Reset()
-		defer eventMocker.Reset()
-		defer aesKeyMocker.Reset()
+		defer dbUserRoleMocker.Reset()
+		defer dbWindowsCertificateMocker.Reset()
+		defer dbEventMocker.Reset()
+		defer dbAesKeyMocker.Reset()
 
 		rsp := ServeHTTP(ctx, CreateGetRequestWithApp(ctx, reqPath, AppInfo.AppID, protocol.WindowsWebDownloadCertificateReq{CertificateID: certificateID}))
 
@@ -236,22 +243,21 @@ func TestWindowsAPI_WebDownloadCertificate(t *testing.T) {
 			FieldByName("Platform").
 			Set(model.AppPlatformWindows).
 			Reset()
-
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                        // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                        // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                                           // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                                            // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                                       // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                                           // 查询数据库应用信息。
-		userRoleMocker = userRoleMocker.ScanOnce(func(v any) { *v.(*[]int) = []int{model.UserRoleAppAdmin} }, nil) // 校验应用管理员权限。
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验应用管理员权限。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
-		defer userRoleMocker.Reset()
+		defer dbUserRoleMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,
@@ -276,7 +282,7 @@ func TestWindowsAPI_WebDownloadCertificate(t *testing.T) {
 	}
 }
 
-func TestWindowsAPI_WebAddEVCertificate(t *testing.T) {
+func TestWindowsWebAddEVCertificate(t *testing.T) {
 	const reqPath = "/web/windows/addEVCertificate"
 
 	t.Run("正常测试", func(t *testing.T) {
@@ -298,21 +304,21 @@ func TestWindowsAPI_WebAddEVCertificate(t *testing.T) {
 
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
-		windowsCertMocker := MockDBClient[model.WindowsCertificate](ctx)
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbWindowsCertificateMocker := MockDBClient[model.WindowsCertificate](ctx)
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
 		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
 		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
 		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		userRoleMocker = userRoleMocker.CountOnce(1, nil)                                   // 校验系统管理员权限。
-		windowsCertMocker = windowsCertMocker.CountOnce(0, nil)                             // 检查相同指纹证书是否已存在。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
+		dbWindowsCertificateMocker = dbWindowsCertificateMocker.CountOnce(0, nil)           // 检查相同指纹证书是否已存在。
 		redisMocker = redisMocker.SAddOnce(1, nil)                                          // 缓存 EV 证书 ID 到 Redis。
-		windowsCertMocker = windowsCertMocker.CreateOnce(nil)                               // 创建 EV 证书记录。
+		dbWindowsCertificateMocker = dbWindowsCertificateMocker.CreateOnce(nil)             // 创建 EV 证书记录。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
-		defer userRoleMocker.Reset()
-		defer windowsCertMocker.Reset()
+		defer dbUserRoleMocker.Reset()
+		defer dbWindowsCertificateMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,
@@ -340,16 +346,16 @@ func TestWindowsAPI_WebAddEVCertificate(t *testing.T) {
 
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
 		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
 		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
 		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		userRoleMocker = userRoleMocker.CountOnce(1, nil)                                   // 校验系统管理员权限。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
-		defer userRoleMocker.Reset()
+		defer dbUserRoleMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,
@@ -405,33 +411,35 @@ func TestWindowsAPI_WebAddEVCertificate(t *testing.T) {
 	}
 }
 
-func TestWindowsAPI_WebUploadCompanyCertificate(t *testing.T) {
+func TestWindowsWebUploadCompanyCertificate(t *testing.T) {
 	const reqPath = "/web/windows/uploadCompanyCertificate"
 
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
 		certificate := windowsCertificate
 		password := windowsCertificatePassword
+		// 模拟数据库中的 AES 加密密钥记录。
+		mockAesKey := &model.AesKey{CreatedTime: time.Now(), Secret: util.RandomBytes(16)}
 
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
-		windowsCertMocker := MockDBClient[model.WindowsCertificate](ctx)
-		aesKeyMocker := MockDBClient[model.AesKey](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                             // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                             // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                                                // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                                                 // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                                            // 查询数据库登录用户信息。
-		userRoleMocker = userRoleMocker.CountOnce(1, nil)                                                               // 校验系统管理员权限。
-		aesKeyMocker = aesKeyMocker.LastOnce(&model.AesKey{CreatedTime: time.Now(), Secret: util.RandomBytes(16)}, nil) // 查询数据库中加密密钥。
-		redisMocker = redisMocker.SAddOnce(1, nil)                                                                      // 缓存公司证书 ID 到 Redis。
-		windowsCertMocker = windowsCertMocker.CreateOnce(nil)                                                           // 创建公司证书记录。
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbWindowsCertificateMocker := MockDBClient[model.WindowsCertificate](ctx)
+		dbAesKeyMocker := MockDBClient[model.AesKey](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
+		dbAesKeyMocker = dbAesKeyMocker.LastOnce(mockAesKey, nil)                           // 查询数据库中加密密钥。
+		redisMocker = redisMocker.SAddOnce(1, nil)                                          // 缓存公司证书 ID 到 Redis。
+		dbWindowsCertificateMocker = dbWindowsCertificateMocker.CreateOnce(nil)             // 创建公司证书记录。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
-		defer userRoleMocker.Reset()
-		defer windowsCertMocker.Reset()
-		defer aesKeyMocker.Reset()
+		defer dbUserRoleMocker.Reset()
+		defer dbWindowsCertificateMocker.Reset()
+		defer dbAesKeyMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,
@@ -448,16 +456,16 @@ func TestWindowsAPI_WebUploadCompanyCertificate(t *testing.T) {
 
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
 		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
 		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
 		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		userRoleMocker = userRoleMocker.CountOnce(1, nil)                                   // 校验系统管理员权限。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
-		defer userRoleMocker.Reset()
+		defer dbUserRoleMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,
@@ -485,28 +493,32 @@ func TestWindowsAPI_WebUploadCompanyCertificate(t *testing.T) {
 	}
 }
 
-func TestWindowsAPI_WebListCompanyCertificates(t *testing.T) {
+func TestWindowsWebListCompanyCertificates(t *testing.T) {
 	const reqPath = "/web/windows/listCompanyCertificates"
 
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
+		// 模拟数据库中的用户列表数据（空结构体，仅占位）。
+		mockUserList := []*model.User{{}, {}}
+		// 模拟数据库中的公司证书列表数据（空结构体，仅占位）。
+		mockCertList := []*model.WindowsCertificate{{}, {}}
 
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
-		windowsCertMocker := MockDBClient[model.WindowsCertificate](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)      // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)      // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                         // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                          // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                     // 查询数据库登录用户信息。
-		userRoleMocker = userRoleMocker.CountOnce(1, nil)                                        // 校验系统管理员权限。
-		dbUserMocker = dbUserMocker.FindOnce([]*model.User{{}, {}}, nil)                         // 查询上传人英文名。
-		windowsCertMocker = windowsCertMocker.FindOnce([]*model.WindowsCertificate{{}, {}}, nil) // 批量查询公司证书。
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbWindowsCertificateMocker := MockDBClient[model.WindowsCertificate](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
+		dbUserMocker = dbUserMocker.FindOnce(mockUserList, nil)                             // 查询上传人英文名。
+		dbWindowsCertificateMocker = dbWindowsCertificateMocker.FindOnce(mockCertList, nil) // 批量查询公司证书。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
-		defer userRoleMocker.Reset()
-		defer windowsCertMocker.Reset()
+		defer dbUserRoleMocker.Reset()
+		defer dbWindowsCertificateMocker.Reset()
 
 		rspBodyObj := CheckAndUnmarshalBody[protocol.WindowsWebListCertificatesRsp](
 			t,
@@ -520,7 +532,7 @@ func TestWindowsAPI_WebListCompanyCertificates(t *testing.T) {
 	})
 }
 
-func TestWindowsAPI_WebGrantAppEVCertificate(t *testing.T) {
+func TestWindowsWebGrantAppEVCertificate(t *testing.T) {
 	const reqPath = "/web/windows/grantAppEVCertificate"
 
 	t.Run("正常测试", func(t *testing.T) {
@@ -531,24 +543,24 @@ func TestWindowsAPI_WebGrantAppEVCertificate(t *testing.T) {
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
-		windowsCertMocker := MockDBClient[model.WindowsCertificate](ctx)
-		windowsCertAuthMocker := MockDBClient[model.WindowsCertificateAuthorization](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		userRoleMocker = userRoleMocker.CountOnce(1, nil)                                   // 校验系统管理员权限。
-		windowsCertMocker = windowsCertMocker.TakeOnce(&model.WindowsCertificate{}, nil)    // 查询证书记录。
-		windowsCertAuthMocker = windowsCertAuthMocker.CreateOnce(nil)                       // 创建证书授权记录。
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbWindowsCertificateMocker := MockDBClient[model.WindowsCertificate](ctx)
+		dbWindowsCertificateAuthorizationMocker := MockDBClient[model.WindowsCertificateAuthorization](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                  // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                  // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                                     // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                                      // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                                 // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.ScanOnce(func(v any) { *v.(*int) = AppInfo.ID }, nil)                      // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                                                // 校验系统管理员权限。
+		dbWindowsCertificateMocker = dbWindowsCertificateMocker.ScanOnce(func(v any) { *v.(*int) = 1 }, nil) // 查询证书记录。
+		dbWindowsCertificateAuthorizationMocker = dbWindowsCertificateAuthorizationMocker.CreateOnce(nil)    // 创建证书授权记录。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
-		defer userRoleMocker.Reset()
-		defer windowsCertMocker.Reset()
-		defer windowsCertAuthMocker.Reset()
+		defer dbUserRoleMocker.Reset()
+		defer dbWindowsCertificateMocker.Reset()
+		defer dbWindowsCertificateAuthorizationMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,
@@ -565,16 +577,16 @@ func TestWindowsAPI_WebGrantAppEVCertificate(t *testing.T) {
 
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
 		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
 		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
 		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		userRoleMocker = userRoleMocker.CountOnce(1, nil)                                   // 校验系统管理员权限。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
-		defer userRoleMocker.Reset()
+		defer dbUserRoleMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,
@@ -604,39 +616,40 @@ func TestWindowsAPI_WebGrantAppEVCertificate(t *testing.T) {
 	}
 }
 
-func TestWindowsAPI_WebGetCertificatePassword(t *testing.T) {
-	const reqPath = "/web/windows/getPassword"
+func TestWindowsWebGetCertificatePassword(t *testing.T) {
+	const reqPath = "/web/windows/getCertificatePassword"
 
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
 		certificateID := util.FastRandomAlphaNumberString(32)
+		// 模拟数据库中的 EV 证书记录。
+		mockCert := &model.WindowsCertificate{Type: model.WindowsCertificateTypePersonalEV, Password: util.FastRandomAlphaNumberString(6)}
 
 		defer mvt.Chain(AppInfo).
 			Elem().
 			FieldByName("Platform").
 			Set(model.AppPlatformWindows).
 			Reset()
-
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
-		windowsCertMocker := MockDBClient[model.WindowsCertificate](ctx)
-		windowsCertAuthMocker := MockDBClient[model.WindowsCertificateAuthorization](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                                                                                         // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                                                                                         // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                                                                                                             // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                                                                                                        // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                                                                                                            // 查询数据库应用信息。
-		userRoleMocker = userRoleMocker.ScanOnce(func(v any) { *v.(*[]int) = []int{model.UserRoleAppAdmin} }, nil)                                                                  // 校验应用管理员权限。
-		windowsCertAuthMocker = windowsCertAuthMocker.CountOnce(1, nil)                                                                                                             // 校验应用是否已获授权。
-		windowsCertMocker = windowsCertMocker.TakeOnce(&model.WindowsCertificate{Type: model.WindowsCertificateTypePersonalEV, Password: util.FastRandomAlphaNumberString(6)}, nil) // 查询 EV 证书密码。
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbWindowsCertificateMocker := MockDBClient[model.WindowsCertificate](ctx)
+		dbWindowsCertificateAuthorizationMocker := MockDBClient[model.WindowsCertificateAuthorization](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                 // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                 // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                                     // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                                // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                                    // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                                               // 校验应用管理员权限。
+		dbWindowsCertificateAuthorizationMocker = dbWindowsCertificateAuthorizationMocker.CountOnce(1, nil) // 校验应用是否已获授权。
+		dbWindowsCertificateMocker = dbWindowsCertificateMocker.TakeOnce(mockCert, nil)                     // 查询 EV 证书密码。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
-		defer userRoleMocker.Reset()
-		defer windowsCertMocker.Reset()
-		defer windowsCertAuthMocker.Reset()
+		defer dbUserRoleMocker.Reset()
+		defer dbWindowsCertificateMocker.Reset()
+		defer dbWindowsCertificateAuthorizationMocker.Reset()
 
 		rspBodyObj := CheckAndUnmarshalBody[protocol.WindowsWebGetCertificatePasswordRsp](
 			t,
@@ -659,21 +672,20 @@ func TestWindowsAPI_WebGetCertificatePassword(t *testing.T) {
 			FieldByName("Platform").
 			Set(model.AppPlatformWindows).
 			Reset()
-
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                        // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                        // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                                            // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                                       // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                                           // 查询数据库应用信息。
-		userRoleMocker = userRoleMocker.ScanOnce(func(v any) { *v.(*[]int) = []int{model.UserRoleAppAdmin} }, nil) // 校验应用管理员权限。
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验应用管理员权限。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
-		defer userRoleMocker.Reset()
+		defer dbUserRoleMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,
@@ -698,34 +710,37 @@ func TestWindowsAPI_WebGetCertificatePassword(t *testing.T) {
 	}
 }
 
-func TestWindowsAPI_WebDownloadCompanyCertificate(t *testing.T) {
+func TestWindowsWebDownloadCompanyCertificate(t *testing.T) {
 	const reqPath = "/web/windows/downloadCompanyCertificate"
 
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
 		certificateID := util.FastRandomAlphaNumberString(32)
+		secret := util.RandomBytes(16)
+		encrypt, _ := util.AESCBCEncrypt(secret, []byte("abc"))
+		// 模拟数据库中的公司证书记录。
+		mockCert := &model.WindowsCertificate{Content: encrypt}
+		// 模拟数据库中的 AES 加密密钥记录。
+		mockAesKey := &model.AesKey{Secret: secret}
 
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
-		windowsCertMocker := MockDBClient[model.WindowsCertificate](ctx)
-		aesKeyMocker := MockDBClient[model.AesKey](ctx)
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbWindowsCertificateMocker := MockDBClient[model.WindowsCertificate](ctx)
+		dbAesKeyMocker := MockDBClient[model.AesKey](ctx)
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
 		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
 		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		userRoleMocker = userRoleMocker.CountOnce(1, nil)                                   // 校验系统管理员权限。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
 		dbUserMocker = dbUserMocker.FindOnce([]*model.User{{}}, nil)                        // 查询上传人英文名。
-
-		secret := util.RandomBytes(16)
-		encrypt, _ := util.AESCBCEncrypt(secret, []byte("abc"))
-		windowsCertMocker = windowsCertMocker.TakeOnce(&model.WindowsCertificate{Content: encrypt}, nil) // 查询公司证书记录。
-		aesKeyMocker = aesKeyMocker.TakeOnce(&model.AesKey{Secret: secret}, nil)                         // 查询数据库解密密钥。
+		dbWindowsCertificateMocker = dbWindowsCertificateMocker.TakeOnce(mockCert, nil)     // 查询公司证书记录。
+		dbAesKeyMocker = dbAesKeyMocker.TakeOnce(mockAesKey, nil)                           // 查询数据库解密密钥。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
-		defer userRoleMocker.Reset()
-		defer windowsCertMocker.Reset()
-		defer aesKeyMocker.Reset()
+		defer dbUserRoleMocker.Reset()
+		defer dbWindowsCertificateMocker.Reset()
+		defer dbAesKeyMocker.Reset()
 
 		rsp := ServeHTTP(ctx, CreateGetRequest(ctx, reqPath, &protocol.WindowsWebDownloadCompanyCertificateReq{
 			CertificateID: certificateID,
@@ -745,15 +760,15 @@ func TestWindowsAPI_WebDownloadCompanyCertificate(t *testing.T) {
 
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
 		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
 		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		userRoleMocker = userRoleMocker.CountOnce(1, nil)                                   // 校验系统管理员权限。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
-		defer userRoleMocker.Reset()
+		defer dbUserRoleMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,
@@ -778,7 +793,7 @@ func TestWindowsAPI_WebDownloadCompanyCertificate(t *testing.T) {
 	}
 }
 
-func TestWindowsAPI_WebListGrantCertificateApps(t *testing.T) {
+func TestWindowsWebListGrantCertificateApps(t *testing.T) {
 	const reqPath = "/web/windows/listGrantCertificateApps"
 
 	t.Run("正常测试", func(t *testing.T) {
@@ -787,31 +802,39 @@ func TestWindowsAPI_WebListGrantCertificateApps(t *testing.T) {
 		appID := util.FastRandomAlphaNumberString(32)
 		pageSize := 1
 		pageNumber := 1
+		// 模拟数据库中的用户列表数据（空结构体，仅占位）。
+		mockUserList := []*model.User{{}}
+		// 模拟数据库中的应用列表数据（空结构体，仅占位）。
+		mockAppList := []*model.App{{}}
+		// 模拟数据库中的证书列表数据（空结构体，仅占位）。
+		mockCertList := []*model.WindowsCertificate{{}}
+		// 模拟数据库中的授权记录列表（空结构体，仅占位）。
+		mockAuthList := []*model.WindowsCertificateAuthorization{{}}
 
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
-		windowsCertMocker := MockDBClient[model.WindowsCertificate](ctx)
-		windowsCertAuthMocker := MockDBClient[model.WindowsCertificateAuthorization](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                       // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                       // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                                           // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                                      // 查询数据库登录用户信息。
-		userRoleMocker = userRoleMocker.CountOnce(1, nil)                                                         // 校验系统管理员权限。
-		dbUserMocker = dbUserMocker.FindOnce([]*model.User{{}}, nil)                                              // 查询上传人英文名。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                                          // 查询指定应用信息。
-		dbAppMocker = dbAppMocker.FindOnce([]*model.App{{}}, nil)                                                 // 批量查询已授权应用信息。
-		windowsCertMocker = windowsCertMocker.TakeOnce(&model.WindowsCertificate{}, nil)                          // 查询证书记录。
-		windowsCertMocker = windowsCertMocker.FindOnce([]*model.WindowsCertificate{{}}, nil)                      // 批量查询证书记录。
-		windowsCertAuthMocker = windowsCertAuthMocker.CountOnce(1, nil)                                           // 统计授权记录总数。
-		windowsCertAuthMocker = windowsCertAuthMocker.FindOnce([]*model.WindowsCertificateAuthorization{{}}, nil) // 分页查询授权记录。
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbWindowsCertificateMocker := MockDBClient[model.WindowsCertificate](ctx)
+		dbWindowsCertificateAuthorizationMocker := MockDBClient[model.WindowsCertificateAuthorization](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                           // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                           // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                                               // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                                          // 查询数据库登录用户信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                                                         // 校验系统管理员权限。
+		dbUserMocker = dbUserMocker.FindOnce(mockUserList, nil)                                                       // 查询上传人英文名。
+		dbAppMocker = dbAppMocker.ScanOnce(func(v any) { *v.(*int) = AppInfo.ID }, nil)                               // 查询指定应用信息。
+		dbAppMocker = dbAppMocker.FindOnce(mockAppList, nil)                                                          // 批量查询已授权应用信息。
+		dbWindowsCertificateMocker = dbWindowsCertificateMocker.ScanOnce(func(v any) { *v.(*int) = 1 }, nil)          // 查询证书记录。
+		dbWindowsCertificateMocker = dbWindowsCertificateMocker.FindOnce(mockCertList, nil)                           // 批量查询证书记录。
+		dbWindowsCertificateAuthorizationMocker = dbWindowsCertificateAuthorizationMocker.CountOnce(1, nil)           // 统计授权记录总数。
+		dbWindowsCertificateAuthorizationMocker = dbWindowsCertificateAuthorizationMocker.FindOnce(mockAuthList, nil) // 分页查询授权记录。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
-		defer userRoleMocker.Reset()
-		defer windowsCertMocker.Reset()
-		defer windowsCertAuthMocker.Reset()
+		defer dbUserRoleMocker.Reset()
+		defer dbWindowsCertificateMocker.Reset()
+		defer dbWindowsCertificateAuthorizationMocker.Reset()
 
 		rspBodyObj := CheckAndUnmarshalBody[protocol.WindowsWebListGrantCertificateAppsRsp](
 			t,
@@ -835,17 +858,17 @@ func TestWindowsAPI_WebListGrantCertificateApps(t *testing.T) {
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
 		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
 		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
 		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		userRoleMocker = userRoleMocker.CountOnce(1, nil)                                   // 校验系统管理员权限。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
-		defer userRoleMocker.Reset()
+		defer dbUserRoleMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,
@@ -879,33 +902,525 @@ func TestWindowsAPI_WebListGrantCertificateApps(t *testing.T) {
 	}
 }
 
-func TestWindowsAPI_WebRemoveCompanyCertificate(t *testing.T) {
+func TestWindowsWebSubmitSigningJob(t *testing.T) {
+	const reqPath = "/web/windows/submitSigningJob"
+
+	t.Run("正常测试_提交PE签名任务", func(t *testing.T) {
+		ctx := context.Background()
+		fileID := util.FastRandomAlphaNumberString(38)
+		certificateID := util.FastRandomAlphaNumberString(32)
+		// 模拟数据库中的 OV 证书记录。
+		mockCert := &model.WindowsCertificate{
+			Type:  model.WindowsCertificateTypePersonalOV,
+			AppID: AppInfo.ID,
+		}
+		// 模拟数据库中的文件记录。
+		mockFile := &model.File{
+			Type:   model.FileTypeWindowsSigning,
+			UserID: LoginUser.ID,
+			AppID:  AppInfo.ID,
+			Name:   "test.dll",
+			TusdID: util.FastRandomAlphaNumberString(38),
+		}
+		// PE 文件二进制数据。
+		peBinary := GenerateMinimalPE()
+
+		defer mvt.Chain(AppInfo).
+			Elem().
+			FieldByName("Platform").
+			Set(model.AppPlatformWindows).
+			Reset()
+		redisMocker := MockRedis(ctx)
+		dbUserMocker := MockDBClient[model.User](ctx)
+		dbAppMocker := MockDBClient[model.App](ctx)
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbWindowsCertificateMocker := MockDBClient[model.WindowsCertificate](ctx)
+		dbFileMocker := MockDBClient[model.File](ctx)
+		dbWindowsSigningJobMocker := MockDBClient[model.WindowsSigningJob](ctx)
+		tusdMocker := MockTusdClient(ctx)
+		rabbitMQMocker := MockRabbitMQClient(ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验应用管理员权限。
+		dbWindowsCertificateMocker = dbWindowsCertificateMocker.TakeOnce(mockCert, nil)     // 查询证书记录。
+		dbFileMocker = dbFileMocker.TakeOnce(mockFile, nil)                                 // 查询文件信息。
+		tusdMocker = tusdMocker.DownloadToFileOnce(peBinary, nil)                           // 下载 PE 文件校验格式。
+		redisMocker = redisMocker.SAddOnce(1, nil)                                          // 生成任务 ID。
+		dbWindowsSigningJobMocker = dbWindowsSigningJobMocker.CreateOnce(nil)               // 保存签名任务到数据库。
+		rabbitMQMocker = rabbitMQMocker.PublishWithContextOnce(nil)                         // 发送签名任务消息到消息队列。
+		defer redisMocker.Reset()
+		defer dbUserMocker.Reset()
+		defer dbAppMocker.Reset()
+		defer dbUserRoleMocker.Reset()
+		defer dbWindowsCertificateMocker.Reset()
+		defer dbFileMocker.Reset()
+		defer dbWindowsSigningJobMocker.Reset()
+		defer tusdMocker.Reset()
+		defer rabbitMQMocker.Reset()
+
+		CheckAndUnmarshalBody[any](
+			t,
+			ServeHTTP(ctx, CreatePostJSONRequestWithApp(ctx, reqPath, AppInfo.AppID, &protocol.WindowsWebSubmitSigningJobReq{
+				SigningType:   model.WindowsSigningJobTypePE,
+				CertificateID: certificateID,
+				FileID:        fileID,
+			})),
+			consts.AlertSuccess,
+		)
+	})
+
+	validateErrorRequest := func(t *testing.T, signingType int, certificateID, fileID string) {
+		ctx := context.Background()
+
+		defer mvt.Chain(AppInfo).
+			Elem().
+			FieldByName("Platform").
+			Set(model.AppPlatformWindows).
+			Reset()
+		redisMocker := MockRedis(ctx)
+		dbUserMocker := MockDBClient[model.User](ctx)
+		dbAppMocker := MockDBClient[model.App](ctx)
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验应用管理员权限。
+		defer redisMocker.Reset()
+		defer dbUserMocker.Reset()
+		defer dbAppMocker.Reset()
+		defer dbUserRoleMocker.Reset()
+
+		CheckAndUnmarshalBody[any](
+			t,
+			ServeHTTP(ctx, CreatePostJSONRequestWithApp(ctx, reqPath, AppInfo.AppID, &protocol.WindowsWebSubmitSigningJobReq{
+				SigningType:   signingType,
+				CertificateID: certificateID,
+				FileID:        fileID,
+			})),
+			errs.ErrInvalidRequestParameters,
+		)
+	}
+
+	for _, v := range []struct {
+		Name          string
+		SigningType   int
+		CertificateID string
+		FileID        string
+	}{
+		{"签名类型缺失", 0, util.FastRandomAlphaNumberString(32), util.FastRandomAlphaNumberString(38)},
+		{"签名类型错误", 4, util.FastRandomAlphaNumberString(32), util.FastRandomAlphaNumberString(38)},
+		{"文件 ID 缺失", model.WindowsSigningJobTypePE, util.FastRandomAlphaNumberString(32), ""},
+		{"文件 ID 错误", model.WindowsSigningJobTypePE, util.FastRandomAlphaNumberString(32), util.FastRandomAlphaNumberString(37)},
+		{"文件 ID 过长", model.WindowsSigningJobTypePE, util.FastRandomAlphaNumberString(32), util.FastRandomAlphaNumberString(39)},
+		{"文件 ID 非法", model.WindowsSigningJobTypePE, util.FastRandomAlphaNumberString(32), util.FastRandomAlphaNumberString(37) + "汉"},
+		{"证书 ID 错误", model.WindowsSigningJobTypePE, util.FastRandomAlphaNumberString(31), util.FastRandomAlphaNumberString(38)},
+		{"证书 ID 非法", model.WindowsSigningJobTypePE, util.FastRandomAlphaNumberString(31) + "汉", util.FastRandomAlphaNumberString(38)},
+	} {
+		t.Run("异常测试_"+v.Name, func(t *testing.T) {
+			validateErrorRequest(t, v.SigningType, v.CertificateID, v.FileID)
+		})
+	}
+}
+
+func TestWindowsWebListSigningJobs(t *testing.T) {
+	const reqPath = "/web/windows/listSigningJobs"
+
+	t.Run("正常测试", func(t *testing.T) {
+		ctx := context.Background()
+		pageNumber := 1
+		pageSize := 10
+		// 模拟数据库中的用户列表数据（空结构体，仅占位）。
+		mockUserList := []*model.User{{}, {}}
+		// 模拟签名任务表名列表。
+		mockTableNames := []string{"~"}
+		// 模拟数据库中的签名任务列表数据（空结构体，仅占位）。
+		mockSigningJobList := []*model.WindowsSigningJob{
+			{Source: model.SourceWeb, UserID: LoginUser.ID, CertificateID: 1, FileID: util.FastRandomAlphaNumberString(38)},
+			{Source: model.SourceWeb, UserID: LoginUser.ID, CertificateID: 2, FileID: util.FastRandomAlphaNumberString(38)},
+		}
+		// 模拟数据库中的证书列表数据（空结构体，仅占位）。
+		mockCertList := []*model.WindowsCertificate{{}, {}}
+		// 模拟数据库中的文件列表数据（空结构体，仅占位）。
+		mockFileList := []*model.File{{}, {}}
+
+		defer mvt.Chain(AppInfo).
+			Elem().
+			FieldByName("Platform").
+			Set(model.AppPlatformWindows).
+			Reset()
+		redisMocker := MockRedis(ctx)
+		dbUserMocker := MockDBClient[model.User](ctx)
+		dbAppMocker := MockDBClient[model.App](ctx)
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbWindowsSigningJobMocker := MockDBClient[model.WindowsSigningJob](ctx)
+		dbWindowsCertificateMocker := MockDBClient[model.WindowsCertificate](ctx)
+		dbFileMocker := MockDBClient[model.File](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                       // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                       // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                                           // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                                      // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                                          // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                                                     // 校验应用管理员权限。
+		dbWindowsSigningJobMocker = dbWindowsSigningJobMocker.WindowsSigningJobGetTablesOnce(mockTableNames, nil) // 获取签名任务表名。
+		dbWindowsSigningJobMocker = dbWindowsSigningJobMocker.WindowsSigningJobCount2Once(2, nil)                 // 统计签名任务总数。
+		dbWindowsSigningJobMocker = dbWindowsSigningJobMocker.WindowsSigningJobListOnce(mockSigningJobList, nil)  // 分页查询签名任务记录。
+		dbUserMocker = dbUserMocker.FindOnce(mockUserList, nil)                                                   // 查询用户英文名。
+		dbWindowsCertificateMocker = dbWindowsCertificateMocker.FindOnce(mockCertList, nil)                       // 查询证书信息。
+		dbFileMocker = dbFileMocker.FindOnce(mockFileList, nil)                                                   // 查询文件信息。
+		defer redisMocker.Reset()
+		defer dbUserMocker.Reset()
+		defer dbAppMocker.Reset()
+		defer dbUserRoleMocker.Reset()
+		defer dbWindowsSigningJobMocker.Reset()
+		defer dbWindowsCertificateMocker.Reset()
+		defer dbFileMocker.Reset()
+
+		rspBodyObj := CheckAndUnmarshalBody[protocol.WindowsWebListSigningJobsRsp](
+			t,
+			ServeHTTP(ctx, CreateGetRequestWithApp(ctx, reqPath, AppInfo.AppID,
+				protocol.WindowsWebListSigningJobsReq{
+					PageNumber: pageNumber,
+					PageSize:   pageSize,
+				},
+			)),
+			0,
+		)
+
+		if len(rspBodyObj.Data.List) <= 0 {
+			t.Errorf("list is empty")
+		}
+		if rspBodyObj.Data.Count <= 0 {
+			t.Errorf("count is zero")
+		}
+	})
+
+	validateErrorRequest := func(t *testing.T, pageNumber, pageSize, signingType, status int) {
+		ctx := context.Background()
+
+		defer mvt.Chain(AppInfo).
+			Elem().
+			FieldByName("Platform").
+			Set(model.AppPlatformWindows).
+			Reset()
+		redisMocker := MockRedis(ctx)
+		dbUserMocker := MockDBClient[model.User](ctx)
+		dbAppMocker := MockDBClient[model.App](ctx)
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验应用管理员权限。
+		defer redisMocker.Reset()
+		defer dbUserMocker.Reset()
+		defer dbAppMocker.Reset()
+		defer dbUserRoleMocker.Reset()
+
+		CheckAndUnmarshalBody[any](
+			t,
+			ServeHTTP(ctx, CreateGetRequestWithApp(ctx, reqPath, AppInfo.AppID,
+				protocol.WindowsWebListSigningJobsReq{
+					PageNumber:  pageNumber,
+					PageSize:    pageSize,
+					SigningType: signingType,
+					Status:      status,
+				},
+			)),
+			errs.ErrInvalidRequestParameters,
+		)
+	}
+
+	for _, v := range []struct {
+		Name                 string
+		PageNumber, PageSize int
+		SigningType, Status  int
+	}{
+		{"页数缺失", 0, 10, 0, 0},
+		{"每页条数缺失", 1, 0, 0, 0},
+		{"每页条数过大", 1, 101, 0, 0},
+		{"签名类型非法", 1, 10, 5, 0},
+		{"任务状态非法", 1, 10, 0, 8},
+	} {
+		t.Run("异常测试_"+v.Name, func(t *testing.T) {
+			validateErrorRequest(t, v.PageNumber, v.PageSize, v.SigningType, v.Status)
+		})
+	}
+}
+
+func TestWindowsWebSubmitWHQLJob(t *testing.T) {
+	const reqPath = "/web/windows/submitWHQLJob"
+
+	t.Run("正常测试_提交HLK测试任务", func(t *testing.T) {
+		ctx := context.Background()
+		fileID := util.FastRandomAlphaNumberString(38)
+		// 模拟数据库中的文件记录（.sys 类型）。
+		mockFile := &model.File{
+			Type:   model.FileTypeWindowsSigning,
+			UserID: LoginUser.ID,
+			AppID:  AppInfo.ID,
+			Name:   "test.sys",
+			TusdID: util.FastRandomAlphaNumberString(38),
+		}
+		// PE 文件二进制数据。
+		peBinary := GenerateMinimalPE()
+
+		defer mvt.Chain(AppInfo).
+			Elem().
+			FieldByName("Platform").
+			Set(model.AppPlatformWindows).
+			Reset()
+		redisMocker := MockRedis(ctx)
+		dbUserMocker := MockDBClient[model.User](ctx)
+		dbAppMocker := MockDBClient[model.App](ctx)
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbFileMocker := MockDBClient[model.File](ctx)
+		dbWhqlJobMocker := MockDBClient[model.WhqlJob](ctx)
+		tusdMocker := MockTusdClient(ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验应用管理员权限。
+		dbFileMocker = dbFileMocker.TakeOnce(mockFile, nil)                                 // 查询文件信息。
+		tusdMocker = tusdMocker.DownloadToFileOnce(peBinary, nil)                           // 下载 .sys 文件校验 PE 格式。
+		redisMocker = redisMocker.SAddOnce(1, nil)                                          // 生成 WHQL 任务 ID。
+		dbWhqlJobMocker = dbWhqlJobMocker.CreateOnce(nil)                                   // 保存 WHQL 任务到数据库。
+		defer redisMocker.Reset()
+		defer dbUserMocker.Reset()
+		defer dbAppMocker.Reset()
+		defer dbUserRoleMocker.Reset()
+		defer dbFileMocker.Reset()
+		defer dbWhqlJobMocker.Reset()
+		defer tusdMocker.Reset()
+
+		CheckAndUnmarshalBody[any](
+			t,
+			ServeHTTP(ctx, CreatePostJSONRequestWithApp(ctx, reqPath, AppInfo.AppID, &protocol.WindowsWebSubmitWHQLJobReq{
+				SigningType: model.WHQLJobTypeHLKAndWHQL,
+				TestSystem:  model.WHQLJobTestSystemWindows10_22H2_64,
+				FileID:      fileID,
+			})),
+			consts.AlertSuccess,
+		)
+	})
+
+	validateErrorRequest := func(t *testing.T, signingType int, testSystem, fileID, serviceName, testTarget string) {
+		ctx := context.Background()
+
+		defer mvt.Chain(AppInfo).
+			Elem().
+			FieldByName("Platform").
+			Set(model.AppPlatformWindows).
+			Reset()
+		redisMocker := MockRedis(ctx)
+		dbUserMocker := MockDBClient[model.User](ctx)
+		dbAppMocker := MockDBClient[model.App](ctx)
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验应用管理员权限。
+		defer redisMocker.Reset()
+		defer dbUserMocker.Reset()
+		defer dbAppMocker.Reset()
+		defer dbUserRoleMocker.Reset()
+
+		CheckAndUnmarshalBody[any](
+			t,
+			ServeHTTP(ctx, CreatePostJSONRequestWithApp(ctx, reqPath, AppInfo.AppID, &protocol.WindowsWebSubmitWHQLJobReq{
+				SigningType: signingType,
+				TestSystem:  testSystem,
+				FileID:      fileID,
+				ServiceName: serviceName,
+				TestTarget:  testTarget,
+			})),
+			errs.ErrInvalidRequestParameters,
+		)
+	}
+
+	for _, v := range []struct {
+		Name                                        string
+		SigningType                                 int
+		TestSystem, FileID, ServiceName, TestTarget string
+	}{
+		{"签名类型缺失", 0, model.WHQLJobTestSystemWindows10_22H2_64, util.FastRandomAlphaNumberString(38), "", ""},
+		{"签名类型非法", 3, model.WHQLJobTestSystemWindows10_22H2_64, util.FastRandomAlphaNumberString(38), "", ""},
+		{"测试系统缺失", model.WHQLJobTypeHLKAndWHQL, "", util.FastRandomAlphaNumberString(38), "", ""},
+		{"测试系统非法", model.WHQLJobTypeHLKAndWHQL, "InvalidSystem", util.FastRandomAlphaNumberString(38), "", ""},
+		{"文件ID缺失", model.WHQLJobTypeHLKAndWHQL, model.WHQLJobTestSystemWindows10_22H2_64, "", "", ""},
+		{"文件ID错误", model.WHQLJobTypeHLKAndWHQL, model.WHQLJobTestSystemWindows10_22H2_64, util.FastRandomAlphaNumberString(37), "", ""},
+		{"文件ID过长", model.WHQLJobTypeHLKAndWHQL, model.WHQLJobTestSystemWindows10_22H2_64, util.FastRandomAlphaNumberString(39), "", ""},
+		{"文件ID非法", model.WHQLJobTypeHLKAndWHQL, model.WHQLJobTestSystemWindows10_22H2_64, util.FastRandomAlphaNumberString(37) + "汉", "", ""},
+		{"服务名过长", model.WHQLJobTypeHLKAndWHQL, model.WHQLJobTestSystemWindows10_22H2_64, util.FastRandomAlphaNumberString(38), util.FastRandomAlphaNumberString(257), ""},
+		{"测试对象过长", model.WHQLJobTypeHLKAndWHQL, model.WHQLJobTestSystemWindows10_22H2_64, util.FastRandomAlphaNumberString(38), "", util.FastRandomAlphaNumberString(257)},
+	} {
+		t.Run("异常测试_"+v.Name, func(t *testing.T) {
+			validateErrorRequest(t, v.SigningType, v.TestSystem, v.FileID, v.ServiceName, v.TestTarget)
+		})
+	}
+}
+
+func TestWindowsWebListWHQLJobs(t *testing.T) {
+	const reqPath = "/web/windows/listWHQLJobs"
+
+	t.Run("正常测试", func(t *testing.T) {
+		ctx := context.Background()
+		pageNumber := 1
+		pageSize := 10
+		// 模拟数据库中的 WHQL 任务列表数据（空结构体，仅占位）。
+		mockWhqlJobList := []*model.WhqlJob{
+			{Source: model.SourceWeb, UserID: LoginUser.ID},
+			{Source: model.SourceWeb, UserID: LoginUser.ID},
+		}
+		// 模拟数据库中的用户列表数据（空结构体，仅占位）。
+		mockUserList := []*model.User{{}, {}}
+		// 模拟数据库中的文件列表数据（空结构体，仅占位）。
+		mockFileList := []*model.File{{}, {}}
+
+		defer mvt.Chain(AppInfo).
+			Elem().
+			FieldByName("Platform").
+			Set(model.AppPlatformWindows).
+			Reset()
+		redisMocker := MockRedis(ctx)
+		dbUserMocker := MockDBClient[model.User](ctx)
+		dbAppMocker := MockDBClient[model.App](ctx)
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbWhqlJobMocker := MockDBClient[model.WhqlJob](ctx)
+		dbFileMocker := MockDBClient[model.File](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验应用管理员权限。
+		dbWhqlJobMocker = dbWhqlJobMocker.CountOnce(2, nil)                                 // 统计 WHQL 任务总数。
+		dbWhqlJobMocker = dbWhqlJobMocker.FindOnce(mockWhqlJobList, nil)                    // 分页查询 WHQL 任务记录。
+		dbFileMocker = dbFileMocker.FindOnce(mockFileList, nil)                             // 查询文件信息。
+		dbUserMocker = dbUserMocker.FindOnce(mockUserList, nil)                             // 查询用户英文名。
+		defer redisMocker.Reset()
+		defer dbUserMocker.Reset()
+		defer dbAppMocker.Reset()
+		defer dbUserRoleMocker.Reset()
+		defer dbWhqlJobMocker.Reset()
+		defer dbFileMocker.Reset()
+
+		rspBodyObj := CheckAndUnmarshalBody[protocol.WindowsWebListWHQLJobsRsp](
+			t,
+			ServeHTTP(ctx, CreateGetRequestWithApp(ctx, reqPath, AppInfo.AppID,
+				protocol.WindowsWebListWHQLJobsReq{
+					PageNumber: pageNumber,
+					PageSize:   pageSize,
+				},
+			)),
+			0,
+		)
+
+		if len(rspBodyObj.Data.List) <= 0 {
+			t.Errorf("list is empty")
+		}
+		if rspBodyObj.Data.Count <= 0 {
+			t.Errorf("count is zero")
+		}
+	})
+
+	validateErrorRequest := func(t *testing.T, pageNumber, pageSize int) {
+		ctx := context.Background()
+
+		defer mvt.Chain(AppInfo).
+			Elem().
+			FieldByName("Platform").
+			Set(model.AppPlatformWindows).
+			Reset()
+		redisMocker := MockRedis(ctx)
+		dbUserMocker := MockDBClient[model.User](ctx)
+		dbAppMocker := MockDBClient[model.App](ctx)
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验应用管理员权限。
+		defer redisMocker.Reset()
+		defer dbUserMocker.Reset()
+		defer dbAppMocker.Reset()
+		defer dbUserRoleMocker.Reset()
+
+		CheckAndUnmarshalBody[any](
+			t,
+			ServeHTTP(ctx, CreateGetRequestWithApp(ctx, reqPath, AppInfo.AppID,
+				protocol.WindowsWebListWHQLJobsReq{
+					PageNumber: pageNumber,
+					PageSize:   pageSize,
+				},
+			)),
+			errs.ErrInvalidRequestParameters,
+		)
+	}
+
+	for _, v := range []struct {
+		Name                 string
+		PageNumber, PageSize int
+	}{
+		{"页数缺失", 0, 10},
+		{"每页条数缺失", 1, 0},
+		{"每页条数过大", 1, 101},
+	} {
+		t.Run("异常测试_"+v.Name, func(t *testing.T) {
+			validateErrorRequest(t, v.PageNumber, v.PageSize)
+		})
+	}
+}
+
+func TestWindowsWebRemoveCompanyCertificate(t *testing.T) {
 	const reqPath = "/web/windows/removeCompanyCertificate"
 
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
 		certificateID := util.FastRandomAlphaNumberString(32)
+		// 模拟数据库中的证书记录。
+		mockCert := &model.WindowsCertificate{Type: model.WindowsCertificateTypePersonalEV}
+		// 模拟数据库操作影响行数。
+		mockRowsAffected := gen.ResultInfo{RowsAffected: 1}
+		// 模拟数据库操作结果（空影响行数）。
+		mockEmptyResult := gen.ResultInfo{}
 
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
-		windowsCertMocker := MockDBClient[model.WindowsCertificate](ctx)
-		windowsCertAuthMocker := MockDBClient[model.WindowsCertificateAuthorization](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                                          // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                                          // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                                                             // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                                                              // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                                                         // 查询数据库登录用户信息。
-		userRoleMocker = userRoleMocker.CountOnce(1, nil)                                                                            // 校验系统管理员权限。
-		dbUserMocker = dbUserMocker.FindOnce([]*model.User{{}}, nil)                                                                 // 查询上传人英文名。
-		windowsCertMocker = windowsCertMocker.TakeOnce(&model.WindowsCertificate{Type: model.WindowsCertificateTypePersonalEV}, nil) // 查询证书记录。
-		windowsCertMocker = windowsCertMocker.UpdateColumnSimpleOnce(gen.ResultInfo{RowsAffected: 1}, nil)                           // 设置证书为软删除状态。
-		windowsCertAuthMocker = windowsCertAuthMocker.DeleteOnce(gen.ResultInfo{}, nil)                                              // 删除关联授权记录。
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbWindowsCertificateMocker := MockDBClient[model.WindowsCertificate](ctx)
+		dbWindowsCertificateAuthorizationMocker := MockDBClient[model.WindowsCertificateAuthorization](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                                // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                                // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                                                   // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                                                    // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                                               // 查询数据库登录用户信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                                                              // 校验系统管理员权限。
+		dbUserMocker = dbUserMocker.FindOnce([]*model.User{{}}, nil)                                                       // 查询上传人英文名。
+		dbWindowsCertificateMocker = dbWindowsCertificateMocker.TakeOnce(mockCert, nil)                                    // 查询证书记录。
+		dbWindowsCertificateMocker = dbWindowsCertificateMocker.UpdateColumnSimpleOnce(mockRowsAffected, nil)              // 设置证书为软删除状态。
+		dbWindowsCertificateAuthorizationMocker = dbWindowsCertificateAuthorizationMocker.DeleteOnce(mockEmptyResult, nil) // 删除关联授权记录。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
-		defer userRoleMocker.Reset()
-		defer windowsCertMocker.Reset()
-		defer windowsCertAuthMocker.Reset()
+		defer dbUserRoleMocker.Reset()
+		defer dbWindowsCertificateMocker.Reset()
+		defer dbWindowsCertificateAuthorizationMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,
@@ -921,16 +1436,16 @@ func TestWindowsAPI_WebRemoveCompanyCertificate(t *testing.T) {
 
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
 		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
 		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
 		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		userRoleMocker = userRoleMocker.CountOnce(1, nil)                                   // 校验系统管理员权限。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
-		defer userRoleMocker.Reset()
+		defer dbUserRoleMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,
@@ -955,41 +1470,44 @@ func TestWindowsAPI_WebRemoveCompanyCertificate(t *testing.T) {
 	}
 }
 
-func TestWindowsAPI_WebDeleteCertificate(t *testing.T) {
+func TestWindowsWebDeleteCertificate(t *testing.T) {
 	const reqPath = "/web/windows/deleteCertificate"
 
 	t.Run("正常测试_删除OV证书", func(t *testing.T) {
 		ctx := context.Background()
 		certificateID := util.FastRandomAlphaNumberString(32)
+		// 模拟数据库中的 OV 证书记录。
+		mockOVCert := &model.WindowsCertificate{Type: model.WindowsCertificateTypePersonalOV}
+		// 模拟数据库操作影响行数。
+		mockRowsAffected := gen.ResultInfo{RowsAffected: 1}
 
 		defer mvt.Chain(AppInfo).
 			Elem().
 			FieldByName("Platform").
 			Set(model.AppPlatformWindows).
 			Reset()
-
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
-		windowsCertMocker := MockDBClient[model.WindowsCertificate](ctx)
-		eventMocker := MockDBClient[model.Event](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                                          // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                                          // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                                                             // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                                                              // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                                                         // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                                                             // 查询数据库应用信息。
-		userRoleMocker = userRoleMocker.ScanOnce(func(v any) { *v.(*[]int) = []int{model.UserRoleAppAdmin} }, nil)                   // 校验应用管理员权限。
-		windowsCertMocker = windowsCertMocker.TakeOnce(&model.WindowsCertificate{Type: model.WindowsCertificateTypePersonalOV}, nil) // 查询 OV 证书记录。
-		windowsCertMocker = windowsCertMocker.UpdateColumnSimpleOnce(gen.ResultInfo{RowsAffected: 1}, nil)                           // 设置证书为软删除状态。
-		eventMocker = eventMocker.CreateOnce(nil)                                                                                    // 添加应用事件到数据库。
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbWindowsCertificateMocker := MockDBClient[model.WindowsCertificate](ctx)
+		dbEventMocker := MockDBClient[model.Event](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                   // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                   // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                                      // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                                       // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                                  // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                                      // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                                                 // 校验应用管理员权限。
+		dbWindowsCertificateMocker = dbWindowsCertificateMocker.TakeOnce(mockOVCert, nil)                     // 查询 OV 证书记录。
+		dbWindowsCertificateMocker = dbWindowsCertificateMocker.UpdateColumnSimpleOnce(mockRowsAffected, nil) // 设置证书为软删除状态。
+		dbEventMocker = dbEventMocker.CreateOnce(nil)                                                         // 添加应用事件到数据库。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
-		defer userRoleMocker.Reset()
-		defer windowsCertMocker.Reset()
-		defer eventMocker.Reset()
+		defer dbUserRoleMocker.Reset()
+		defer dbWindowsCertificateMocker.Reset()
+		defer dbEventMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,
@@ -1001,37 +1519,40 @@ func TestWindowsAPI_WebDeleteCertificate(t *testing.T) {
 	t.Run("正常测试_删除EV证书", func(t *testing.T) {
 		ctx := context.Background()
 		certificateID := util.FastRandomAlphaNumberString(32)
+		// 模拟数据库中的 EV 证书记录。
+		mockEVCert := &model.WindowsCertificate{Type: model.WindowsCertificateTypePersonalEV}
+		// 模拟数据库操作影响行数。
+		mockRowsAffected := gen.ResultInfo{RowsAffected: 1}
 
 		defer mvt.Chain(AppInfo).
 			Elem().
 			FieldByName("Platform").
 			Set(model.AppPlatformWindows).
 			Reset()
-
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
-		windowsCertMocker := MockDBClient[model.WindowsCertificate](ctx)
-		eventMocker := MockDBClient[model.Event](ctx)
-		windowsCertAuthMocker := MockDBClient[model.WindowsCertificateAuthorization](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                                          // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                                          // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                                                             // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                                                              // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                                                         // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                                                             // 查询数据库应用信息。
-		userRoleMocker = userRoleMocker.ScanOnce(func(v any) { *v.(*[]int) = []int{model.UserRoleAppAdmin} }, nil)                   // 校验应用管理员权限。
-		windowsCertMocker = windowsCertMocker.TakeOnce(&model.WindowsCertificate{Type: model.WindowsCertificateTypePersonalEV}, nil) // 查询 EV 证书记录。
-		eventMocker = eventMocker.CreateOnce(nil)                                                                                    // 添加应用事件到数据库。
-		windowsCertAuthMocker = windowsCertAuthMocker.DeleteOnce(gen.ResultInfo{RowsAffected: 1}, nil)                               // 删除 EV 证书授权记录。
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbWindowsCertificateMocker := MockDBClient[model.WindowsCertificate](ctx)
+		dbEventMocker := MockDBClient[model.Event](ctx)
+		dbWindowsCertificateAuthorizationMocker := MockDBClient[model.WindowsCertificateAuthorization](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                                 // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                                 // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                                                    // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                                                     // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                                                // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                                                    // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                                                               // 校验应用管理员权限。
+		dbWindowsCertificateMocker = dbWindowsCertificateMocker.TakeOnce(mockEVCert, nil)                                   // 查询 EV 证书记录。
+		dbEventMocker = dbEventMocker.CreateOnce(nil)                                                                       // 添加应用事件到数据库。
+		dbWindowsCertificateAuthorizationMocker = dbWindowsCertificateAuthorizationMocker.DeleteOnce(mockRowsAffected, nil) // 删除 EV 证书授权记录。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
-		defer userRoleMocker.Reset()
-		defer windowsCertMocker.Reset()
-		defer eventMocker.Reset()
-		defer windowsCertAuthMocker.Reset()
+		defer dbUserRoleMocker.Reset()
+		defer dbWindowsCertificateMocker.Reset()
+		defer dbEventMocker.Reset()
+		defer dbWindowsCertificateAuthorizationMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,
@@ -1048,22 +1569,21 @@ func TestWindowsAPI_WebDeleteCertificate(t *testing.T) {
 			FieldByName("Platform").
 			Set(model.AppPlatformWindows).
 			Reset()
-
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                        // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                        // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                                           // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                                            // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                                       // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                                           // 查询数据库应用信息。
-		userRoleMocker = userRoleMocker.ScanOnce(func(v any) { *v.(*[]int) = []int{model.UserRoleAppAdmin} }, nil) // 校验应用管理员权限。
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验应用管理员权限。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
-		defer userRoleMocker.Reset()
+		defer dbUserRoleMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,

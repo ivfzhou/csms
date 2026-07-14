@@ -36,7 +36,7 @@ import (
 	tus "gitee.com/ivfzhou/tus_client/v2"
 )
 
-func TestAppAPI_WebRegister(t *testing.T) {
+func TestAppWebRegister(t *testing.T) {
 	const reqPath = "/web/app/register"
 	createRequestBody := func(
 		name, logoName *string,
@@ -97,21 +97,26 @@ func TestAppAPI_WebRegister(t *testing.T) {
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
 		admins, members := []string{"a", "d"}, []string{"b", "c"}
+		// 创建应用注册请求体的参数。
+		appName := new("应用名")
+		logoName := new("logo_name.png")
+		platform := TakeIntPtr(model.AppPlatformWindows)
+		logoData := GeneratePNG(t, 10, 10)
 
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
 		tusdMocker := MockTusdClient(ctx)
 		dbFileMocker := MockDBClient[model.File](ctx)
-		todoMocker := MockDBClient[model.Todo](ctx)
+		dbTodoMocker := MockDBClient[model.Todo](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
-		eventMocker := MockDBClient[model.Event](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)   // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)   // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                      // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                       // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                  // 查询数据库登录用户信息。
-		userRoleMocker = userRoleMocker.ScanOnce(func(v any) { *v.(*[]int) = []int{1} }, nil) // 查询数据库中的系统管理员。
+		dbEventMocker := MockDBClient[model.Event](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)       // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)       // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                          // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                           // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                      // 查询数据库登录用户信息。
+		dbUserRoleMocker = dbUserRoleMocker.ScanOnce(func(v any) { *v.(*[]int) = []int{1} }, nil) // 查询数据库中的系统管理员。
 
 		userInfos := make([]*model.User, 0, len(admins)+len(members))
 		for _, v := range admins {
@@ -125,21 +130,20 @@ func TestAppAPI_WebRegister(t *testing.T) {
 		redisMocker = redisMocker.SAddOnce(1, nil)                                        // 添加文件 ID 到 Redis。
 		tusdMocker = tusdMocker.UploadFileOnce(util.FastRandomAlphaNumberString(32), nil) // 上传应用图标文件到存储服务。
 		dbFileMocker = dbFileMocker.CreateOnce(nil)                                       // 保存应用图标文件信息到数据库。
-		todoMocker = todoMocker.CreateOnce(nil)                                           // 保存应用审批待办到数据库。
+		dbTodoMocker = dbTodoMocker.CreateOnce(nil)                                       // 保存应用审批待办到数据库。
 		dbAppMocker = dbAppMocker.CreateOnce(nil)                                         // 保存应用信息到数据库。
-		userRoleMocker = userRoleMocker.CreateInBatchesOnce(nil)                          // 添加数据库应用成员记录。
-		eventMocker = eventMocker.CreateOnce(nil)                                         // 添加应用事件到数据库。
+		dbUserRoleMocker = dbUserRoleMocker.CreateInBatchesOnce(nil)                      // 添加数据库应用成员记录。
+		dbEventMocker = dbEventMocker.CreateOnce(nil)                                     // 添加应用事件到数据库。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
-		defer userRoleMocker.Reset()
+		defer dbUserRoleMocker.Reset()
 		defer tusdMocker.Reset()
 		defer dbFileMocker.Reset()
-		defer todoMocker.Reset()
+		defer dbTodoMocker.Reset()
 		defer dbAppMocker.Reset()
-		defer eventMocker.Reset()
+		defer dbEventMocker.Reset()
 
-		reqBody, contentType := createRequestBody(new("应用名"), new("logo_name.png"),
-			TakeIntPtr(model.AppPlatformWindows), admins, members, GeneratePNG(t, 10, 10))
+		reqBody, contentType := createRequestBody(appName, logoName, platform, admins, members, logoData)
 		CheckAndUnmarshalBody[any](
 			t,
 			ServeHTTP(ctx, CreatePostMultiFormRequest(ctx, reqPath, reqBody, contentType)),
@@ -149,6 +153,12 @@ func TestAppAPI_WebRegister(t *testing.T) {
 
 	t.Run("异常测试_图标文件过大", func(t *testing.T) {
 		ctx := context.Background()
+		// 创建应用注册请求体的参数。
+		appName := new("应用名")
+		logoName := new("logo_name.png")
+		platform := TakeIntPtr(model.AppPlatformWindows)
+		admins, members := []string{"a", "d"}, []string{"b", "c"}
+		logoData := GeneratePNG(t, 10, 10)
 
 		defer mvt.Chain(cfg.Get()).
 			Elem().
@@ -156,22 +166,20 @@ func TestAppAPI_WebRegister(t *testing.T) {
 			FieldByName("AppLogoMaximumSizeValue").
 			Set(1).
 			Reset()
-
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)   // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)   // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                      // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                       // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                  // 查询数据库登录用户信息。
-		userRoleMocker = userRoleMocker.ScanOnce(func(v any) { *v.(*[]int) = []int{1} }, nil) // 查询数据库中的系统管理员。
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)       // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)       // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                          // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                           // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                      // 查询数据库登录用户信息。
+		dbUserRoleMocker = dbUserRoleMocker.ScanOnce(func(v any) { *v.(*[]int) = []int{1} }, nil) // 查询数据库中的系统管理员。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
-		defer userRoleMocker.Reset()
+		defer dbUserRoleMocker.Reset()
 
-		reqBody, contentType := createRequestBody(new("应用名"), new("logo_name.png"),
-			TakeIntPtr(model.AppPlatformWindows), []string{"a", "d"}, []string{"b", "c"}, GeneratePNG(t, 10, 10))
+		reqBody, contentType := createRequestBody(appName, logoName, platform, admins, members, logoData)
 		CheckAndUnmarshalBody[any](
 			t,
 			ServeHTTP(ctx, CreatePostMultiFormRequest(ctx, reqPath, reqBody, contentType)),
@@ -181,22 +189,27 @@ func TestAppAPI_WebRegister(t *testing.T) {
 
 	t.Run("异常测试_图标文件格式非法", func(t *testing.T) {
 		ctx := context.Background()
+		// 创建应用注册请求体的参数。
+		appName := new("应用名")
+		logoName := new("logo_name.png")
+		platform := TakeIntPtr(model.AppPlatformWindows)
+		admins, members := []string{"a", "d"}, []string{"b", "c"}
+		logoData := GenerateGIF(t, 10, 10)
 
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)   // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)   // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                      // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                       // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                  // 查询数据库登录用户信息。
-		userRoleMocker = userRoleMocker.ScanOnce(func(v any) { *v.(*[]int) = []int{1} }, nil) // 查询数据库中的系统管理员。
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)       // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)       // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                          // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                           // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                      // 查询数据库登录用户信息。
+		dbUserRoleMocker = dbUserRoleMocker.ScanOnce(func(v any) { *v.(*[]int) = []int{1} }, nil) // 查询数据库中的系统管理员。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
-		defer userRoleMocker.Reset()
+		defer dbUserRoleMocker.Reset()
 
-		reqBody, contentType := createRequestBody(new("应用名"), new("logo_name.png"),
-			TakeIntPtr(model.AppPlatformWindows), []string{"a", "d"}, []string{"b", "c"}, GenerateGIF(t, 10, 10))
+		reqBody, contentType := createRequestBody(appName, logoName, platform, admins, members, logoData)
 		CheckAndUnmarshalBody[any](
 			t,
 			ServeHTTP(ctx, CreatePostMultiFormRequest(ctx, reqPath, reqBody, contentType)),
@@ -207,16 +220,21 @@ func TestAppAPI_WebRegister(t *testing.T) {
 	t.Run("异常测试_用户不存在", func(t *testing.T) {
 		ctx := context.Background()
 		admins, members := []string{"a", "d"}, []string{"b", "c"}
+		// 创建应用注册请求体的参数。
+		appName := new("应用名")
+		logoName := new("logo_name.png")
+		platform := TakeIntPtr(model.AppPlatformWindows)
+		logoData := GeneratePNG(t, 10, 10)
 
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)   // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)   // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                      // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                       // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                  // 查询数据库登录用户信息。
-		userRoleMocker = userRoleMocker.ScanOnce(func(v any) { *v.(*[]int) = []int{1} }, nil) // 查询数据库中的系统管理员。
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)       // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)       // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                          // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                           // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                      // 查询数据库登录用户信息。
+		dbUserRoleMocker = dbUserRoleMocker.ScanOnce(func(v any) { *v.(*[]int) = []int{1} }, nil) // 查询数据库中的系统管理员。
 
 		userInfos := make([]*model.User, 0, len(admins)+len(members))
 		for _, v := range admins {
@@ -231,10 +249,9 @@ func TestAppAPI_WebRegister(t *testing.T) {
 		dbUserMocker = dbUserMocker.FindOnce(userInfos, nil) // 查询数据库中人员信息。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
-		defer userRoleMocker.Reset()
+		defer dbUserRoleMocker.Reset()
 
-		reqBody, contentType := createRequestBody(new("应用名"), new("logo_name.png"),
-			TakeIntPtr(model.AppPlatformWindows), admins, members, GeneratePNG(t, 10, 10))
+		reqBody, contentType := createRequestBody(appName, logoName, platform, admins, members, logoData)
 		CheckAndUnmarshalBody[any](
 			t,
 			ServeHTTP(ctx, CreatePostMultiFormRequest(ctx, reqPath, reqBody, contentType)),
@@ -293,34 +310,38 @@ func TestAppAPI_WebRegister(t *testing.T) {
 	}
 }
 
-func TestAppAPI_WebSearch(t *testing.T) {
+func TestAppWebSearch(t *testing.T) {
 	const reqPath = "/web/app/search"
 
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
+		// 搜索请求参数。
+		searchName := ""
+		searchPlatform := []int{}
+		searchStatus := []int{}
 
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
 		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
 		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		userRoleMocker = userRoleMocker.CountOnce(0, nil)                                   // 校验是否为系统管理员。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(0, nil)                               // 校验是否为系统管理员。
 		dbAppMocker = dbAppMocker.ScanOnce(func(v any) { *v.(*[]int) = []int{1} }, nil)     // 查询用户有权限的应用 IDs。
 		dbAppMocker = dbAppMocker.FindOnce([]*model.App{AppInfo}, nil)                      // 查询数据库应用信息。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
-		defer userRoleMocker.Reset()
+		defer dbUserRoleMocker.Reset()
 		defer dbAppMocker.Reset()
 
 		rspBodyObj := CheckAndUnmarshalBody[protocol.AppWebSearchRsp](
 			t,
 			ServeHTTP(ctx, CreatePostJSONRequest(ctx, reqPath, &protocol.AppWebSearchReq{
-				Name:     "",
-				Platform: []int{},
-				Status:   []int{},
+				Name:     searchName,
+				Platform: searchPlatform,
+				Status:   searchStatus,
 			})),
 			0,
 		)
@@ -379,28 +400,47 @@ func TestAppAPI_WebSearch(t *testing.T) {
 	}
 }
 
-func TestAppAPI_WebUpdate(t *testing.T) {
+func TestAppWebUpdate(t *testing.T) {
 	const reqPath = "/web/app/update"
 
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
 		admins, members, logo := []string{"a", "b"}, []string{"c", "d"}, GeneratePNG(t, 10, 10)
+		// 更新应用请求参数。
+		updateName := "应用名"
+		updateLogoFileID := util.FastRandomAlphaNumberString(38)
+		// 模拟数据库中的应用图标文件记录（新文件）。
+		mockNewFile := &model.File{
+			ID:     1,
+			FileID: util.FastRandomAlphaNumberString(38),
+			UserID: LoginUser.ID,
+			AppID:  AppInfo.ID,
+			Type:   model.FileTypeAppLogo,
+		}
+		// 模拟存储服务返回的文件下载结果。
+		mockTusResult := &tus.GetResult{
+			HTTPStatus:    http.StatusOK,
+			Body:          io.NopCloser(bytes.NewReader(logo)),
+			ContentLength: len(logo),
+		}
+		// 模拟数据库操作影响行数。
+		mockRowsAffected := gen.ResultInfo{RowsAffected: 1}
 
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
 		dbFileMocker := MockDBClient[model.File](ctx)
 		tusdMocker := MockTusdClient(ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
-		todoMocker := MockDBClient[model.Todo](ctx)
-		eventMocker := MockDBClient[model.Event](ctx)
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbTodoMocker := MockDBClient[model.Todo](ctx)
+		dbEventMocker := MockDBClient[model.Event](ctx)
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
 		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
 		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
 		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
 		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		userRoleMocker = userRoleMocker.CountOnce(1, nil)                                   // 校验应用管理员权限。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验应用管理员权限。
 
 		userInfos := make([]*model.User, 0, len(admins)+len(members))
 		for _, v := range admins {
@@ -409,55 +449,39 @@ func TestAppAPI_WebUpdate(t *testing.T) {
 		for _, v := range members {
 			userInfos = append(userInfos, &model.User{ID: rand.Intn(9999), NameEn: v})
 		}
-		dbUserMocker = dbUserMocker.FindOnce(userInfos, nil) // 查询数据库中人员信息。
-		dbFileMocker = dbFileMocker.TakeOnce(&model.File{
-			ID:     1,
-			FileID: util.FastRandomAlphaNumberString(38),
-			UserID: LoginUser.ID,
-			AppID:  AppInfo.ID,
-			Type:   model.FileTypeAppLogo,
-		}, nil) // 查询数据库中应用图标文件信息。
-		tusdMocker = tusdMocker.GetOnce(&tus.GetResult{
-			HTTPStatus:    http.StatusOK,
-			Body:          io.NopCloser(bytes.NewReader(logo)),
-			ContentLength: len(logo),
-		}, nil) // 从存储服务下载应用图标文件。
-		dbAppMocker = dbAppMocker.UpdateColumnSimpleOnce(gen.ResultInfo{RowsAffected: 1}, nil) // 更新数据库应用信息。
-		dbFileMocker = dbFileMocker.TakeOnce(&model.File{
-			ID:     1,
-			FileID: util.FastRandomAlphaNumberString(38),
-			UserID: LoginUser.ID,
-			AppID:  AppInfo.ID,
-			Type:   model.FileTypeAppLogo,
-		}, nil) // 查询数据库中旧的应用图标文件信息。
-		dbFileMocker = dbFileMocker.DeleteOnce(gen.ResultInfo{RowsAffected: 1}, nil) // 删除数据库中旧的应用图标文件信息。
-		tusdMocker = tusdMocker.DeleteFileOnce(nil)                                  // 删除存储服务中旧的应用图标文件。
-		redisMocker = redisMocker.SRemOnce(1, nil)                                   // 删除 Redis 中旧文件 ID。
+		dbUserMocker = dbUserMocker.FindOnce(userInfos, nil)                    // 查询数据库中人员信息。
+		dbFileMocker = dbFileMocker.TakeOnce(mockNewFile, nil)                  // 查询数据库中应用图标文件信息。
+		tusdMocker = tusdMocker.GetOnce(mockTusResult, nil)                     // 从存储服务下载应用图标文件。
+		dbAppMocker = dbAppMocker.UpdateColumnSimpleOnce(mockRowsAffected, nil) // 更新数据库应用信息。
+		dbFileMocker = dbFileMocker.TakeOnce(mockNewFile, nil)                  // 查询数据库中旧的应用图标文件信息。
+		dbFileMocker = dbFileMocker.DeleteOnce(mockRowsAffected, nil)           // 删除数据库中旧的应用图标文件信息。
+		tusdMocker = tusdMocker.DeleteFileOnce(nil)                             // 删除存储服务中旧的应用图标文件。
+		redisMocker = redisMocker.SRemOnce(1, nil)                              // 删除 Redis 中旧文件 ID。
 
 		var hasSignerRoleUserIDs []int
 		if len(userInfos) > 0 {
 			hasSignerRoleUserIDs = []int{userInfos[0].ID}
 		}
-		userRoleMocker = userRoleMocker.ScanOnce(func(v any) { *v.(*[]int) = hasSignerRoleUserIDs }, nil) // 查询有签名权限的人员。
-		userRoleMocker = userRoleMocker.DeleteOnce(gen.ResultInfo{RowsAffected: 1}, nil)                  // 删除需要移除应用签名权限的人员。
-		userRoleMocker = userRoleMocker.DeleteOnce(gen.ResultInfo{RowsAffected: 1}, nil)                  // 删除所有应用成员。
-		userRoleMocker = userRoleMocker.CreateInBatchesOnce(nil)                                          // 添加应用成员。
-		todoMocker = todoMocker.UpdateColumnSimpleOnce(gen.ResultInfo{RowsAffected: 1}, nil)              // 更新待办中的审批人。
-		eventMocker = eventMocker.CreateOnce(nil)                                                         // 添加应用事件到数据库。
+		dbUserRoleMocker = dbUserRoleMocker.ScanOnce(func(v any) { *v.(*[]int) = hasSignerRoleUserIDs }, nil) // 查询有签名权限的人员。
+		dbUserRoleMocker = dbUserRoleMocker.DeleteOnce(mockRowsAffected, nil)                                 // 删除需要移除应用签名权限的人员。
+		dbUserRoleMocker = dbUserRoleMocker.DeleteOnce(mockRowsAffected, nil)                                 // 删除所有应用成员。
+		dbUserRoleMocker = dbUserRoleMocker.CreateInBatchesOnce(nil)                                          // 添加应用成员。
+		dbTodoMocker = dbTodoMocker.UpdateColumnSimpleOnce(mockRowsAffected, nil)                             // 更新待办中的审批人。
+		dbEventMocker = dbEventMocker.CreateOnce(nil)                                                         // 添加应用事件到数据库。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
 		defer dbFileMocker.Reset()
 		defer tusdMocker.Reset()
-		defer userRoleMocker.Reset()
-		defer todoMocker.Reset()
-		defer eventMocker.Reset()
+		defer dbUserRoleMocker.Reset()
+		defer dbTodoMocker.Reset()
+		defer dbEventMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,
 			ServeHTTP(ctx, CreatePostJSONRequestWithApp(ctx, reqPath, AppInfo.AppID, &protocol.AppWebUpdateReq{
-				Name:       "应用名",
-				LogoFileID: util.FastRandomAlphaNumberString(38),
+				Name:       updateName,
+				LogoFileID: updateLogoFileID,
 				Admins:     admins,
 				Members:    members,
 			})),
@@ -467,36 +491,39 @@ func TestAppAPI_WebUpdate(t *testing.T) {
 
 	t.Run("异常测试_应用状态非法", func(t *testing.T) {
 		ctx := context.Background()
+		// 更新应用请求参数。
+		updateName := "应用名"
+		updateLogoFileID := util.FastRandomAlphaNumberString(38)
+		updateAdmins, updateMembers := []string{"a", "b"}, []string{"c", "d"}
 
 		defer mvt.Chain(AppInfo).
 			Elem().
 			FieldByName("Status").
 			Set(model.AppStatusInvalid).
 			Reset()
-
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
 		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
 		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
 		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
 		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		userRoleMocker = userRoleMocker.CountOnce(1, nil)                                   // 校验应用管理员权限。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验应用管理员权限。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
-		defer userRoleMocker.Reset()
+		defer dbUserRoleMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,
 			ServeHTTP(ctx, CreatePostJSONRequestWithApp(ctx, reqPath, AppInfo.AppID, &protocol.AppWebUpdateReq{
-				Name:       "应用名",
-				LogoFileID: util.FastRandomAlphaNumberString(38),
-				Admins:     []string{"a", "b"},
-				Members:    []string{"c", "d"},
+				Name:       updateName,
+				LogoFileID: updateLogoFileID,
+				Admins:     updateAdmins,
+				Members:    updateMembers,
 			})),
 			consts.ErrAppStatusNotValid,
 		)
@@ -505,6 +532,10 @@ func TestAppAPI_WebUpdate(t *testing.T) {
 	t.Run("异常测试_应用图标文件过大", func(t *testing.T) {
 		ctx := context.Background()
 		logo := GeneratePNG(t, 10, 10)
+		// 更新应用请求参数。
+		updateName := "应用名"
+		updateLogoFileID := util.FastRandomAlphaNumberString(38)
+		updateAdmins, updateMembers := []string{"a", "b"}, []string{"c", "d"}
 
 		defer mvt.Chain(cfg.Get()).
 			Elem().
@@ -512,12 +543,11 @@ func TestAppAPI_WebUpdate(t *testing.T) {
 			FieldByName("AppLogoMaximumSizeValue").
 			Set(1).
 			Reset()
-
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
 		dbFileMocker := MockDBClient[model.File](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
 		tusdMocker := MockTusdClient(ctx)
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
@@ -525,7 +555,7 @@ func TestAppAPI_WebUpdate(t *testing.T) {
 		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
 		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
 		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		userRoleMocker = userRoleMocker.CountOnce(1, nil)                                   // 校验应用管理员权限。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验应用管理员权限。
 		dbFileMocker = dbFileMocker.TakeOnce(&model.File{
 			ID:     1,
 			FileID: util.FastRandomAlphaNumberString(38),
@@ -542,16 +572,16 @@ func TestAppAPI_WebUpdate(t *testing.T) {
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
 		defer dbFileMocker.Reset()
-		defer userRoleMocker.Reset()
+		defer dbUserRoleMocker.Reset()
 		defer tusdMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,
 			ServeHTTP(ctx, CreatePostJSONRequestWithApp(ctx, reqPath, AppInfo.AppID, &protocol.AppWebUpdateReq{
-				Name:       "应用名",
-				LogoFileID: util.FastRandomAlphaNumberString(38),
-				Admins:     []string{"a", "b"},
-				Members:    []string{"c", "d"},
+				Name:       updateName,
+				LogoFileID: updateLogoFileID,
+				Admins:     updateAdmins,
+				Members:    updateMembers,
 			})),
 			consts.ErrAppLogoTooLarge,
 		)
@@ -560,12 +590,16 @@ func TestAppAPI_WebUpdate(t *testing.T) {
 	t.Run("异常测试_应用图标文件格式不支持", func(t *testing.T) {
 		ctx := context.Background()
 		logo := GenerateGIF(t, 10, 10)
+		// 更新应用请求参数。
+		updateName := "应用名"
+		updateLogoFileID := util.FastRandomAlphaNumberString(38)
+		updateAdmins, updateMembers := []string{"a", "b"}, []string{"c", "d"}
 
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
 		dbFileMocker := MockDBClient[model.File](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
 		tusdMocker := MockTusdClient(ctx)
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
@@ -573,10 +607,10 @@ func TestAppAPI_WebUpdate(t *testing.T) {
 		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
 		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
 		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		userRoleMocker = userRoleMocker.CountOnce(1, nil)                                   // 校验应用管理员权限。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验应用管理员权限。
 		dbFileMocker = dbFileMocker.TakeOnce(&model.File{
 			ID:     1,
-			FileID: util.FastRandomAlphaNumberString(38),
+			FileID: updateLogoFileID,
 			UserID: LoginUser.ID,
 			AppID:  AppInfo.ID,
 			Type:   model.FileTypeAppLogo,
@@ -590,16 +624,16 @@ func TestAppAPI_WebUpdate(t *testing.T) {
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
 		defer dbFileMocker.Reset()
-		defer userRoleMocker.Reset()
+		defer dbUserRoleMocker.Reset()
 		defer tusdMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,
 			ServeHTTP(ctx, CreatePostJSONRequestWithApp(ctx, reqPath, AppInfo.AppID, &protocol.AppWebUpdateReq{
-				Name:       "应用名",
-				LogoFileID: util.FastRandomAlphaNumberString(38),
-				Admins:     []string{"a", "b"},
-				Members:    []string{"c", "d"},
+				Name:       updateName,
+				LogoFileID: updateLogoFileID,
+				Admins:     updateAdmins,
+				Members:    updateMembers,
 			})),
 			consts.ErrAppLogoFormatNotSupported,
 		)
@@ -608,11 +642,14 @@ func TestAppAPI_WebUpdate(t *testing.T) {
 	t.Run("异常测试_用户不存在", func(t *testing.T) {
 		ctx := context.Background()
 		admins, members, logo := []string{"a", "b"}, []string{"c", "d"}, GeneratePNG(t, 10, 10)
+		// 更新应用请求参数。
+		updateName := "应用名"
+		updateLogoFileID := util.FastRandomAlphaNumberString(38)
 
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
 		dbFileMocker := MockDBClient[model.File](ctx)
 		tusdMocker := MockTusdClient(ctx)
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
@@ -621,10 +658,10 @@ func TestAppAPI_WebUpdate(t *testing.T) {
 		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
 		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
 		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		userRoleMocker = userRoleMocker.CountOnce(1, nil)                                   // 校验应用管理员权限。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验应用管理员权限。
 		dbFileMocker = dbFileMocker.TakeOnce(&model.File{
 			ID:     1,
-			FileID: util.FastRandomAlphaNumberString(38),
+			FileID: updateLogoFileID,
 			UserID: LoginUser.ID,
 			AppID:  AppInfo.ID,
 			Type:   model.FileTypeAppLogo,
@@ -649,15 +686,15 @@ func TestAppAPI_WebUpdate(t *testing.T) {
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
-		defer userRoleMocker.Reset()
+		defer dbUserRoleMocker.Reset()
 		defer dbFileMocker.Reset()
 		defer tusdMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,
 			ServeHTTP(ctx, CreatePostJSONRequestWithApp(ctx, reqPath, AppInfo.AppID, &protocol.AppWebUpdateReq{
-				Name:       "应用名",
-				LogoFileID: util.FastRandomAlphaNumberString(38),
+				Name:       updateName,
+				LogoFileID: updateLogoFileID,
 				Admins:     admins,
 				Members:    members,
 			})),
@@ -671,18 +708,18 @@ func TestAppAPI_WebUpdate(t *testing.T) {
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
 		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
 		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
 		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
 		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		userRoleMocker = userRoleMocker.CountOnce(1, nil)                                   // 校验应用管理员权限。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验应用管理员权限。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
-		defer userRoleMocker.Reset()
+		defer dbUserRoleMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,
@@ -719,7 +756,7 @@ func TestAppAPI_WebUpdate(t *testing.T) {
 	}
 }
 
-func TestAppAPI_WebGetInformation(t *testing.T) {
+func TestAppWebGetInformation(t *testing.T) {
 	const reqPath = "/web/app/getInformation"
 
 	t.Run("正常测试", func(t *testing.T) {
@@ -729,13 +766,13 @@ func TestAppAPI_WebGetInformation(t *testing.T) {
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
 		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
 		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
 		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
 		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		userRoleMocker = userRoleMocker.CountOnce(1, nil)                                   // 校验应用管理员权限。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验应用管理员权限。
 
 		userInfos := make([]*model.User, 0, len(admins)+len(members))
 		for i, v := range admins {
@@ -753,11 +790,11 @@ func TestAppAPI_WebGetInformation(t *testing.T) {
 		for _, v := range memberIDs {
 			userRoleInfos = append(userRoleInfos, &model.UserRole{UserID: v, Role: model.UserRoleAppMember})
 		}
-		userRoleMocker = userRoleMocker.FindOnce(userRoleInfos, nil) // 查询应用的成员。
+		dbUserRoleMocker = dbUserRoleMocker.FindOnce(userRoleInfos, nil) // 查询应用的成员。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
-		defer userRoleMocker.Reset()
+		defer dbUserRoleMocker.Reset()
 
 		rspBodyObj := CheckAndUnmarshalBody[protocol.AppWebGetInformationRsp](
 			t,
@@ -792,31 +829,33 @@ func TestAppAPI_WebGetInformation(t *testing.T) {
 	})
 }
 
-func TestAppAPI_WebInvalidate(t *testing.T) {
+func TestAppWebInvalidate(t *testing.T) {
 	const reqPath = "/web/app/invalidate"
 
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
+		// 模拟数据库操作影响行数。
+		mockRowsAffected := gen.ResultInfo{RowsAffected: 1}
 
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
-		eventMocker := MockDBClient[model.Event](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)    // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)    // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                       // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                        // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                   // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                       // 查询数据库应用信息。
-		userRoleMocker = userRoleMocker.CountOnce(1, nil)                                      // 校验应用管理员权限。
-		dbAppMocker = dbAppMocker.UpdateColumnSimpleOnce(gen.ResultInfo{RowsAffected: 1}, nil) // 更新数据库应用记录。
-		eventMocker = eventMocker.CreateOnce(nil)                                              // 添加应用事件到数据库。
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbEventMocker := MockDBClient[model.Event](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验应用管理员权限。
+		dbAppMocker = dbAppMocker.UpdateColumnSimpleOnce(mockRowsAffected, nil)             // 更新数据库应用记录。
+		dbEventMocker = dbEventMocker.CreateOnce(nil)                                       // 添加应用事件到数据库。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
-		defer userRoleMocker.Reset()
-		defer eventMocker.Reset()
+		defer dbUserRoleMocker.Reset()
+		defer dbEventMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,
@@ -826,42 +865,43 @@ func TestAppAPI_WebInvalidate(t *testing.T) {
 	})
 }
 
-func TestAppAPI_WebEnable(t *testing.T) {
+func TestAppWebEnable(t *testing.T) {
 	const reqPath = "/web/app/enable"
 
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
+		// 模拟数据库操作影响行数。
+		mockRowsAffected := gen.ResultInfo{RowsAffected: 1}
 
 		defer mvt.Chain(AppInfo).
 			Elem().
 			FieldByName("Status").
 			Set(model.AppStatusInvalid).
 			Reset()
-
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
-		eventMocker := MockDBClient[model.Event](ctx)
-		todoMocker := MockDBClient[model.Todo](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)    // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)    // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                       // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                        // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                   // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                       // 查询数据库应用信息。
-		userRoleMocker = userRoleMocker.CountOnce(1, nil)                                      // 校验应用管理员权限。
-		userRoleMocker = userRoleMocker.ScanOnce(func(v any) { *v.(*[]int) = []int{1} }, nil)  // 查询数据库中的系统管理员。
-		dbAppMocker = dbAppMocker.UpdateColumnSimpleOnce(gen.ResultInfo{RowsAffected: 1}, nil) // 更新数据库应用状态。
-		todoMocker = todoMocker.TakeOnce(nil, nil)                                             // 检查应用是否存在启用待办。
-		todoMocker = todoMocker.CreateOnce(nil)                                                // 创建应用启用审批待办。
-		eventMocker = eventMocker.CreateOnce(nil)                                              // 添加应用事件到数据库。
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbEventMocker := MockDBClient[model.Event](ctx)
+		dbTodoMocker := MockDBClient[model.Todo](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)       // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)       // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                          // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                           // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                      // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                          // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                                     // 校验应用管理员权限。
+		dbUserRoleMocker = dbUserRoleMocker.ScanOnce(func(v any) { *v.(*[]int) = []int{1} }, nil) // 查询数据库中的系统管理员。
+		dbAppMocker = dbAppMocker.UpdateColumnSimpleOnce(mockRowsAffected, nil)                   // 更新数据库应用状态。
+		dbTodoMocker = dbTodoMocker.TakeOnce(nil, nil)                                            // 检查应用是否存在启用待办。
+		dbTodoMocker = dbTodoMocker.CreateOnce(nil)                                               // 创建应用启用审批待办。
+		dbEventMocker = dbEventMocker.CreateOnce(nil)                                             // 添加应用事件到数据库。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
-		defer userRoleMocker.Reset()
-		defer eventMocker.Reset()
-		defer todoMocker.Reset()
+		defer dbUserRoleMocker.Reset()
+		defer dbEventMocker.Reset()
+		defer dbTodoMocker.Reset()
 
 		CheckAndUnmarshalBody[any](
 			t,
@@ -871,7 +911,7 @@ func TestAppAPI_WebEnable(t *testing.T) {
 	})
 }
 
-func TestAppAPI_WebCount(t *testing.T) {
+func TestAppWebCount(t *testing.T) {
 	const reqPath = "/web/app/count"
 
 	t.Run("正常测试", func(t *testing.T) {
@@ -880,15 +920,15 @@ func TestAppAPI_WebCount(t *testing.T) {
 
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
-		userRoleMocker := MockDBClient[model.UserRole](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		userRoleMocker = userRoleMocker.ScanOnce(func(v any) { *v.(*int) = count }, nil)    // 查询用户应用数量。
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)  // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)  // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                      // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                 // 查询数据库登录用户信息。
+		dbUserRoleMocker = dbUserRoleMocker.ScanOnce(func(v any) { *v.(*int) = count }, nil) // 查询用户应用数量。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
-		defer userRoleMocker.Reset()
+		defer dbUserRoleMocker.Reset()
 
 		rspBodyObj := CheckAndUnmarshalBody[protocol.AppWebCountRsp](
 			t,
