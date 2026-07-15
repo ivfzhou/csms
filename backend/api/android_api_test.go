@@ -44,13 +44,13 @@ func TestAndroidWebAddOrganization(t *testing.T) {
 		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAndroidOrganizationMocker := MockDBClient[model.AndroidOrganization](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
-		dbAndroidOrganizationMocker = dbAndroidOrganizationMocker.CreateOnce(nil)           // 保存安卓证书主体到数据库。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)        // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil)    // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                          // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                           // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                      // 查询数据库登录用户信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                     // 校验系统管理员权限。
+		dbAndroidOrganizationMocker = dbAndroidOrganizationMocker.CreateOnce(nil) // 保存安卓证书主体到数据库。
 		defer redisMocker.Reset()
 		defer dbUserRoleMocker.Reset()
 		defer dbUserMocker.Reset()
@@ -72,12 +72,12 @@ func TestAndroidWebAddOrganization(t *testing.T) {
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)     // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                       // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                        // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                   // 查询数据库登录用户信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                  // 校验系统管理员权限。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbUserRoleMocker.Reset()
@@ -99,8 +99,8 @@ func TestAndroidWebAddOrganization(t *testing.T) {
 	}{
 		{"通用名缺失", "", "C=CN,ST=Hunan,L=Changsha,CN=company_android_cert"},
 		{"通用名过长", util.FastRandomAlphaNumberString(33), "C=CN,ST=Hunan,L=Changsha,CN=company_android_cert"},
-		{"DName缺失", "company certificate", ""},
-		{"DName过长", "company certificate", util.FastRandomAlphaNumberString(257)},
+		{"DName 缺失", "company certificate", ""},
+		{"DName 过长", "company certificate", util.FastRandomAlphaNumberString(257)},
 	} {
 		t.Run("异常测试_"+v.Name, func(t *testing.T) {
 			validateErrorRequest(t, v.CommonName, v.DName)
@@ -113,17 +113,15 @@ func TestAndroidWebListOrganizations(t *testing.T) {
 
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
-		// 模拟数据库中的用户列表数据。
-		mockUserList := []*model.User{{ID: 1, NameEn: "zs"}, {ID: 2, NameEn: "ls"}}
-		// 模拟数据库中的安卓证书主体列表数据。
-		mockOrgList := []*model.AndroidOrganization{{UserID: 1}, {UserID: 1}, {UserID: 2}}
+		mockUserList := []*model.User{{ID: 1, NameEn: "zs"}, {ID: 2, NameEn: "ls"}}        // 模拟数据库中的用户列表数据。
+		mockOrgList := []*model.AndroidOrganization{{UserID: 1}, {UserID: 1}, {UserID: 2}} // 模拟数据库中的安卓证书主体列表数据。
 
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
 		dbAndroidOrganizationMocker := MockDBClient[model.AndroidOrganization](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)  // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)  // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)                   // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)                   // 加载 Redis 限流脚本。
 		redisMocker = redisMocker.GetOnce(Session, nil)                                      // 获取 Redis 用户会话数据。
 		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                 // 查询数据库登录用户信息。
 		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                                // 校验系统管理员权限。
@@ -154,24 +152,13 @@ func TestAndroidWebApplyCertificate(t *testing.T) {
 		certType := model.AndroidCertificateTypeDebug
 		ownerID := 1
 		alias := "alias"
-		// 模拟数据库中安卓证书主体的 DName 数据。
-		mockOrgDName := "CN=ivfzhou"
-		// 模拟数据库中的 AES 加密密钥记录。
+		mockOrgDName := "CN=ivfzhou" // 模拟数据库中安卓证书主体的 DName 数据。
 		mockAesKey := &model.AesKey{
 			ID:          1,
 			Secret:      util.RandomBytes(16),
 			CreatedTime: time.Now(),
-		}
+		} // 模拟数据库中的 AES 加密密钥记录。
 
-		defer mvt.Chain(AppInfo).
-			Elem().
-			FieldByName("Platform").
-			Set(model.AppPlatformAndroid).
-			Reset()
-		defer mvt.Chain(&consts.KeytoolBinaryPath).
-			Elem().
-			Set("keytool").
-			Reset()
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
@@ -180,8 +167,10 @@ func TestAndroidWebApplyCertificate(t *testing.T) {
 		dbAesKeyMocker := MockDBClient[model.AesKey](ctx)
 		dbAndroidCertificateMocker := MockDBClient[model.AndroidCertificate](ctx)
 		dbEventMocker := MockDBClient[model.Event](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                                  // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                                  // 加载 Redis 限流脚本。
+		appPlatformReset := mvt.Chain(AppInfo).Elem().FieldByName("Platform").Set(model.AppPlatformAndroid)
+		keytoolPathReset := mvt.Chain(&consts.KeytoolBinaryPath).Elem().Set("keytool")
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)                                                   // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)                                                   // 加载 Redis 限流脚本。
 		redisMocker = redisMocker.EvalshaOnce(true, nil)                                                                     // 执行防抖过滤 Redis Lua 脚本。
 		redisMocker = redisMocker.GetOnce(Session, nil)                                                                      // 获取 Redis 用户会话数据。
 		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                                                 // 查询数据库登录用户信息。
@@ -192,6 +181,8 @@ func TestAndroidWebApplyCertificate(t *testing.T) {
 		redisMocker = redisMocker.SAddOnce(1, nil)                                                                           // 添加安卓证书 ID 到 Redis。
 		dbAndroidCertificateMocker = dbAndroidCertificateMocker.CreateOnce(nil)                                              // 保存安卓证书信息到数据库。
 		dbEventMocker = dbEventMocker.CreateOnce(nil)                                                                        // 添加应用事件到数据库。
+		defer appPlatformReset.Reset()
+		defer keytoolPathReset.Reset()
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbUserRoleMocker.Reset()
@@ -221,13 +212,13 @@ func TestAndroidWebApplyCertificate(t *testing.T) {
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
 		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)     // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                       // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                        // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                   // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                       // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                  // 校验系统管理员权限。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
@@ -270,22 +261,12 @@ func TestAndroidWebUploadCertificate(t *testing.T) {
 
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
-		// 模拟数据库中的 AES 加密密钥记录。
 		mockAesKey := &model.AesKey{
 			ID:          1,
 			Secret:      util.RandomBytes(16),
 			CreatedTime: time.Now(),
-		}
+		} // 模拟数据库中的 AES 加密密钥记录。
 
-		defer mvt.Chain(AppInfo).
-			Elem().
-			FieldByName("Platform").
-			Set(model.AppPlatformAndroid).
-			Reset()
-		defer mvt.Chain(&consts.KeytoolBinaryPath).
-			Elem().
-			Set("keytool").
-			Reset()
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
@@ -293,17 +274,21 @@ func TestAndroidWebUploadCertificate(t *testing.T) {
 		dbAndroidCertificateMocker := MockDBClient[model.AndroidCertificate](ctx)
 		dbAesKeyMocker := MockDBClient[model.AesKey](ctx)
 		dbEventMocker := MockDBClient[model.Event](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
-		dbAesKeyMocker = dbAesKeyMocker.LastOnce(mockAesKey, nil)                           // 查询数据库中证书 AES 加密密钥。
-		redisMocker = redisMocker.SAddOnce(1, nil)                                          // 添加安卓证书 ID 到 Redis。
-		dbAndroidCertificateMocker = dbAndroidCertificateMocker.CreateOnce(nil)             // 保存安卓证书信息到数据库。
-		dbEventMocker = dbEventMocker.CreateOnce(nil)                                       // 添加应用事件到数据库。
+		appPlatformRest := mvt.Chain(AppInfo).Elem().FieldByName("Platform").Set(model.AppPlatformAndroid)
+		keytoolPathReset := mvt.Chain(&consts.KeytoolBinaryPath).Elem().Set("keytool")
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)      // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil)  // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                        // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                         // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                    // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                        // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                   // 校验系统管理员权限。
+		dbAesKeyMocker = dbAesKeyMocker.LastOnce(mockAesKey, nil)               // 查询数据库中证书 AES 加密密钥。
+		redisMocker = redisMocker.SAddOnce(1, nil)                              // 添加安卓证书 ID 到 Redis。
+		dbAndroidCertificateMocker = dbAndroidCertificateMocker.CreateOnce(nil) // 保存安卓证书信息到数据库。
+		dbEventMocker = dbEventMocker.CreateOnce(nil)                           // 添加应用事件到数据库。
+		defer appPlatformRest.Reset()
+		defer keytoolPathReset.Reset()
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
@@ -317,9 +302,9 @@ func TestAndroidWebUploadCertificate(t *testing.T) {
 			ServeHTTP(ctx, CreatePostJSONRequestWithApp(ctx, reqPath, AppInfo.AppID,
 				&protocol.AndroidWebUploadCertificateReq{
 					Type:        model.AndroidCertificateTypeDebug,
-					Storepass:   androidKeystoreStorepass,
-					Keypass:     androidKeystoreKeypass,
-					Certificate: androidCertificate,
+					Storepass:   AndroidKeystoreStorepass,
+					Keypass:     AndroidKeystoreKeypass,
+					Certificate: AndroidCertificate,
 				}),
 			),
 			consts.AlertSuccess,
@@ -333,13 +318,13 @@ func TestAndroidWebUploadCertificate(t *testing.T) {
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
 		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)     // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                       // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                        // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                   // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                       // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                  // 校验系统管理员权限。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
@@ -366,14 +351,14 @@ func TestAndroidWebUploadCertificate(t *testing.T) {
 		Keypass     string
 		Certificate string
 	}{
-		{"类型缺失", 0, "123456", "123456", androidCertificate},
-		{"类型错误", -1, "123456", "123456", androidCertificate},
-		{"Storepass 缺失", model.AndroidCertificateTypeDebug, "", "123456", androidCertificate},
-		{"Storepass 过长", model.AndroidCertificateTypeDebug, util.FastRandomAlphaNumberString(33), "123456", androidCertificate},
-		{"Storepass 过短", model.AndroidCertificateTypeDebug, util.FastRandomAlphaNumberString(5), "123456", androidCertificate},
-		{"Keypass 缺失", model.AndroidCertificateTypeDebug, "123456", "", androidCertificate},
-		{"Keypass 过长", model.AndroidCertificateTypeDebug, "123456", util.FastRandomAlphaNumberString(33), androidCertificate},
-		{"Keypass 过短", model.AndroidCertificateTypeDebug, "123456", util.FastRandomAlphaNumberString(5), androidCertificate},
+		{"类型缺失", 0, "123456", "123456", AndroidCertificate},
+		{"类型错误", -1, "123456", "123456", AndroidCertificate},
+		{"Storepass 缺失", model.AndroidCertificateTypeDebug, "", "123456", AndroidCertificate},
+		{"Storepass 过长", model.AndroidCertificateTypeDebug, util.FastRandomAlphaNumberString(33), "123456", AndroidCertificate},
+		{"Storepass 过短", model.AndroidCertificateTypeDebug, util.FastRandomAlphaNumberString(5), "123456", AndroidCertificate},
+		{"Keypass 缺失", model.AndroidCertificateTypeDebug, "123456", "", AndroidCertificate},
+		{"Keypass 过长", model.AndroidCertificateTypeDebug, "123456", util.FastRandomAlphaNumberString(33), AndroidCertificate},
+		{"Keypass 过短", model.AndroidCertificateTypeDebug, "123456", util.FastRandomAlphaNumberString(5), AndroidCertificate},
 		{"证书缺失", model.AndroidCertificateTypeDebug, "123456", "123456", ""},
 		{"证书格式错误", model.AndroidCertificateTypeDebug, "123456", "123456", "汉"},
 	} {
@@ -388,29 +373,24 @@ func TestAndroidWebListCertificates(t *testing.T) {
 
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
-		// 模拟数据库中的用户列表数据（空结构体，仅占位）。
-		mockUserList := []*model.User{{}, {}}
-		// 模拟数据库中的安卓证书列表数据（空结构体，仅占位）。
-		mockCertList := []*model.AndroidCertificate{{}, {}}
+		mockUserList := []*model.User{{}, {}}               // 模拟数据库中的用户列表数据（空结构体，仅占位）。
+		mockCertList := []*model.AndroidCertificate{{}, {}} // 模拟数据库中的安卓证书列表数据（空结构体，仅占位）。
 
-		defer mvt.Chain(AppInfo).
-			Elem().
-			FieldByName("Platform").
-			Set(model.AppPlatformAndroid).
-			Reset()
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
 		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
 		dbAndroidCertificateMocker := MockDBClient[model.AndroidCertificate](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
+		appPlatformReset := mvt.Chain(AppInfo).Elem().FieldByName("Platform").Set(model.AppPlatformAndroid)
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)                  // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil)              // 加载 Redis 限流脚本。
 		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
 		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
 		dbUserMocker = dbUserMocker.FindOnce(mockUserList, nil)                             // 查询数据库中用户英文名。
 		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
 		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
 		dbAndroidCertificateMocker = dbAndroidCertificateMocker.FindOnce(mockCertList, nil) // 查询数据库中安卓证书数据。
+		defer appPlatformReset.Reset()
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
@@ -436,16 +416,9 @@ func TestAndroidWebDownloadCertificate(t *testing.T) {
 		ctx := context.Background()
 		secret := util.RandomBytes(16)
 		encrypt, _ := util.AESCBCEncrypt(secret, []byte("certificate content"))
-		// 模拟数据库中的 AES 加密密钥记录。
-		mockAesKey := &model.AesKey{Secret: secret}
-		// 模拟数据库中的安卓证书记录。
-		mockCert := &model.AndroidCertificate{Content: encrypt}
+		mockAesKey := &model.AesKey{Secret: secret}             // 模拟数据库中的 AES 加密密钥记录。
+		mockCert := &model.AndroidCertificate{Content: encrypt} // 模拟数据库中的安卓证书记录。
 
-		defer mvt.Chain(AppInfo).
-			Elem().
-			FieldByName("Platform").
-			Set(model.AppPlatformAndroid).
-			Reset()
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
@@ -453,16 +426,18 @@ func TestAndroidWebDownloadCertificate(t *testing.T) {
 		dbAesKeyMocker := MockDBClient[model.AesKey](ctx)
 		dbAndroidCertificateMocker := MockDBClient[model.AndroidCertificate](ctx)
 		dbEventMocker := MockDBClient[model.Event](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
-		dbAesKeyMocker = dbAesKeyMocker.TakeOnce(mockAesKey, nil)                           // 查询数据库中证书加密密钥。
-		dbAndroidCertificateMocker = dbAndroidCertificateMocker.TakeOnce(mockCert, nil)     // 查询数据库中安卓证书数据。
-		dbEventMocker = dbEventMocker.CreateOnce(nil)                                       // 添加应用事件到数据库。
+		appPlatformReset := mvt.Chain(AppInfo).Elem().FieldByName("Platform").Set(model.AppPlatformAndroid)
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)              // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil)          // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                 // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                            // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                           // 校验系统管理员权限。
+		dbAesKeyMocker = dbAesKeyMocker.TakeOnce(mockAesKey, nil)                       // 查询数据库中证书加密密钥。
+		dbAndroidCertificateMocker = dbAndroidCertificateMocker.TakeOnce(mockCert, nil) // 查询数据库中安卓证书数据。
+		dbEventMocker = dbEventMocker.CreateOnce(nil)                                   // 添加应用事件到数据库。
+		defer appPlatformReset.Reset()
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
@@ -489,13 +464,13 @@ func TestAndroidWebDownloadCertificate(t *testing.T) {
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
 		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)     // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                       // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                        // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                   // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                       // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                  // 校验系统管理员权限。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
@@ -529,23 +504,17 @@ func TestAndroidWebGetGooglePlayCertificate(t *testing.T) {
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
 		secret := util.RandomBytes(16)
-		bs, _ := base64.StdEncoding.DecodeString(androidCertificate)
+		bs, _ := base64.StdEncoding.DecodeString(AndroidCertificate)
 		encrypt, _ := util.AESCBCEncrypt(secret, bs)
 		certificateID := util.FastRandomAlphaNumberString(32)
-		// 模拟数据库中的 AES 加密密钥记录。
-		mockAesKey := &model.AesKey{Secret: secret}
-		// 模拟数据库中的安卓证书记录。
-		mockCert := &model.AndroidCertificate{Content: encrypt, Storepass: androidKeystoreStorepass, Keypass: androidKeystoreKeypass, Alias_: androidKeystoreAlias}
+		mockAesKey := &model.AesKey{Secret: secret} // 模拟数据库中的 AES 加密密钥记录。
+		mockCert := &model.AndroidCertificate{
+			Content:   encrypt,
+			Storepass: AndroidKeystoreStorepass,
+			Keypass:   AndroidKeystoreKeypass,
+			Alias_:    AndroidKeystoreAlias,
+		} // 模拟数据库中的安卓证书记录。
 
-		defer mvt.Chain(AppInfo).
-			Elem().
-			FieldByName("Platform").
-			Set(model.AppPlatformAndroid).
-			Reset()
-		defer mvt.Chain(&consts.KeytoolBinaryPath).
-			Elem().
-			Set("keytool").
-			Reset()
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
@@ -553,16 +522,20 @@ func TestAndroidWebGetGooglePlayCertificate(t *testing.T) {
 		dbAesKeyMocker := MockDBClient[model.AesKey](ctx)
 		dbAndroidCertificateMocker := MockDBClient[model.AndroidCertificate](ctx)
 		dbEventMocker := MockDBClient[model.Event](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
-		dbAesKeyMocker = dbAesKeyMocker.TakeOnce(mockAesKey, nil)                           // 查询数据库中证书加密密钥。
-		dbAndroidCertificateMocker = dbAndroidCertificateMocker.TakeOnce(mockCert, nil)     // 查询数据库中安卓证书数据。
-		dbEventMocker = dbEventMocker.CreateOnce(nil)                                       // 添加应用事件到数据库。
+		appPlatformReset := mvt.Chain(AppInfo).Elem().FieldByName("Platform").Set(model.AppPlatformAndroid)
+		keytoolPathReset := mvt.Chain(&consts.KeytoolBinaryPath).Elem().Set("keytool")
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)              // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil)          // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                 // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                            // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                           // 校验系统管理员权限。
+		dbAesKeyMocker = dbAesKeyMocker.TakeOnce(mockAesKey, nil)                       // 查询数据库中证书加密密钥。
+		dbAndroidCertificateMocker = dbAndroidCertificateMocker.TakeOnce(mockCert, nil) // 查询数据库中安卓证书数据。
+		dbEventMocker = dbEventMocker.CreateOnce(nil)                                   // 添加应用事件到数据库。
+		defer appPlatformReset.Reset()
+		defer keytoolPathReset.Reset()
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
@@ -590,13 +563,13 @@ func TestAndroidWebGetGooglePlayCertificate(t *testing.T) {
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
 		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)     // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                       // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                        // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                   // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                       // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                  // 校验系统管理员权限。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
@@ -630,27 +603,17 @@ func TestAndroidWebGetGooglePlayDeployCertificate(t *testing.T) {
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
 		secret := util.RandomBytes(16)
-		bs, _ := base64.StdEncoding.DecodeString(androidCertificate)
+		bs, _ := base64.StdEncoding.DecodeString(AndroidCertificate)
 		encrypt, _ := util.AESCBCEncrypt(secret, bs)
 		certificateID := util.FastRandomAlphaNumberString(32)
-		// 模拟数据库中的 AES 加密密钥记录。
-		mockAesKey := &model.AesKey{Secret: secret}
-		// 模拟数据库中的安卓证书记录。
-		mockCert := &model.AndroidCertificate{Content: encrypt, Storepass: androidKeystoreStorepass, Keypass: androidKeystoreKeypass, Alias_: androidKeystoreAlias}
+		mockAesKey := &model.AesKey{Secret: secret} // 模拟数据库中的 AES 加密密钥记录。
+		mockCert := &model.AndroidCertificate{
+			Content:   encrypt,
+			Storepass: AndroidKeystoreStorepass,
+			Keypass:   AndroidKeystoreKeypass,
+			Alias_:    AndroidKeystoreAlias,
+		} // 模拟数据库中的安卓证书记录。
 
-		defer mvt.Chain(AppInfo).
-			Elem().
-			FieldByName("Platform").
-			Set(model.AppPlatformAndroid).
-			Reset()
-		defer mvt.Chain(&consts.PepkJarPath).
-			Elem().
-			Set("../../pepk.jar").
-			Reset()
-		defer mvt.Chain(&consts.JavaBinaryPathForPepk).
-			Elem().
-			Set("java").
-			Reset()
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
@@ -658,16 +621,22 @@ func TestAndroidWebGetGooglePlayDeployCertificate(t *testing.T) {
 		dbAesKeyMocker := MockDBClient[model.AesKey](ctx)
 		dbAndroidCertificateMocker := MockDBClient[model.AndroidCertificate](ctx)
 		dbEventMocker := MockDBClient[model.Event](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
-		dbAesKeyMocker = dbAesKeyMocker.TakeOnce(mockAesKey, nil)                           // 查询数据库中证书加密密钥。
-		dbAndroidCertificateMocker = dbAndroidCertificateMocker.TakeOnce(mockCert, nil)     // 查询数据库中安卓证书数据。
-		dbEventMocker = dbEventMocker.CreateOnce(nil)                                       // 添加应用事件到数据库。
+		appPlatformReset := mvt.Chain(AppInfo).Elem().FieldByName("Platform").Set(model.AppPlatformAndroid)
+		pepkPathReset := mvt.Chain(&consts.PepkJarPath).Elem().Set("../../pepk.jar")
+		javaPathReset := mvt.Chain(&consts.JavaBinaryPathForPepk).Elem().Set("java")
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)              // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil)          // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                 // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                            // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                           // 校验系统管理员权限。
+		dbAesKeyMocker = dbAesKeyMocker.TakeOnce(mockAesKey, nil)                       // 查询数据库中证书加密密钥。
+		dbAndroidCertificateMocker = dbAndroidCertificateMocker.TakeOnce(mockCert, nil) // 查询数据库中安卓证书数据。
+		dbEventMocker = dbEventMocker.CreateOnce(nil)                                   // 添加应用事件到数据库。
+		defer appPlatformReset.Reset()
+		defer pepkPathReset.Reset()
+		defer javaPathReset.Reset()
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
@@ -679,7 +648,7 @@ func TestAndroidWebGetGooglePlayDeployCertificate(t *testing.T) {
 		rsp := ServeHTTP(ctx, CreatePostJSONRequestWithApp(ctx, reqPath, AppInfo.AppID,
 			&protocol.AndroidWebGetGooglePlayDeployCertificateReq{
 				CertificateID: certificateID,
-				PublicKey:     androidRSAPublicKey,
+				PublicKey:     AndroidRSAPublicKey,
 			}),
 		)
 
@@ -699,13 +668,13 @@ func TestAndroidWebGetGooglePlayDeployCertificate(t *testing.T) {
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
 		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)     // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                       // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                        // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                   // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                       // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                  // 校验系统管理员权限。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
@@ -716,7 +685,7 @@ func TestAndroidWebGetGooglePlayDeployCertificate(t *testing.T) {
 			ServeHTTP(ctx, CreatePostJSONRequestWithApp(ctx, reqPath, AppInfo.AppID,
 				&protocol.AndroidWebGetGooglePlayDeployCertificateReq{
 					CertificateID: certificateID,
-					PublicKey:     androidRSAPublicKey,
+					PublicKey:     AndroidRSAPublicKey,
 				}),
 			),
 			errs.ErrInvalidRequestParameters,
@@ -743,28 +712,17 @@ func TestAndroidWebGetGooglePlayUpgradeCertificate(t *testing.T) {
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
 		secret := util.RandomBytes(16)
-		bs, _ := base64.StdEncoding.DecodeString(androidCertificate)
+		bs, _ := base64.StdEncoding.DecodeString(AndroidCertificate)
 		encrypt, _ := util.AESCBCEncrypt(secret, bs)
 		deployCertificateID := util.FastRandomAlphaNumberString(32)
 		uploadCertificateID := util.FastRandomAlphaNumberString(32)
-		// 模拟数据库中的 AES 加密密钥记录。
-		mockAesKey := &model.AesKey{Secret: secret}
-		// 模拟数据库中的安卓证书记录。
-		mockCert := &model.AndroidCertificate{Content: encrypt, Storepass: androidKeystoreStorepass, Keypass: androidKeystoreKeypass, Alias_: androidKeystoreAlias}
+		mockAesKey := &model.AesKey{Secret: secret} // 模拟数据库中的 AES 加密密钥记录。
+		mockCert := &model.AndroidCertificate{
+			Content:   encrypt,
+			Storepass: AndroidKeystoreStorepass,
+			Keypass:   AndroidKeystoreKeypass, Alias_: AndroidKeystoreAlias,
+		} // 模拟数据库中的安卓证书记录。
 
-		defer mvt.Chain(AppInfo).
-			Elem().
-			FieldByName("Platform").
-			Set(model.AppPlatformAndroid).
-			Reset()
-		defer mvt.Chain(&consts.PepkJarPath).
-			Elem().
-			Set("../../pepk.jar").
-			Reset()
-		defer mvt.Chain(&consts.JavaBinaryPathForPepk).
-			Elem().
-			Set("java").
-			Reset()
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
@@ -772,18 +730,24 @@ func TestAndroidWebGetGooglePlayUpgradeCertificate(t *testing.T) {
 		dbAesKeyMocker := MockDBClient[model.AesKey](ctx)
 		dbAndroidCertificateMocker := MockDBClient[model.AndroidCertificate](ctx)
 		dbEventMocker := MockDBClient[model.Event](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
-		dbAesKeyMocker = dbAesKeyMocker.TakeOnce(mockAesKey, nil)                           // 查询数据库中 AesKey。
-		dbAesKeyMocker = dbAesKeyMocker.TakeOnce(mockAesKey, nil)                           // 查询数据库中 AesKey（第二证书可能不同密钥）。
-		dbAndroidCertificateMocker = dbAndroidCertificateMocker.TakeOnce(mockCert, nil)     // 查询数据库中部署证书数据。
-		dbAndroidCertificateMocker = dbAndroidCertificateMocker.TakeOnce(mockCert, nil)     // 查询数据库中上传证书数据。
-		dbEventMocker = dbEventMocker.CreateOnce(nil)                                       // 添加应用事件到数据库。
+		appPlatformReset := mvt.Chain(AppInfo).Elem().FieldByName("Platform").Set(model.AppPlatformAndroid)
+		pepkPathReset := mvt.Chain(&consts.PepkJarPath).Elem().Set("../../pepk.jar")
+		javaPathReset := mvt.Chain(&consts.JavaBinaryPathForPepk).Elem().Set("java")
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)              // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil)          // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                 // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                            // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                           // 校验系统管理员权限。
+		dbAesKeyMocker = dbAesKeyMocker.TakeOnce(mockAesKey, nil)                       // 查询数据库中 AesKey。
+		dbAesKeyMocker = dbAesKeyMocker.TakeOnce(mockAesKey, nil)                       // 查询数据库中 AesKey（第二证书可能不同密钥）。
+		dbAndroidCertificateMocker = dbAndroidCertificateMocker.TakeOnce(mockCert, nil) // 查询数据库中部署证书数据。
+		dbAndroidCertificateMocker = dbAndroidCertificateMocker.TakeOnce(mockCert, nil) // 查询数据库中上传证书数据。
+		dbEventMocker = dbEventMocker.CreateOnce(nil)                                   // 添加应用事件到数据库。
+		defer appPlatformReset.Reset()
+		defer pepkPathReset.Reset()
+		defer javaPathReset.Reset()
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
@@ -796,7 +760,7 @@ func TestAndroidWebGetGooglePlayUpgradeCertificate(t *testing.T) {
 			&protocol.AndroidWebGetGooglePlayUpgradeCertificateReq{
 				DeployCertificateID: deployCertificateID,
 				UploadCertificateID: uploadCertificateID,
-				PublicKey:           androidRSAPublicKey,
+				PublicKey:           AndroidRSAPublicKey,
 			}),
 		)
 
@@ -816,13 +780,13 @@ func TestAndroidWebGetGooglePlayUpgradeCertificate(t *testing.T) {
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
 		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)     // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                       // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                        // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                   // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                       // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                  // 校验系统管理员权限。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
@@ -845,12 +809,12 @@ func TestAndroidWebGetGooglePlayUpgradeCertificate(t *testing.T) {
 		Name                                                string
 		DeployCertificateID, UploadCertificateID, PublicKey string
 	}{
-		{"部署证书 ID 缺失", "", util.FastRandomAlphaNumberString(32), androidRSAPublicKey},
-		{"部署证书 ID 错误", util.FastRandomAlphaNumberString(31), util.FastRandomAlphaNumberString(32), androidRSAPublicKey},
-		{"部署证书 ID 非法", util.FastRandomAlphaNumberString(31) + "汉", util.FastRandomAlphaNumberString(32), androidRSAPublicKey},
-		{"升级证书 ID 缺失", util.FastRandomAlphaNumberString(32), "", androidRSAPublicKey},
-		{"升级证书 ID 错误", util.FastRandomAlphaNumberString(32), util.FastRandomAlphaNumberString(31), androidRSAPublicKey},
-		{"升级证书 ID 非法", util.FastRandomAlphaNumberString(32), util.FastRandomAlphaNumberString(31) + "汉", androidRSAPublicKey},
+		{"部署证书 ID 缺失", "", util.FastRandomAlphaNumberString(32), AndroidRSAPublicKey},
+		{"部署证书 ID 错误", util.FastRandomAlphaNumberString(31), util.FastRandomAlphaNumberString(32), AndroidRSAPublicKey},
+		{"部署证书 ID 非法", util.FastRandomAlphaNumberString(31) + "汉", util.FastRandomAlphaNumberString(32), AndroidRSAPublicKey},
+		{"升级证书 ID 缺失", util.FastRandomAlphaNumberString(32), "", AndroidRSAPublicKey},
+		{"升级证书 ID 错误", util.FastRandomAlphaNumberString(32), util.FastRandomAlphaNumberString(31), AndroidRSAPublicKey},
+		{"升级证书 ID 非法", util.FastRandomAlphaNumberString(32), util.FastRandomAlphaNumberString(31) + "汉", AndroidRSAPublicKey},
 		{"公钥缺失", util.FastRandomAlphaNumberString(32), util.FastRandomAlphaNumberString(32), ""},
 	} {
 		t.Run("异常测试_"+v.Name, func(t *testing.T) {
@@ -865,23 +829,17 @@ func TestAndroidWebGetCertificateFacebookDigest(t *testing.T) {
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
 		secret := util.RandomBytes(16)
-		bs, _ := base64.StdEncoding.DecodeString(androidCertificate)
+		bs, _ := base64.StdEncoding.DecodeString(AndroidCertificate)
 		encrypt, _ := util.AESCBCEncrypt(secret, bs)
 		certificateID := util.FastRandomAlphaNumberString(32)
-		// 模拟数据库中的 AES 加密密钥记录。
-		mockAesKey := &model.AesKey{Secret: secret}
-		// 模拟数据库中的安卓证书记录。
-		mockCert := &model.AndroidCertificate{Content: encrypt, Storepass: androidKeystoreStorepass, Keypass: androidKeystoreKeypass, Alias_: androidKeystoreAlias}
+		mockAesKey := &model.AesKey{Secret: secret} // 模拟数据库中的 AES 加密密钥记录。
+		mockCert := &model.AndroidCertificate{
+			Content:   encrypt,
+			Storepass: AndroidKeystoreStorepass,
+			Keypass:   AndroidKeystoreKeypass,
+			Alias_:    AndroidKeystoreAlias,
+		} // 模拟数据库中的安卓证书记录。
 
-		defer mvt.Chain(AppInfo).
-			Elem().
-			FieldByName("Platform").
-			Set(model.AppPlatformAndroid).
-			Reset()
-		defer mvt.Chain(&consts.KeytoolBinaryPath).
-			Elem().
-			Set("keytool").
-			Reset()
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
@@ -889,16 +847,20 @@ func TestAndroidWebGetCertificateFacebookDigest(t *testing.T) {
 		dbAesKeyMocker := MockDBClient[model.AesKey](ctx)
 		dbAndroidCertificateMocker := MockDBClient[model.AndroidCertificate](ctx)
 		dbEventMocker := MockDBClient[model.Event](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
-		dbAesKeyMocker = dbAesKeyMocker.TakeOnce(mockAesKey, nil)                           // 查询数据库中证书加密密钥。
-		dbAndroidCertificateMocker = dbAndroidCertificateMocker.TakeOnce(mockCert, nil)     // 查询数据库中安卓证书数据。
-		dbEventMocker = dbEventMocker.CreateOnce(nil)                                       // 添加应用事件到数据库。
+		appPlatformReset := mvt.Chain(AppInfo).Elem().FieldByName("Platform").Set(model.AppPlatformAndroid)
+		keytoolPathReset := mvt.Chain(&consts.KeytoolBinaryPath).Elem().Set("keytool")
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)              // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil)          // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                 // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                            // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                           // 校验系统管理员权限。
+		dbAesKeyMocker = dbAesKeyMocker.TakeOnce(mockAesKey, nil)                       // 查询数据库中证书加密密钥。
+		dbAndroidCertificateMocker = dbAndroidCertificateMocker.TakeOnce(mockCert, nil) // 查询数据库中安卓证书数据。
+		dbEventMocker = dbEventMocker.CreateOnce(nil)                                   // 添加应用事件到数据库。
+		defer appPlatformReset.Reset()
+		defer keytoolPathReset.Reset()
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
@@ -926,13 +888,13 @@ func TestAndroidWebGetCertificateFacebookDigest(t *testing.T) {
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
 		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)     // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                       // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                        // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                   // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                       // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                  // 校验系统管理员权限。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
@@ -968,21 +930,14 @@ func TestAndroidWebSubmitAPKSigningJob(t *testing.T) {
 		signatureSchema := []int{1}
 		certificateID := util.FastRandomAlphaNumberString(32)
 		fileID := util.FastRandomAlphaNumberString(38)
-		// 模拟数据库中的文件记录（APK 签名类型）。
 		mockFile := &model.File{
 			UserID: LoginUser.ID,
 			AppID:  AppInfo.ID,
 			Name:   cc.ExtensionAPK,
 			Type:   model.FileTypeAndroidSigning,
-		}
-		// 模拟数据库中的安卓证书记录（有效期未过期）。
-		mockCert := &model.AndroidCertificate{NotAfter: time.Now().Add(time.Hour)}
+		} // 模拟数据库中的文件记录（APK 签名类型）。
+		mockCert := &model.AndroidCertificate{NotAfter: time.Now().Add(time.Hour)} // 模拟数据库中的安卓证书记录（有效期未过期）。
 
-		defer mvt.Chain(AppInfo).
-			Elem().
-			FieldByName("Platform").
-			Set(model.AppPlatformAndroid).
-			Reset()
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
@@ -991,18 +946,20 @@ func TestAndroidWebSubmitAPKSigningJob(t *testing.T) {
 		dbAndroidCertificateMocker := MockDBClient[model.AndroidCertificate](ctx)
 		dbAndroidSigningJobMocker := MockDBClient[model.AndroidSigningJob](ctx)
 		rabbitMQMocker := MockRabbitMQClient(ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
-		dbFileMocker = dbFileMocker.TakeOnce(mockFile, nil)                                 // 查询数据库中文件信息。
-		dbAndroidCertificateMocker = dbAndroidCertificateMocker.TakeOnce(mockCert, nil)     // 查询数据库中安卓证书信息。
-		redisMocker = redisMocker.SAddOnce(1, nil)                                          // 添加安卓签名任务 ID 到 Redis。
-		dbAndroidSigningJobMocker = dbAndroidSigningJobMocker.CreateOnce(nil)               // 保存安卓签名任务到数据库。
-		rabbitMQMocker = rabbitMQMocker.PublishWithContextOnce(nil)                         // 发送安卓签名任务消息到消息队列。
+		appPlatformReset := mvt.Chain(AppInfo).Elem().FieldByName("Platform").Set(model.AppPlatformAndroid)
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)              // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil)          // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                 // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                            // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                           // 校验系统管理员权限。
+		dbFileMocker = dbFileMocker.TakeOnce(mockFile, nil)                             // 查询数据库中文件信息。
+		dbAndroidCertificateMocker = dbAndroidCertificateMocker.TakeOnce(mockCert, nil) // 查询数据库中安卓证书信息。
+		redisMocker = redisMocker.SAddOnce(1, nil)                                      // 添加安卓签名任务 ID 到 Redis。
+		dbAndroidSigningJobMocker = dbAndroidSigningJobMocker.CreateOnce(nil)           // 保存安卓签名任务到数据库。
+		rabbitMQMocker = rabbitMQMocker.PublishWithContextOnce(nil)                     // 发送安卓签名任务消息到消息队列。
+		defer appPlatformReset.Reset()
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
@@ -1032,13 +989,13 @@ func TestAndroidWebSubmitAPKSigningJob(t *testing.T) {
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
 		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)     // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                       // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                        // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                   // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                       // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                  // 校验系统管理员权限。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
@@ -1085,21 +1042,14 @@ func TestAndroidWebSubmitAABSigningJob(t *testing.T) {
 		ctx := context.Background()
 		certificateID := util.FastRandomAlphaNumberString(32)
 		fileID := util.FastRandomAlphaNumberString(38)
-		// 模拟数据库中的文件记录（AAB 签名类型）。
 		mockFile := &model.File{
 			UserID: LoginUser.ID,
 			AppID:  AppInfo.ID,
 			Name:   cc.ExtensionAAB,
 			Type:   model.FileTypeAndroidSigning,
-		}
-		// 模拟数据库中的安卓证书记录（有效期未过期）。
-		mockCert := &model.AndroidCertificate{NotAfter: time.Now().Add(time.Hour)}
+		} // 模拟数据库中的文件记录（AAB 签名类型）。
+		mockCert := &model.AndroidCertificate{NotAfter: time.Now().Add(time.Hour)} // 模拟数据库中的安卓证书记录（有效期未过期）。
 
-		defer mvt.Chain(AppInfo).
-			Elem().
-			FieldByName("Platform").
-			Set(model.AppPlatformAndroid).
-			Reset()
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
@@ -1108,18 +1058,20 @@ func TestAndroidWebSubmitAABSigningJob(t *testing.T) {
 		dbAndroidCertificateMocker := MockDBClient[model.AndroidCertificate](ctx)
 		dbAndroidSigningJobMocker := MockDBClient[model.AndroidSigningJob](ctx)
 		rabbitMQMocker := MockRabbitMQClient(ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
-		dbFileMocker = dbFileMocker.TakeOnce(mockFile, nil)                                 // 查询数据库中文件信息。
-		dbAndroidCertificateMocker = dbAndroidCertificateMocker.TakeOnce(mockCert, nil)     // 查询数据库中安卓证书信息。
-		redisMocker = redisMocker.SAddOnce(1, nil)                                          // 添加安卓签名任务 ID 到 Redis。
-		dbAndroidSigningJobMocker = dbAndroidSigningJobMocker.CreateOnce(nil)               // 保存安卓签名任务到数据库。
-		rabbitMQMocker = rabbitMQMocker.PublishWithContextOnce(nil)                         // 发送安卓签名任务消息到消息队列。
+		appPlatformReset := mvt.Chain(AppInfo).Elem().FieldByName("Platform").Set(model.AppPlatformAndroid)
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)              // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil)          // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                 // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                            // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                           // 校验系统管理员权限。
+		dbFileMocker = dbFileMocker.TakeOnce(mockFile, nil)                             // 查询数据库中文件信息。
+		dbAndroidCertificateMocker = dbAndroidCertificateMocker.TakeOnce(mockCert, nil) // 查询数据库中安卓证书信息。
+		redisMocker = redisMocker.SAddOnce(1, nil)                                      // 添加安卓签名任务 ID 到 Redis。
+		dbAndroidSigningJobMocker = dbAndroidSigningJobMocker.CreateOnce(nil)           // 保存安卓签名任务到数据库。
+		rabbitMQMocker = rabbitMQMocker.PublishWithContextOnce(nil)                     // 发送安卓签名任务消息到消息队列。
+		defer appPlatformReset.Reset()
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
@@ -1148,13 +1100,13 @@ func TestAndroidWebSubmitAABSigningJob(t *testing.T) {
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
 		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)     // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                       // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                        // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                   // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                       // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                  // 校验系统管理员权限。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
@@ -1199,21 +1151,14 @@ func TestAndroidWebSubmitAPKPatchSigningJob(t *testing.T) {
 		certificateID := util.FastRandomAlphaNumberString(32)
 		fileID := util.FastRandomAlphaNumberString(38)
 		minimumSDKVersion := 1
-		// 模拟数据库中的文件记录（APK 签名类型）。
 		mockFile := &model.File{
 			UserID: LoginUser.ID,
 			AppID:  AppInfo.ID,
 			Name:   cc.ExtensionAPK,
 			Type:   model.FileTypeAndroidSigning,
-		}
-		// 模拟数据库中的安卓证书记录（有效期未过期）。
-		mockCert := &model.AndroidCertificate{NotAfter: time.Now().Add(time.Hour)}
+		} // 模拟数据库中的文件记录（APK 签名类型）。
+		mockCert := &model.AndroidCertificate{NotAfter: time.Now().Add(time.Hour)} // 模拟数据库中的安卓证书记录（有效期未过期）。
 
-		defer mvt.Chain(AppInfo).
-			Elem().
-			FieldByName("Platform").
-			Set(model.AppPlatformAndroid).
-			Reset()
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
@@ -1222,18 +1167,20 @@ func TestAndroidWebSubmitAPKPatchSigningJob(t *testing.T) {
 		dbAndroidCertificateMocker := MockDBClient[model.AndroidCertificate](ctx)
 		dbAndroidSigningJobMocker := MockDBClient[model.AndroidSigningJob](ctx)
 		rabbitMQMocker := MockRabbitMQClient(ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
-		dbFileMocker = dbFileMocker.TakeOnce(mockFile, nil)                                 // 查询数据库中文件信息。
-		dbAndroidCertificateMocker = dbAndroidCertificateMocker.TakeOnce(mockCert, nil)     // 查询数据库中安卓证书信息。
-		redisMocker = redisMocker.SAddOnce(1, nil)                                          // 添加安卓签名任务 ID 到 Redis。
-		dbAndroidSigningJobMocker = dbAndroidSigningJobMocker.CreateOnce(nil)               // 保存安卓签名任务到数据库。
-		rabbitMQMocker = rabbitMQMocker.PublishWithContextOnce(nil)                         // 发送安卓签名任务消息到消息队列。
+		appPlatformReset := mvt.Chain(AppInfo).Elem().FieldByName("Platform").Set(model.AppPlatformAndroid)
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)              // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil)          // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                 // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                            // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                           // 校验系统管理员权限。
+		dbFileMocker = dbFileMocker.TakeOnce(mockFile, nil)                             // 查询数据库中文件信息。
+		dbAndroidCertificateMocker = dbAndroidCertificateMocker.TakeOnce(mockCert, nil) // 查询数据库中安卓证书信息。
+		redisMocker = redisMocker.SAddOnce(1, nil)                                      // 添加安卓签名任务 ID 到 Redis。
+		dbAndroidSigningJobMocker = dbAndroidSigningJobMocker.CreateOnce(nil)           // 保存安卓签名任务到数据库。
+		rabbitMQMocker = rabbitMQMocker.PublishWithContextOnce(nil)                     // 发送安卓签名任务消息到消息队列。
+		defer appPlatformReset.Reset()
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
@@ -1264,13 +1211,13 @@ func TestAndroidWebSubmitAPKPatchSigningJob(t *testing.T) {
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
 		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)     // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                       // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                        // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                   // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                       // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                  // 校验系统管理员权限。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
@@ -1324,24 +1271,13 @@ func TestAndroidWebListSigningJobs(t *testing.T) {
 		certificateAlias := "~"
 		pageNumber := 1
 		pageSize := 1
-		// 模拟数据库中的用户列表数据（空结构体，仅占位）。
-		mockUserList := []*model.User{{}, {}}
-		// 模拟数据库中的 API 凭证列表数据（空结构体，仅占位）。
-		mockAPIAccountList := []*model.APIAccount{{}, {}}
-		// 模拟数据库中的安卓证书列表数据（空结构体，仅占位）。
-		mockAndroidCertList := []*model.AndroidCertificate{{}, {}}
-		// 模拟签名任务表名列表。
-		mockTableNames := []string{"~"}
-		// 模拟数据库中的签名任务列表数据（空结构体，仅占位）。
-		mockSigningJobList := []*model.AndroidSigningJob{{}, {}}
-		// 模拟数据库中的文件列表数据（空结构体，仅占位）。
-		mockFileList := []*model.File{{}, {}}
+		mockUserList := []*model.User{{}, {}}                      // 模拟数据库中的用户列表数据（空结构体，仅占位）。
+		mockAPIAccountList := []*model.APIAccount{{}, {}}          // 模拟数据库中的 API 凭证列表数据（空结构体，仅占位）。
+		mockAndroidCertList := []*model.AndroidCertificate{{}, {}} // 模拟数据库中的安卓证书列表数据（空结构体，仅占位）。
+		mockTableNames := []string{"~"}                            // 模拟签名任务表名列表。
+		mockSigningJobList := []*model.AndroidSigningJob{{}, {}}   // 模拟数据库中的签名任务列表数据（空结构体，仅占位）。
+		mockFileList := []*model.File{{}, {}}                      // 模拟数据库中的文件列表数据（空结构体，仅占位）。
 
-		defer mvt.Chain(AppInfo).
-			Elem().
-			FieldByName("Platform").
-			Set(model.AppPlatformAndroid).
-			Reset()
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
@@ -1350,8 +1286,9 @@ func TestAndroidWebListSigningJobs(t *testing.T) {
 		dbAndroidCertificateMocker := MockDBClient[model.AndroidCertificate](ctx)
 		dbAndroidSigningJobMocker := MockDBClient[model.AndroidSigningJob](ctx)
 		dbFileMocker := MockDBClient[model.File](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                           // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)                           // 加载 Redis 限流脚本。
+		appPlatformReset := mvt.Chain(AppInfo).Elem().FieldByName("Platform").Set(model.AppPlatformAndroid)
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)                                            // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)                                            // 加载 Redis 限流脚本。
 		redisMocker = redisMocker.GetOnce(Session, nil)                                                               // 获取 Redis 用户会话数据。
 		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                                          // 查询数据库登录用户信息。
 		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                                              // 查询数据库应用信息。
@@ -1366,6 +1303,7 @@ func TestAndroidWebListSigningJobs(t *testing.T) {
 		dbAndroidSigningJobMocker = dbAndroidSigningJobMocker.AndroidSigningJobCount2Once(1, nil)                     // 统计安卓签名任务总数。
 		dbAndroidSigningJobMocker = dbAndroidSigningJobMocker.AndroidSigningJobListOnce(mockSigningJobList, nil)      // 分页查询安卓签名任务记录。
 		dbFileMocker = dbFileMocker.FindOnce(mockFileList, nil)                                                       // 查询数据库中文件信息。
+		defer appPlatformReset.Reset()
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
@@ -1404,12 +1342,12 @@ func TestAndroidWebListSigningJobs(t *testing.T) {
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
 		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)     // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                        // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                   // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                       // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                  // 校验系统管理员权限。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
@@ -1452,15 +1390,14 @@ func TestAndroidWebRemoveOrganization(t *testing.T) {
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
 		id := 1
-		// 模拟数据库删除操作返回结果（影响一行）。
-		mockResult := gen.ResultInfo{RowsAffected: 1}
+		mockResult := gen.ResultInfo{RowsAffected: 1} // 模拟数据库删除操作返回结果（影响一行）。
 
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
 		dbAndroidOrganizationMocker := MockDBClient[model.AndroidOrganization](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)   // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)   // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)                    // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)                    // 加载 Redis 限流脚本。
 		redisMocker = redisMocker.EvalshaOnce(true, nil)                                      // 执行防抖过滤 Redis Lua 脚本。
 		redisMocker = redisMocker.GetOnce(Session, nil)                                       // 获取 Redis 用户会话数据。
 		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                  // 查询数据库登录用户信息。
@@ -1484,12 +1421,12 @@ func TestAndroidWebRemoveOrganization(t *testing.T) {
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)     // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                       // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                        // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                   // 查询数据库登录用户信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                  // 校验系统管理员权限。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbUserRoleMocker.Reset()
@@ -1520,24 +1457,18 @@ func TestAndroidWebDeleteCertificate(t *testing.T) {
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
 		certificateID := util.FastRandomAlphaNumberString(32)
-		// 模拟数据库中的安卓证书记录（空结构体，表示已存在的证书）。
-		mockCert := &model.AndroidCertificate{}
-		// 模拟数据库更新操作返回结果（影响一行）。
-		mockResult := gen.ResultInfo{RowsAffected: 1}
+		mockCert := &model.AndroidCertificate{}       // 模拟数据库中的安卓证书记录（空结构体，表示已存在的证书）。
+		mockResult := gen.ResultInfo{RowsAffected: 1} // 模拟数据库更新操作返回结果（影响一行）。
 
-		defer mvt.Chain(AppInfo).
-			Elem().
-			FieldByName("Platform").
-			Set(model.AppPlatformAndroid).
-			Reset()
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
 		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
 		dbAndroidCertificateMocker := MockDBClient[model.AndroidCertificate](ctx)
 		dbEventMocker := MockDBClient[model.Event](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)             // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)             // 加载 Redis 限流脚本。
+		appPlatformReset := mvt.Chain(AppInfo).Elem().FieldByName("Platform").Set(model.AppPlatformAndroid)
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)                              // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)                              // 加载 Redis 限流脚本。
 		redisMocker = redisMocker.EvalshaOnce(true, nil)                                                // 执行防抖过滤 Redis Lua 脚本。
 		redisMocker = redisMocker.GetOnce(Session, nil)                                                 // 获取 Redis 用户会话数据。
 		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                            // 查询数据库登录用户信息。
@@ -1546,6 +1477,7 @@ func TestAndroidWebDeleteCertificate(t *testing.T) {
 		dbAndroidCertificateMocker = dbAndroidCertificateMocker.TakeOnce(mockCert, nil)                 // 查询数据库证书数据。
 		dbAndroidCertificateMocker = dbAndroidCertificateMocker.UpdateColumnSimpleOnce(mockResult, nil) // 设置数据库安卓证书记录为软删除状态。
 		dbEventMocker = dbEventMocker.CreateOnce(nil)                                                   // 添加应用事件到数据库。
+		defer appPlatformReset.Reset()
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
@@ -1568,13 +1500,13 @@ func TestAndroidWebDeleteCertificate(t *testing.T) {
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
 		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)     // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                       // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                        // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                   // 查询数据库登录用户信息。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                       // 查询数据库应用信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                  // 校验系统管理员权限。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbAppMocker.Reset()
@@ -1610,33 +1542,13 @@ func TestAndroidAPIDownloadCertificate(t *testing.T) {
 		certificateID := util.FastRandomAlphaNumberString(32)
 		secret := util.RandomBytes(16)
 		encrypt, _ := util.AESCBCEncrypt(secret, []byte("certificate content"))
-		// API 凭证密钥。
-		apiSecret := util.FastRandomAlphaNumberString(32)
-		// 模拟数据库中的 API 凭证账号。
-		mockAPIAccount := &model.APIAccount{
-			ID:          1,
-			AppID:       AppInfo.ID,
-			AccountID:   "testAccount",
-			Secret:      apiSecret,
-			IP:          model.StringList{"*"},
-			Frequency:   100,
-			ExpiredTime: time.Now().Add(24 * time.Hour),
-		}
-		// 模拟数据库中的 AES 加密密钥记录。
-		mockAesKey := &model.AesKey{Secret: secret}
-		// 模拟数据库中的安卓证书记录。
+		mockAesKey := &model.AesKey{Secret: secret} // 模拟数据库中的 AES 加密密钥记录。
 		mockCert := &model.AndroidCertificate{
 			Content:  encrypt,
 			Category: model.AndroidCertificateTypeDebug,
 			Alias_:   "alias",
-		}
+		} // 模拟数据库中的安卓证书记录。
 
-		defer mvt.Chain(AppInfo).
-			Elem().
-			FieldByName("Platform").
-			Set(model.AppPlatformAndroid).
-			Reset()
-		token := CreateAPIAuthorization(AppInfo.AppID, mockAPIAccount.AccountID, apiSecret)
 		redisMocker := MockRedis(ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
 		dbAPIAccountMocker := MockDBClient[model.APIAccount](ctx)
@@ -1644,15 +1556,17 @@ func TestAndroidAPIDownloadCertificate(t *testing.T) {
 		dbAndroidCertificateMocker := MockDBClient[model.AndroidCertificate](ctx)
 		dbAesKeyMocker := MockDBClient[model.AesKey](ctx)
 		dbEventMocker := MockDBClient[model.Event](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行 API 请求限流脚本。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbAPIAccountMocker = dbAPIAccountMocker.TakeOnce(mockAPIAccount, nil)               // 查询数据库 API 凭证信息。
-		dbAPIAuthorizationMocker = dbAPIAuthorizationMocker.CountOnce(1, nil)               // 校验 API 凭证权限。
-		dbAndroidCertificateMocker = dbAndroidCertificateMocker.TakeOnce(mockCert, nil)     // 查询数据库中安卓证书数据。
-		dbAesKeyMocker = dbAesKeyMocker.TakeOnce(mockAesKey, nil)                           // 查询数据库中证书加密密钥。
-		dbEventMocker = dbEventMocker.CreateOnce(nil)                                       // 添加应用事件到数据库。
+		appPlatformReset := mvt.Chain(AppInfo).Elem().FieldByName("Platform").Set(model.AppPlatformAndroid)
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)              // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil)          // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                // 执行 API 请求限流脚本。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                // 查询数据库应用信息。
+		dbAPIAccountMocker = dbAPIAccountMocker.TakeOnce(APIAccount, nil)               // 查询数据库 API 凭证信息。
+		dbAPIAuthorizationMocker = dbAPIAuthorizationMocker.CountOnce(1, nil)           // 校验 API 凭证权限。
+		dbAndroidCertificateMocker = dbAndroidCertificateMocker.TakeOnce(mockCert, nil) // 查询数据库中安卓证书数据。
+		dbAesKeyMocker = dbAesKeyMocker.TakeOnce(mockAesKey, nil)                       // 查询数据库中证书加密密钥。
+		dbEventMocker = dbEventMocker.CreateOnce(nil)                                   // 添加应用事件到数据库。
+		defer appPlatformReset.Reset()
 		defer redisMocker.Reset()
 		defer dbAppMocker.Reset()
 		defer dbAPIAccountMocker.Reset()
@@ -1661,7 +1575,8 @@ func TestAndroidAPIDownloadCertificate(t *testing.T) {
 		defer dbAesKeyMocker.Reset()
 		defer dbEventMocker.Reset()
 
-		rsp := ServeHTTP(ctx, CreateAPIGetRequest(ctx, reqPath, token,
+		rsp := ServeHTTP(ctx, CreateAPIGetRequest(ctx, reqPath,
+			CreateAPIAuthorization(AppInfo.AppID, APIAccount.AccountID, APIAccount.Secret),
 			protocol.AndroidAPIDownloadCertificateReq{CertificateID: certificateID}))
 
 		if rsp.Code != http.StatusOK {
@@ -1675,40 +1590,26 @@ func TestAndroidAPIDownloadCertificate(t *testing.T) {
 
 	validateErrorRequest := func(t *testing.T, certificateID string) {
 		ctx := context.Background()
-		apiSecret := util.FastRandomAlphaNumberString(32)
-		// 模拟数据库中的 API 凭证账号。
-		mockAPIAccount := &model.APIAccount{
-			ID:          1,
-			AppID:       AppInfo.ID,
-			AccountID:   "testAccount",
-			Secret:      apiSecret,
-			IP:          model.StringList{"*"},
-			Frequency:   100,
-			ExpiredTime: time.Now().Add(24 * time.Hour),
-		}
 
-		defer mvt.Chain(AppInfo).
-			Elem().
-			FieldByName("Platform").
-			Set(model.AppPlatformAndroid).
-			Reset()
-		token := CreateAPIAuthorization(AppInfo.AppID, mockAPIAccount.AccountID, apiSecret)
 		redisMocker := MockRedis(ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
 		dbAPIAccountMocker := MockDBClient[model.APIAccount](ctx)
 		dbAPIAuthorizationMocker := MockDBClient[model.APIAuthorization](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行 API 请求限流脚本。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbAPIAccountMocker = dbAPIAccountMocker.TakeOnce(mockAPIAccount, nil)               // 查询数据库 API 凭证信息。
-		dbAPIAuthorizationMocker = dbAPIAuthorizationMocker.CountOnce(1, nil)               // 校验 API 凭证权限。
+		appPlatformReset := mvt.Chain(AppInfo).Elem().FieldByName("Platform").Set(model.AppPlatformAndroid)
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)     // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                       // 执行 API 请求限流脚本。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                       // 查询数据库应用信息。
+		dbAPIAccountMocker = dbAPIAccountMocker.TakeOnce(APIAccount, nil)      // 查询数据库 API 凭证信息。
+		dbAPIAuthorizationMocker = dbAPIAuthorizationMocker.CountOnce(1, nil)  // 校验 API 凭证权限。
+		defer appPlatformReset.Reset()
 		defer redisMocker.Reset()
 		defer dbAppMocker.Reset()
 		defer dbAPIAccountMocker.Reset()
 		defer dbAPIAuthorizationMocker.Reset()
 
-		rsp := ServeHTTP(ctx, CreateAPIGetRequest(ctx, reqPath, token,
+		rsp := ServeHTTP(ctx, CreateAPIGetRequest(ctx, reqPath,
+			CreateAPIAuthorization(AppInfo.AppID, APIAccount.AccountID, APIAccount.Secret),
 			protocol.AndroidAPIDownloadCertificateReq{CertificateID: certificateID}))
 
 		if rsp.Code != http.StatusBadRequest {
@@ -1733,112 +1634,6 @@ func TestAndroidAPIDownloadCertificate(t *testing.T) {
 			validateErrorRequest(t, v.CertificateID)
 		})
 	}
-
-	t.Run("异常测试_未认证", func(t *testing.T) {
-		ctx := context.Background()
-
-		redisMocker := MockRedis(ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		defer redisMocker.Reset()
-
-		rsp := ServeHTTP(ctx, CreateAPIGetRequest(ctx, reqPath, "", nil))
-
-		if rsp.Code != http.StatusUnauthorized {
-			t.Errorf("expect http code %d, but got %d", http.StatusUnauthorized, rsp.Code)
-		}
-	})
-
-	t.Run("异常测试_无权限", func(t *testing.T) {
-		ctx := context.Background()
-		apiSecret := util.FastRandomAlphaNumberString(32)
-		// 模拟数据库中的 API 凭证账号。
-		mockAPIAccount := &model.APIAccount{
-			ID:          1,
-			AppID:       AppInfo.ID,
-			AccountID:   "testAccount",
-			Secret:      apiSecret,
-			IP:          model.StringList{"*"},
-			Frequency:   100,
-			ExpiredTime: time.Now().Add(24 * time.Hour),
-		}
-
-		defer mvt.Chain(AppInfo).
-			Elem().
-			FieldByName("Platform").
-			Set(model.AppPlatformAndroid).
-			Reset()
-		token := CreateAPIAuthorization(AppInfo.AppID, mockAPIAccount.AccountID, apiSecret)
-		redisMocker := MockRedis(ctx)
-		dbAppMocker := MockDBClient[model.App](ctx)
-		dbAPIAccountMocker := MockDBClient[model.APIAccount](ctx)
-		dbAPIAuthorizationMocker := MockDBClient[model.APIAuthorization](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行 API 请求限流脚本。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbAPIAccountMocker = dbAPIAccountMocker.TakeOnce(mockAPIAccount, nil)               // 查询数据库 API 凭证信息。
-		dbAPIAuthorizationMocker = dbAPIAuthorizationMocker.CountOnce(0, nil)               // 校验 API 凭证权限（无权限）。
-		defer redisMocker.Reset()
-		defer dbAppMocker.Reset()
-		defer dbAPIAccountMocker.Reset()
-		defer dbAPIAuthorizationMocker.Reset()
-
-		rsp := ServeHTTP(ctx, CreateAPIGetRequest(ctx, reqPath, token, nil))
-
-		if rsp.Code != http.StatusForbidden {
-			t.Errorf("expect http code %d, but got %d", http.StatusForbidden, rsp.Code)
-		}
-	})
-
-	t.Run("异常测试_应用平台不支持", func(t *testing.T) {
-		ctx := context.Background()
-		apiSecret := util.FastRandomAlphaNumberString(32)
-		certificateID := util.FastRandomAlphaNumberString(32)
-		// 模拟数据库中的 API 凭证账号。
-		mockAPIAccount := &model.APIAccount{
-			ID:          1,
-			AppID:       AppInfo.ID,
-			AccountID:   "testAccount",
-			Secret:      apiSecret,
-			IP:          model.StringList{"*"},
-			Frequency:   100,
-			ExpiredTime: time.Now().Add(24 * time.Hour),
-		}
-
-		defer mvt.Chain(AppInfo).
-			Elem().
-			FieldByName("Platform").
-			Set(model.AppPlatformWindows).
-			Reset()
-		token := CreateAPIAuthorization(AppInfo.AppID, mockAPIAccount.AccountID, apiSecret)
-		redisMocker := MockRedis(ctx)
-		dbAppMocker := MockDBClient[model.App](ctx)
-		dbAPIAccountMocker := MockDBClient[model.APIAccount](ctx)
-		dbAPIAuthorizationMocker := MockDBClient[model.APIAuthorization](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行 API 请求限流脚本。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbAPIAccountMocker = dbAPIAccountMocker.TakeOnce(mockAPIAccount, nil)               // 查询数据库 API 凭证信息。
-		dbAPIAuthorizationMocker = dbAPIAuthorizationMocker.CountOnce(1, nil)               // 校验 API 凭证权限。
-		defer redisMocker.Reset()
-		defer dbAppMocker.Reset()
-		defer dbAPIAccountMocker.Reset()
-		defer dbAPIAuthorizationMocker.Reset()
-
-		rsp := ServeHTTP(ctx, CreateAPIGetRequest(ctx, reqPath, token,
-			protocol.AndroidAPIDownloadCertificateReq{CertificateID: certificateID}))
-
-		if rsp.Code != http.StatusBadRequest {
-			t.Errorf("expect http code %d, but got %d", http.StatusBadRequest, rsp.Code)
-		}
-		var rspBodyObj util.Response[any]
-		_ = json.Unmarshal(rsp.Body.Bytes(), &rspBodyObj)
-		if rspBodyObj.Code != consts.ErrAppPlatformNotSupported {
-			t.Errorf("expect %v, but got %v", consts.ErrAppPlatformNotSupported, rspBodyObj.Code)
-		}
-	})
 }
 
 func TestAndroidAPISubmitAPKSigningJob(t *testing.T) {
@@ -1849,33 +1644,14 @@ func TestAndroidAPISubmitAPKSigningJob(t *testing.T) {
 		signatureSchema := []int{1}
 		certificateID := util.FastRandomAlphaNumberString(32)
 		fileID := util.FastRandomAlphaNumberString(38)
-		apiSecret := util.FastRandomAlphaNumberString(32)
-		// 模拟数据库中的 API 凭证账号。
-		mockAPIAccount := &model.APIAccount{
-			ID:          1,
-			AppID:       AppInfo.ID,
-			AccountID:   "testAccount",
-			Secret:      apiSecret,
-			IP:          model.StringList{"*"},
-			Frequency:   100,
-			ExpiredTime: time.Now().Add(24 * time.Hour),
-		}
-		// 模拟数据库中的文件记录（APK 签名类型）。
 		mockFile := &model.File{
 			UserID: LoginUser.ID,
 			AppID:  AppInfo.ID,
 			Name:   cc.ExtensionAPK,
 			Type:   model.FileTypeAndroidSigning,
-		}
-		// 模拟数据库中的安卓证书记录（有效期未过期）。
-		mockCert := &model.AndroidCertificate{NotAfter: time.Now().Add(time.Hour)}
+		} // 模拟数据库中的文件记录（APK 签名类型）。
+		mockCert := &model.AndroidCertificate{NotAfter: time.Now().Add(time.Hour)} // 模拟数据库中的安卓证书记录（有效期未过期）。
 
-		defer mvt.Chain(AppInfo).
-			Elem().
-			FieldByName("Platform").
-			Set(model.AppPlatformAndroid).
-			Reset()
-		token := CreateAPIAuthorization(AppInfo.AppID, mockAPIAccount.AccountID, apiSecret)
 		redisMocker := MockRedis(ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
 		dbAPIAccountMocker := MockDBClient[model.APIAccount](ctx)
@@ -1884,17 +1660,19 @@ func TestAndroidAPISubmitAPKSigningJob(t *testing.T) {
 		dbAndroidCertificateMocker := MockDBClient[model.AndroidCertificate](ctx)
 		dbAndroidSigningJobMocker := MockDBClient[model.AndroidSigningJob](ctx)
 		rabbitMQMocker := MockRabbitMQClient(ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行 API 请求限流脚本。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbAPIAccountMocker = dbAPIAccountMocker.TakeOnce(mockAPIAccount, nil)               // 查询数据库 API 凭证信息。
-		dbAPIAuthorizationMocker = dbAPIAuthorizationMocker.CountOnce(1, nil)               // 校验 API 凭证权限。
-		dbFileMocker = dbFileMocker.TakeOnce(mockFile, nil)                                 // 查询数据库中文件信息。
-		dbAndroidCertificateMocker = dbAndroidCertificateMocker.TakeOnce(mockCert, nil)     // 查询数据库中安卓证书信息。
-		redisMocker = redisMocker.SAddOnce(1, nil)                                          // 添加安卓签名任务 ID 到 Redis。
-		dbAndroidSigningJobMocker = dbAndroidSigningJobMocker.CreateOnce(nil)               // 保存安卓签名任务到数据库。
-		rabbitMQMocker = rabbitMQMocker.PublishWithContextOnce(nil)                         // 发送安卓签名任务消息到消息队列。
+		appPlatformReset := mvt.Chain(AppInfo).Elem().FieldByName("Platform").Set(model.AppPlatformAndroid)
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)              // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil)          // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                // 执行 API 请求限流脚本。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                // 查询数据库应用信息。
+		dbAPIAccountMocker = dbAPIAccountMocker.TakeOnce(APIAccount, nil)               // 查询数据库 API 凭证信息。
+		dbAPIAuthorizationMocker = dbAPIAuthorizationMocker.CountOnce(1, nil)           // 校验 API 凭证权限。
+		dbFileMocker = dbFileMocker.TakeOnce(mockFile, nil)                             // 查询数据库中文件信息。
+		dbAndroidCertificateMocker = dbAndroidCertificateMocker.TakeOnce(mockCert, nil) // 查询数据库中安卓证书信息。
+		redisMocker = redisMocker.SAddOnce(1, nil)                                      // 添加安卓签名任务 ID 到 Redis。
+		dbAndroidSigningJobMocker = dbAndroidSigningJobMocker.CreateOnce(nil)           // 保存安卓签名任务到数据库。
+		rabbitMQMocker = rabbitMQMocker.PublishWithContextOnce(nil)                     // 发送安卓签名任务消息到消息队列。
+		defer appPlatformReset.Reset()
 		defer redisMocker.Reset()
 		defer dbAppMocker.Reset()
 		defer dbAPIAccountMocker.Reset()
@@ -1906,7 +1684,8 @@ func TestAndroidAPISubmitAPKSigningJob(t *testing.T) {
 
 		rspBodyObj := CheckAndUnmarshalBody[protocol.AndroidAPISubmitAPKSigningJobRsp](
 			t,
-			ServeHTTP(ctx, CreateAPIPostJSONRequest(ctx, reqPath, token,
+			ServeHTTP(ctx, CreateAPIPostJSONRequest(ctx, reqPath,
+				CreateAPIAuthorization(AppInfo.AppID, APIAccount.AccountID, APIAccount.Secret),
 				&protocol.AndroidAPISubmitAPKSigningJobReq{
 					SignatureSchema: signatureSchema,
 					CertificateID:   certificateID,
@@ -1922,40 +1701,26 @@ func TestAndroidAPISubmitAPKSigningJob(t *testing.T) {
 
 	validateErrorRequest := func(t *testing.T, signatureSchema []int, certificateID, fileID string) {
 		ctx := context.Background()
-		apiSecret := util.FastRandomAlphaNumberString(32)
-		// 模拟数据库中的 API 凭证账号。
-		mockAPIAccount := &model.APIAccount{
-			ID:          1,
-			AppID:       AppInfo.ID,
-			AccountID:   "testAccount",
-			Secret:      apiSecret,
-			IP:          model.StringList{"*"},
-			Frequency:   100,
-			ExpiredTime: time.Now().Add(24 * time.Hour),
-		}
 
-		defer mvt.Chain(AppInfo).
-			Elem().
-			FieldByName("Platform").
-			Set(model.AppPlatformAndroid).
-			Reset()
-		token := CreateAPIAuthorization(AppInfo.AppID, mockAPIAccount.AccountID, apiSecret)
 		redisMocker := MockRedis(ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
 		dbAPIAccountMocker := MockDBClient[model.APIAccount](ctx)
 		dbAPIAuthorizationMocker := MockDBClient[model.APIAuthorization](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行 API 请求限流脚本。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbAPIAccountMocker = dbAPIAccountMocker.TakeOnce(mockAPIAccount, nil)               // 查询数据库 API 凭证信息。
-		dbAPIAuthorizationMocker = dbAPIAuthorizationMocker.CountOnce(1, nil)               // 校验 API 凭证权限。
+		appPlatformReset := mvt.Chain(AppInfo).Elem().FieldByName("Platform").Set(model.AppPlatformAndroid)
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)     // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                       // 执行 API 请求限流脚本。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                       // 查询数据库应用信息。
+		dbAPIAccountMocker = dbAPIAccountMocker.TakeOnce(APIAccount, nil)      // 查询数据库 API 凭证信息。
+		dbAPIAuthorizationMocker = dbAPIAuthorizationMocker.CountOnce(1, nil)  // 校验 API 凭证权限。
+		defer appPlatformReset.Reset()
 		defer redisMocker.Reset()
 		defer dbAppMocker.Reset()
 		defer dbAPIAccountMocker.Reset()
 		defer dbAPIAuthorizationMocker.Reset()
 
-		rsp := ServeHTTP(ctx, CreateAPIPostJSONRequest(ctx, reqPath, token,
+		rsp := ServeHTTP(ctx, CreateAPIPostJSONRequest(ctx, reqPath,
+			CreateAPIAuthorization(AppInfo.AppID, APIAccount.AccountID, APIAccount.Secret),
 			&protocol.AndroidAPISubmitAPKSigningJobReq{
 				SignatureSchema: signatureSchema,
 				CertificateID:   certificateID,
@@ -1991,125 +1756,6 @@ func TestAndroidAPISubmitAPKSigningJob(t *testing.T) {
 			validateErrorRequest(t, v.SignatureSchema, v.CertificateID, v.FileID)
 		})
 	}
-
-	t.Run("异常测试_未认证", func(t *testing.T) {
-		ctx := context.Background()
-
-		redisMocker := MockRedis(ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		defer redisMocker.Reset()
-
-		rsp := ServeHTTP(ctx, CreateAPIPostJSONRequest(ctx, reqPath, "",
-			&protocol.AndroidAPISubmitAPKSigningJobReq{
-				SignatureSchema: []int{1},
-				CertificateID:   util.FastRandomAlphaNumberString(32),
-				FileID:          util.FastRandomAlphaNumberString(38),
-			}))
-
-		if rsp.Code != http.StatusUnauthorized {
-			t.Errorf("expect http code %d, but got %d", http.StatusUnauthorized, rsp.Code)
-		}
-	})
-
-	t.Run("异常测试_无权限", func(t *testing.T) {
-		ctx := context.Background()
-		apiSecret := util.FastRandomAlphaNumberString(32)
-		// 模拟数据库中的 API 凭证账号。
-		mockAPIAccount := &model.APIAccount{
-			ID:          1,
-			AppID:       AppInfo.ID,
-			AccountID:   "testAccount",
-			Secret:      apiSecret,
-			IP:          model.StringList{"*"},
-			Frequency:   100,
-			ExpiredTime: time.Now().Add(24 * time.Hour),
-		}
-
-		defer mvt.Chain(AppInfo).
-			Elem().
-			FieldByName("Platform").
-			Set(model.AppPlatformAndroid).
-			Reset()
-		token := CreateAPIAuthorization(AppInfo.AppID, mockAPIAccount.AccountID, apiSecret)
-		redisMocker := MockRedis(ctx)
-		dbAppMocker := MockDBClient[model.App](ctx)
-		dbAPIAccountMocker := MockDBClient[model.APIAccount](ctx)
-		dbAPIAuthorizationMocker := MockDBClient[model.APIAuthorization](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行 API 请求限流脚本。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbAPIAccountMocker = dbAPIAccountMocker.TakeOnce(mockAPIAccount, nil)               // 查询数据库 API 凭证信息。
-		dbAPIAuthorizationMocker = dbAPIAuthorizationMocker.CountOnce(0, nil)               // 校验 API 凭证权限（无权限）。
-		defer redisMocker.Reset()
-		defer dbAppMocker.Reset()
-		defer dbAPIAccountMocker.Reset()
-		defer dbAPIAuthorizationMocker.Reset()
-
-		rsp := ServeHTTP(ctx, CreateAPIPostJSONRequest(ctx, reqPath, token,
-			&protocol.AndroidAPISubmitAPKSigningJobReq{
-				SignatureSchema: []int{1},
-				CertificateID:   util.FastRandomAlphaNumberString(32),
-				FileID:          util.FastRandomAlphaNumberString(38),
-			}))
-
-		if rsp.Code != http.StatusForbidden {
-			t.Errorf("expect http code %d, but got %d", http.StatusForbidden, rsp.Code)
-		}
-	})
-
-	t.Run("异常测试_应用平台不支持", func(t *testing.T) {
-		ctx := context.Background()
-		apiSecret := util.FastRandomAlphaNumberString(32)
-		// 模拟数据库中的 API 凭证账号。
-		mockAPIAccount := &model.APIAccount{
-			ID:          1,
-			AppID:       AppInfo.ID,
-			AccountID:   "testAccount",
-			Secret:      apiSecret,
-			IP:          model.StringList{"*"},
-			Frequency:   100,
-			ExpiredTime: time.Now().Add(24 * time.Hour),
-		}
-
-		defer mvt.Chain(AppInfo).
-			Elem().
-			FieldByName("Platform").
-			Set(model.AppPlatformWindows).
-			Reset()
-		token := CreateAPIAuthorization(AppInfo.AppID, mockAPIAccount.AccountID, apiSecret)
-		redisMocker := MockRedis(ctx)
-		dbAppMocker := MockDBClient[model.App](ctx)
-		dbAPIAccountMocker := MockDBClient[model.APIAccount](ctx)
-		dbAPIAuthorizationMocker := MockDBClient[model.APIAuthorization](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行 API 请求限流脚本。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbAPIAccountMocker = dbAPIAccountMocker.TakeOnce(mockAPIAccount, nil)               // 查询数据库 API 凭证信息。
-		dbAPIAuthorizationMocker = dbAPIAuthorizationMocker.CountOnce(1, nil)               // 校验 API 凭证权限。
-		defer redisMocker.Reset()
-		defer dbAppMocker.Reset()
-		defer dbAPIAccountMocker.Reset()
-		defer dbAPIAuthorizationMocker.Reset()
-
-		rsp := ServeHTTP(ctx, CreateAPIPostJSONRequest(ctx, reqPath, token,
-			&protocol.AndroidAPISubmitAPKSigningJobReq{
-				SignatureSchema: []int{1},
-				CertificateID:   util.FastRandomAlphaNumberString(32),
-				FileID:          util.FastRandomAlphaNumberString(38),
-			}))
-
-		if rsp.Code != http.StatusBadRequest {
-			t.Errorf("expect http code %d, but got %d", http.StatusBadRequest, rsp.Code)
-		}
-		var rspBodyObj util.Response[any]
-		_ = json.Unmarshal(rsp.Body.Bytes(), &rspBodyObj)
-		if rspBodyObj.Code != consts.ErrAppPlatformNotSupported {
-			t.Errorf("expect %v, but got %v", consts.ErrAppPlatformNotSupported, rspBodyObj.Code)
-		}
-	})
 }
 
 func TestAndroidAPISubmitAABSigningJob(t *testing.T) {
@@ -2119,33 +1765,14 @@ func TestAndroidAPISubmitAABSigningJob(t *testing.T) {
 		ctx := context.Background()
 		certificateID := util.FastRandomAlphaNumberString(32)
 		fileID := util.FastRandomAlphaNumberString(38)
-		apiSecret := util.FastRandomAlphaNumberString(32)
-		// 模拟数据库中的 API 凭证账号。
-		mockAPIAccount := &model.APIAccount{
-			ID:          1,
-			AppID:       AppInfo.ID,
-			AccountID:   "testAccount",
-			Secret:      apiSecret,
-			IP:          model.StringList{"*"},
-			Frequency:   100,
-			ExpiredTime: time.Now().Add(24 * time.Hour),
-		}
-		// 模拟数据库中的文件记录（AAB 签名类型）。
 		mockFile := &model.File{
 			UserID: LoginUser.ID,
 			AppID:  AppInfo.ID,
 			Name:   cc.ExtensionAAB,
 			Type:   model.FileTypeAndroidSigning,
-		}
-		// 模拟数据库中的安卓证书记录（有效期未过期）。
-		mockCert := &model.AndroidCertificate{NotAfter: time.Now().Add(time.Hour)}
+		} // 模拟数据库中的文件记录（AAB 签名类型）。
+		mockCert := &model.AndroidCertificate{NotAfter: time.Now().Add(time.Hour)} // 模拟数据库中的安卓证书记录（有效期未过期）。
 
-		defer mvt.Chain(AppInfo).
-			Elem().
-			FieldByName("Platform").
-			Set(model.AppPlatformAndroid).
-			Reset()
-		token := CreateAPIAuthorization(AppInfo.AppID, mockAPIAccount.AccountID, apiSecret)
 		redisMocker := MockRedis(ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
 		dbAPIAccountMocker := MockDBClient[model.APIAccount](ctx)
@@ -2154,17 +1781,19 @@ func TestAndroidAPISubmitAABSigningJob(t *testing.T) {
 		dbAndroidCertificateMocker := MockDBClient[model.AndroidCertificate](ctx)
 		dbAndroidSigningJobMocker := MockDBClient[model.AndroidSigningJob](ctx)
 		rabbitMQMocker := MockRabbitMQClient(ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行 API 请求限流脚本。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbAPIAccountMocker = dbAPIAccountMocker.TakeOnce(mockAPIAccount, nil)               // 查询数据库 API 凭证信息。
-		dbAPIAuthorizationMocker = dbAPIAuthorizationMocker.CountOnce(1, nil)               // 校验 API 凭证权限。
-		dbFileMocker = dbFileMocker.TakeOnce(mockFile, nil)                                 // 查询数据库中文件信息。
-		dbAndroidCertificateMocker = dbAndroidCertificateMocker.TakeOnce(mockCert, nil)     // 查询数据库中安卓证书信息。
-		redisMocker = redisMocker.SAddOnce(1, nil)                                          // 添加安卓签名任务 ID 到 Redis。
-		dbAndroidSigningJobMocker = dbAndroidSigningJobMocker.CreateOnce(nil)               // 保存安卓签名任务到数据库。
-		rabbitMQMocker = rabbitMQMocker.PublishWithContextOnce(nil)                         // 发送安卓签名任务消息到消息队列。
+		appPlatformReset := mvt.Chain(AppInfo).Elem().FieldByName("Platform").Set(model.AppPlatformAndroid)
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)              // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil)          // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                // 执行 API 请求限流脚本。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                // 查询数据库应用信息。
+		dbAPIAccountMocker = dbAPIAccountMocker.TakeOnce(APIAccount, nil)               // 查询数据库 API 凭证信息。
+		dbAPIAuthorizationMocker = dbAPIAuthorizationMocker.CountOnce(1, nil)           // 校验 API 凭证权限。
+		dbFileMocker = dbFileMocker.TakeOnce(mockFile, nil)                             // 查询数据库中文件信息。
+		dbAndroidCertificateMocker = dbAndroidCertificateMocker.TakeOnce(mockCert, nil) // 查询数据库中安卓证书信息。
+		redisMocker = redisMocker.SAddOnce(1, nil)                                      // 添加安卓签名任务 ID 到 Redis。
+		dbAndroidSigningJobMocker = dbAndroidSigningJobMocker.CreateOnce(nil)           // 保存安卓签名任务到数据库。
+		rabbitMQMocker = rabbitMQMocker.PublishWithContextOnce(nil)                     // 发送安卓签名任务消息到消息队列。
+		defer appPlatformReset.Reset()
 		defer redisMocker.Reset()
 		defer dbAppMocker.Reset()
 		defer dbAPIAccountMocker.Reset()
@@ -2176,7 +1805,8 @@ func TestAndroidAPISubmitAABSigningJob(t *testing.T) {
 
 		rspBodyObj := CheckAndUnmarshalBody[protocol.AndroidAPISubmitAABSigningJobRsp](
 			t,
-			ServeHTTP(ctx, CreateAPIPostJSONRequest(ctx, reqPath, token,
+			ServeHTTP(ctx, CreateAPIPostJSONRequest(ctx, reqPath,
+				CreateAPIAuthorization(AppInfo.AppID, APIAccount.AccountID, APIAccount.Secret),
 				&protocol.AndroidAPISubmitAABSigningJobReq{
 					CertificateID: certificateID,
 					FileID:        fileID,
@@ -2191,40 +1821,26 @@ func TestAndroidAPISubmitAABSigningJob(t *testing.T) {
 
 	validateErrorRequest := func(t *testing.T, certificateID, fileID string) {
 		ctx := context.Background()
-		apiSecret := util.FastRandomAlphaNumberString(32)
-		// 模拟数据库中的 API 凭证账号。
-		mockAPIAccount := &model.APIAccount{
-			ID:          1,
-			AppID:       AppInfo.ID,
-			AccountID:   "testAccount",
-			Secret:      apiSecret,
-			IP:          model.StringList{"*"},
-			Frequency:   100,
-			ExpiredTime: time.Now().Add(24 * time.Hour),
-		}
 
-		defer mvt.Chain(AppInfo).
-			Elem().
-			FieldByName("Platform").
-			Set(model.AppPlatformAndroid).
-			Reset()
-		token := CreateAPIAuthorization(AppInfo.AppID, mockAPIAccount.AccountID, apiSecret)
 		redisMocker := MockRedis(ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
 		dbAPIAccountMocker := MockDBClient[model.APIAccount](ctx)
 		dbAPIAuthorizationMocker := MockDBClient[model.APIAuthorization](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行 API 请求限流脚本。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbAPIAccountMocker = dbAPIAccountMocker.TakeOnce(mockAPIAccount, nil)               // 查询数据库 API 凭证信息。
-		dbAPIAuthorizationMocker = dbAPIAuthorizationMocker.CountOnce(1, nil)               // 校验 API 凭证权限。
+		appPlatformReset := mvt.Chain(AppInfo).Elem().FieldByName("Platform").Set(model.AppPlatformAndroid)
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)     // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                       // 执行 API 请求限流脚本。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                       // 查询数据库应用信息。
+		dbAPIAccountMocker = dbAPIAccountMocker.TakeOnce(APIAccount, nil)      // 查询数据库 API 凭证信息。
+		dbAPIAuthorizationMocker = dbAPIAuthorizationMocker.CountOnce(1, nil)  // 校验 API 凭证权限。
+		defer appPlatformReset.Reset()
 		defer redisMocker.Reset()
 		defer dbAppMocker.Reset()
 		defer dbAPIAccountMocker.Reset()
 		defer dbAPIAuthorizationMocker.Reset()
 
-		rsp := ServeHTTP(ctx, CreateAPIPostJSONRequest(ctx, reqPath, token,
+		rsp := ServeHTTP(ctx, CreateAPIPostJSONRequest(ctx, reqPath,
+			CreateAPIAuthorization(AppInfo.AppID, APIAccount.AccountID, APIAccount.Secret),
 			&protocol.AndroidAPISubmitAABSigningJobReq{
 				CertificateID: certificateID,
 				FileID:        fileID,
@@ -2256,111 +1872,100 @@ func TestAndroidAPISubmitAABSigningJob(t *testing.T) {
 			validateErrorRequest(t, v.CertificateID, v.FileID)
 		})
 	}
+}
 
-	t.Run("异常测试_未认证", func(t *testing.T) {
+func TestAndroidAPISubmitAPKPatchSigningJob(t *testing.T) {
+	const reqPath = "/api/android/submitAPKPatchSigningJob"
+
+	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
+		signatureSchema := []int{1}
+		certificateID := util.FastRandomAlphaNumberString(32)
+		fileID := util.FastRandomAlphaNumberString(38)
+		minimumSDKVersion := 1
+		mockFile := &model.File{
+			UserID: LoginUser.ID,
+			AppID:  AppInfo.ID,
+			Name:   cc.ExtensionAPK,
+			Type:   model.FileTypeAndroidSigning,
+		} // 模拟数据库中的文件记录（APK 签名类型）。
+		mockCert := &model.AndroidCertificate{NotAfter: time.Now().Add(time.Hour)} // 模拟数据库中的安卓证书记录（有效期未过期）。
 
-		redisMocker := MockRedis(ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		defer redisMocker.Reset()
-
-		rsp := ServeHTTP(ctx, CreateAPIPostJSONRequest(ctx, reqPath, "",
-			&protocol.AndroidAPISubmitAABSigningJobReq{
-				CertificateID: util.FastRandomAlphaNumberString(32),
-				FileID:        util.FastRandomAlphaNumberString(38),
-			}))
-
-		if rsp.Code != http.StatusUnauthorized {
-			t.Errorf("expect http code %d, but got %d", http.StatusUnauthorized, rsp.Code)
-		}
-	})
-
-	t.Run("异常测试_无权限", func(t *testing.T) {
-		ctx := context.Background()
-		apiSecret := util.FastRandomAlphaNumberString(32)
-		// 模拟数据库中的 API 凭证账号。
-		mockAPIAccount := &model.APIAccount{
-			ID:          1,
-			AppID:       AppInfo.ID,
-			AccountID:   "testAccount",
-			Secret:      apiSecret,
-			IP:          model.StringList{"*"},
-			Frequency:   100,
-			ExpiredTime: time.Now().Add(24 * time.Hour),
-		}
-
-		defer mvt.Chain(AppInfo).
-			Elem().
-			FieldByName("Platform").
-			Set(model.AppPlatformAndroid).
-			Reset()
-		token := CreateAPIAuthorization(AppInfo.AppID, mockAPIAccount.AccountID, apiSecret)
 		redisMocker := MockRedis(ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
 		dbAPIAccountMocker := MockDBClient[model.APIAccount](ctx)
 		dbAPIAuthorizationMocker := MockDBClient[model.APIAuthorization](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行 API 请求限流脚本。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbAPIAccountMocker = dbAPIAccountMocker.TakeOnce(mockAPIAccount, nil)               // 查询数据库 API 凭证信息。
-		dbAPIAuthorizationMocker = dbAPIAuthorizationMocker.CountOnce(0, nil)               // 校验 API 凭证权限（无权限）。
+		dbFileMocker := MockDBClient[model.File](ctx)
+		dbAndroidCertificateMocker := MockDBClient[model.AndroidCertificate](ctx)
+		dbAndroidSigningJobMocker := MockDBClient[model.AndroidSigningJob](ctx)
+		rabbitMQMocker := MockRabbitMQClient(ctx)
+		appPlatformReset := mvt.Chain(AppInfo).Elem().FieldByName("Platform").Set(model.AppPlatformAndroid)
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)              // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil)          // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                // 执行 API 请求限流脚本。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                // 查询数据库应用信息。
+		dbAPIAccountMocker = dbAPIAccountMocker.TakeOnce(APIAccount, nil)               // 查询数据库 API 凭证信息。
+		dbAPIAuthorizationMocker = dbAPIAuthorizationMocker.CountOnce(1, nil)           // 校验 API 凭证权限。
+		dbFileMocker = dbFileMocker.TakeOnce(mockFile, nil)                             // 查询数据库中文件信息。
+		dbAndroidCertificateMocker = dbAndroidCertificateMocker.TakeOnce(mockCert, nil) // 查询数据库中安卓证书信息。
+		redisMocker = redisMocker.SAddOnce(1, nil)                                      // 添加安卓签名任务 ID 到 Redis。
+		dbAndroidSigningJobMocker = dbAndroidSigningJobMocker.CreateOnce(nil)           // 保存安卓签名任务到数据库。
+		rabbitMQMocker = rabbitMQMocker.PublishWithContextOnce(nil)                     // 发送安卓签名任务消息到消息队列。
+		defer appPlatformReset.Reset()
+		defer redisMocker.Reset()
+		defer dbAppMocker.Reset()
+		defer dbAPIAccountMocker.Reset()
+		defer dbAPIAuthorizationMocker.Reset()
+		defer dbFileMocker.Reset()
+		defer dbAndroidCertificateMocker.Reset()
+		defer dbAndroidSigningJobMocker.Reset()
+		defer rabbitMQMocker.Reset()
+
+		rspBodyObj := CheckAndUnmarshalBody[protocol.AndroidAPISubmitAPKPatchSigningJobRsp](
+			t,
+			ServeHTTP(ctx, CreateAPIPostJSONRequest(ctx, reqPath,
+				CreateAPIAuthorization(AppInfo.AppID, APIAccount.AccountID, APIAccount.Secret),
+				&protocol.AndroidAPISubmitAPKPatchSigningJobReq{
+					SignatureSchema:   signatureSchema,
+					CertificateID:     certificateID,
+					FileID:            fileID,
+					MinimumSDKVersion: minimumSDKVersion,
+				})),
+			0,
+		)
+
+		if len(rspBodyObj.Data.JobID) <= 0 {
+			t.Errorf("job id is empty")
+		}
+	})
+
+	validateErrorRequest := func(t *testing.T, signatureSchema []int, certificateID, fileID string, minimumSDKVersion int) {
+		ctx := context.Background()
+
+		redisMocker := MockRedis(ctx)
+		dbAppMocker := MockDBClient[model.App](ctx)
+		dbAPIAccountMocker := MockDBClient[model.APIAccount](ctx)
+		dbAPIAuthorizationMocker := MockDBClient[model.APIAuthorization](ctx)
+		appPlatformReset := mvt.Chain(AppInfo).Elem().FieldByName("Platform").Set(model.AppPlatformAndroid)
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)     // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                       // 执行 API 请求限流脚本。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                       // 查询数据库应用信息。
+		dbAPIAccountMocker = dbAPIAccountMocker.TakeOnce(APIAccount, nil)      // 查询数据库 API 凭证信息。
+		dbAPIAuthorizationMocker = dbAPIAuthorizationMocker.CountOnce(1, nil)  // 校验 API 凭证权限。
+		defer appPlatformReset.Reset()
 		defer redisMocker.Reset()
 		defer dbAppMocker.Reset()
 		defer dbAPIAccountMocker.Reset()
 		defer dbAPIAuthorizationMocker.Reset()
 
-		rsp := ServeHTTP(ctx, CreateAPIPostJSONRequest(ctx, reqPath, token,
-			&protocol.AndroidAPISubmitAABSigningJobReq{
-				CertificateID: util.FastRandomAlphaNumberString(32),
-				FileID:        util.FastRandomAlphaNumberString(38),
-			}))
-
-		if rsp.Code != http.StatusForbidden {
-			t.Errorf("expect http code %d, but got %d", http.StatusForbidden, rsp.Code)
-		}
-	})
-
-	t.Run("异常测试_应用平台不支持", func(t *testing.T) {
-		ctx := context.Background()
-		apiSecret := util.FastRandomAlphaNumberString(32)
-		// 模拟数据库中的 API 凭证账号。
-		mockAPIAccount := &model.APIAccount{
-			ID:          1,
-			AppID:       AppInfo.ID,
-			AccountID:   "testAccount",
-			Secret:      apiSecret,
-			IP:          model.StringList{"*"},
-			Frequency:   100,
-			ExpiredTime: time.Now().Add(24 * time.Hour),
-		}
-
-		defer mvt.Chain(AppInfo).
-			Elem().
-			FieldByName("Platform").
-			Set(model.AppPlatformWindows).
-			Reset()
-		token := CreateAPIAuthorization(AppInfo.AppID, mockAPIAccount.AccountID, apiSecret)
-		redisMocker := MockRedis(ctx)
-		dbAppMocker := MockDBClient[model.App](ctx)
-		dbAPIAccountMocker := MockDBClient[model.APIAccount](ctx)
-		dbAPIAuthorizationMocker := MockDBClient[model.APIAuthorization](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行 API 请求限流脚本。
-		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
-		dbAPIAccountMocker = dbAPIAccountMocker.TakeOnce(mockAPIAccount, nil)               // 查询数据库 API 凭证信息。
-		dbAPIAuthorizationMocker = dbAPIAuthorizationMocker.CountOnce(1, nil)               // 校验 API 凭证权限。
-		defer redisMocker.Reset()
-		defer dbAppMocker.Reset()
-		defer dbAPIAccountMocker.Reset()
-		defer dbAPIAuthorizationMocker.Reset()
-
-		rsp := ServeHTTP(ctx, CreateAPIPostJSONRequest(ctx, reqPath, token,
-			&protocol.AndroidAPISubmitAABSigningJobReq{
-				CertificateID: util.FastRandomAlphaNumberString(32),
-				FileID:        util.FastRandomAlphaNumberString(38),
+		rsp := ServeHTTP(ctx, CreateAPIPostJSONRequest(ctx, reqPath,
+			CreateAPIAuthorization(AppInfo.AppID, APIAccount.AccountID, APIAccount.Secret),
+			&protocol.AndroidAPISubmitAPKPatchSigningJobReq{
+				SignatureSchema:   signatureSchema,
+				CertificateID:     certificateID,
+				FileID:            fileID,
+				MinimumSDKVersion: minimumSDKVersion,
 			}))
 
 		if rsp.Code != http.StatusBadRequest {
@@ -2368,8 +1973,190 @@ func TestAndroidAPISubmitAABSigningJob(t *testing.T) {
 		}
 		var rspBodyObj util.Response[any]
 		_ = json.Unmarshal(rsp.Body.Bytes(), &rspBodyObj)
-		if rspBodyObj.Code != consts.ErrAppPlatformNotSupported {
-			t.Errorf("expect %v, but got %v", consts.ErrAppPlatformNotSupported, rspBodyObj.Code)
+		if rspBodyObj.Code != errs.ErrInvalidRequestParameters {
+			t.Errorf("expect %v, but got %v", errs.ErrInvalidRequestParameters, rspBodyObj.Code)
+		}
+	}
+
+	for _, v := range []struct {
+		Name              string
+		SignatureSchema   []int
+		CertificateID     string
+		FileID            string
+		MinimumSDKVersion int
+	}{
+		{"签名方案缺失", nil, util.FastRandomAlphaNumberString(32), util.FastRandomAlphaNumberString(38), 1},
+		{"签名方案重复", []int{1, 1}, util.FastRandomAlphaNumberString(32), util.FastRandomAlphaNumberString(38), 1},
+		{"证书 ID 缺失", []int{1}, "", util.FastRandomAlphaNumberString(38), 1},
+		{"证书 ID 错误", []int{1}, util.FastRandomAlphaNumberString(31), util.FastRandomAlphaNumberString(38), 1},
+		{"证书 ID 非法", []int{1}, util.FastRandomAlphaNumberString(31) + "汉", util.FastRandomAlphaNumberString(38), 1},
+		{"文件 ID 非法", []int{1}, util.FastRandomAlphaNumberString(32), "", 1},
+		{"文件 ID 错误", []int{1}, util.FastRandomAlphaNumberString(32), util.FastRandomAlphaNumberString(37), 1},
+		{"文件 ID 非法", []int{1}, util.FastRandomAlphaNumberString(32), util.FastRandomAlphaNumberString(37) + "汉", 1},
+		{"SDK 版本缺失", []int{1}, util.FastRandomAlphaNumberString(32), util.FastRandomAlphaNumberString(38), 0},
+		{"SDK 版本非法", []int{1}, util.FastRandomAlphaNumberString(32), util.FastRandomAlphaNumberString(38), -1},
+	} {
+		t.Run("异常测试_"+v.Name, func(t *testing.T) {
+			validateErrorRequest(t, v.SignatureSchema, v.CertificateID, v.FileID, v.MinimumSDKVersion)
+		})
+	}
+}
+
+func TestAndroidAPIGetSigningJobInformation(t *testing.T) {
+	const reqPath = "/api/android/getSigningJobInformation"
+
+	t.Run("正常测试", func(t *testing.T) {
+		ctx := context.Background()
+		jobID := util.FastRandomAlphaNumberString(38)
+		fileID := util.FastRandomAlphaNumberString(38)
+		certificateID := util.FastRandomAlphaNumberString(32)
+		certAlias := "alias"
+		fileName := "test.apk"
+		mockJob := &model.AndroidSigningJob{
+			UserID:        APIAccount.ID,
+			Source:        model.SourceAPI,
+			CertificateID: 1,
+			FileID:        fileID,
+			Type:          model.AndroidSigningJobTypeAPK,
+			CreatedTime:   time.Now(),
+		} // 模拟数据库中的安卓签名任务记录（来源为 API）。
+		mockCert := &model.AndroidCertificate{
+			CertificateID: certificateID,
+			Alias_:        certAlias,
+		} // 模拟数据库中的安卓证书记录。
+
+		redisMocker := MockRedis(ctx)
+		dbAppMocker := MockDBClient[model.App](ctx)
+		dbAPIAccountMocker := MockDBClient[model.APIAccount](ctx)
+		dbAPIAuthorizationMocker := MockDBClient[model.APIAuthorization](ctx)
+		dbAndroidSigningJobMocker := MockDBClient[model.AndroidSigningJob](ctx)
+		dbAndroidCertificateMocker := MockDBClient[model.AndroidCertificate](ctx)
+		dbFileMocker := MockDBClient[model.File](ctx)
+		appPlatformReset := mvt.Chain(AppInfo).Elem().FieldByName("Platform").Set(model.AppPlatformAndroid)
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)                                         // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil)                                     // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                                           // 执行 API 请求限流脚本。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                                           // 查询数据库应用信息。
+		dbAPIAccountMocker = dbAPIAccountMocker.TakeOnce(APIAccount, nil)                                          // 查询数据库 API 凭证信息。
+		dbAPIAuthorizationMocker = dbAPIAuthorizationMocker.CountOnce(1, nil)                                      // 校验 API 凭证权限。
+		dbAndroidSigningJobMocker = dbAndroidSigningJobMocker.TakeOnce(mockJob, nil)                               // 查询数据库中签名任务信息。
+		dbAPIAccountMocker = dbAPIAccountMocker.ScanOnce(func(v any) { *v.(*string) = APIAccount.AccountID }, nil) // 查询数据库中 API 凭证账号名。
+		dbAndroidCertificateMocker = dbAndroidCertificateMocker.TakeOnce(mockCert, nil)                            // 查询数据库中安卓证书信息。
+		dbFileMocker = dbFileMocker.ScanOnce(func(v any) { *v.(*string) = fileName }, nil)                         // 查询数据库中文件名。
+		defer appPlatformReset.Reset()
+		defer redisMocker.Reset()
+		defer dbAppMocker.Reset()
+		defer dbAPIAccountMocker.Reset()
+		defer dbAPIAuthorizationMocker.Reset()
+		defer dbAndroidSigningJobMocker.Reset()
+		defer dbAndroidCertificateMocker.Reset()
+		defer dbFileMocker.Reset()
+
+		rspBodyObj := CheckAndUnmarshalBody[protocol.AndroidAPIGetSigningJobInformationRsp](
+			t,
+			ServeHTTP(ctx, CreateAPIGetRequest(ctx, reqPath,
+				CreateAPIAuthorization(AppInfo.AppID, APIAccount.AccountID, APIAccount.Secret),
+				protocol.AndroidAPIGetSigningJobInformationReq{JobID: jobID})),
+			0,
+		)
+
+		if rspBodyObj.Data.FileName != fileName {
+			t.Errorf("expect file name %s, but got %s", fileName, rspBodyObj.Data.FileName)
+		}
+		if rspBodyObj.Data.CertificateAlias != certAlias {
+			t.Errorf("expect certificate alias %s, but got %s", certAlias, rspBodyObj.Data.CertificateAlias)
+		}
+	})
+
+	validateErrorRequest := func(t *testing.T, jobID string) {
+		ctx := context.Background()
+
+		redisMocker := MockRedis(ctx)
+		dbAppMocker := MockDBClient[model.App](ctx)
+		dbAPIAccountMocker := MockDBClient[model.APIAccount](ctx)
+		dbAPIAuthorizationMocker := MockDBClient[model.APIAuthorization](ctx)
+		appPlatformReset := mvt.Chain(AppInfo).Elem().FieldByName("Platform").Set(model.AppPlatformAndroid)
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)     // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                       // 执行 API 请求限流脚本。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                       // 查询数据库应用信息。
+		dbAPIAccountMocker = dbAPIAccountMocker.TakeOnce(APIAccount, nil)      // 查询数据库 API 凭证信息。
+		dbAPIAuthorizationMocker = dbAPIAuthorizationMocker.CountOnce(1, nil)  // 校验 API 凭证权限。
+		defer appPlatformReset.Reset()
+		defer redisMocker.Reset()
+		defer dbAppMocker.Reset()
+		defer dbAPIAccountMocker.Reset()
+		defer dbAPIAuthorizationMocker.Reset()
+
+		rsp := ServeHTTP(ctx, CreateAPIGetRequest(ctx, reqPath,
+			CreateAPIAuthorization(AppInfo.AppID, APIAccount.AccountID, APIAccount.Secret),
+			protocol.AndroidAPIGetSigningJobInformationReq{JobID: jobID}))
+
+		if rsp.Code != http.StatusBadRequest {
+			t.Errorf("expect http code %d, but got %d", http.StatusBadRequest, rsp.Code)
+		}
+		var rspBodyObj util.Response[any]
+		_ = json.Unmarshal(rsp.Body.Bytes(), &rspBodyObj)
+		if rspBodyObj.Code != errs.ErrInvalidRequestParameters {
+			t.Errorf("expect %v, but got %v", errs.ErrInvalidRequestParameters, rspBodyObj.Code)
+		}
+	}
+
+	for _, v := range []struct {
+		Name  string
+		JobID string
+	}{
+		{"任务 ID 缺失", ""},
+		{"任务 ID 错误", util.FastRandomAlphaNumberString(37)},
+		{"任务 ID 非法", util.FastRandomAlphaNumberString(37) + "汉"},
+	} {
+		t.Run("异常测试_"+v.Name, func(t *testing.T) {
+			validateErrorRequest(t, v.JobID)
+		})
+	}
+}
+
+func TestAndroidAPIListCertificates(t *testing.T) {
+	const reqPath = "/api/android/listCertificates"
+
+	t.Run("正常测试", func(t *testing.T) {
+		ctx := context.Background()
+		mockUserList := []*model.User{{ID: 1, NameEn: "zs"}, {ID: 2, NameEn: "ls"}} // 模拟数据库中的用户列表数据。
+		mockCertList := []*model.AndroidCertificate{{}, {}}                         // 模拟数据库中的安卓证书列表数据。
+
+		redisMocker := MockRedis(ctx)
+		dbAppMocker := MockDBClient[model.App](ctx)
+		dbAPIAccountMocker := MockDBClient[model.APIAccount](ctx)
+		dbAPIAuthorizationMocker := MockDBClient[model.APIAuthorization](ctx)
+		dbAndroidCertificateMocker := MockDBClient[model.AndroidCertificate](ctx)
+		dbUserMocker := MockDBClient[model.User](ctx)
+		appPlatformReset := mvt.Chain(AppInfo).Elem().FieldByName("Platform").Set(model.AppPlatformAndroid)
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)                  // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil)              // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行 API 请求限流脚本。
+		dbAppMocker = dbAppMocker.TakeOnce(AppInfo, nil)                                    // 查询数据库应用信息。
+		dbAPIAccountMocker = dbAPIAccountMocker.TakeOnce(APIAccount, nil)                   // 查询数据库 API 凭证信息。
+		dbAPIAuthorizationMocker = dbAPIAuthorizationMocker.CountOnce(1, nil)               // 校验 API 凭证权限。
+		dbAndroidCertificateMocker = dbAndroidCertificateMocker.FindOnce(mockCertList, nil) // 查询数据库中安卓证书列表。
+		dbUserMocker = dbUserMocker.FindOnce(mockUserList, nil)                             // 查询数据库中用户英文名。
+		defer appPlatformReset.Reset()
+		defer redisMocker.Reset()
+		defer dbAppMocker.Reset()
+		defer dbAPIAccountMocker.Reset()
+		defer dbAPIAuthorizationMocker.Reset()
+		defer dbAndroidCertificateMocker.Reset()
+		defer dbUserMocker.Reset()
+
+		rspBodyObj := CheckAndUnmarshalBody[protocol.AndroidAPIListCertificatesRsp](
+			t,
+			ServeHTTP(ctx, CreateAPIGetRequest(ctx, reqPath,
+				CreateAPIAuthorization(AppInfo.AppID, APIAccount.AccountID, APIAccount.Secret),
+				nil)),
+			0,
+		)
+
+		if len(rspBodyObj.Data.List) <= 0 {
+			t.Errorf("list is empty")
 		}
 	})
 }

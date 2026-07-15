@@ -22,7 +22,6 @@ import (
 	"gitee.com/ivfzhou/csms/backend/consts"
 	"gitee.com/ivfzhou/csms/backend/protocol"
 	"gitee.com/ivfzhou/csms/comm/model"
-	"gitee.com/ivfzhou/csms/comm/util"
 )
 
 func TestNoticeWebLast(t *testing.T) {
@@ -41,9 +40,9 @@ func TestNoticeWebLast(t *testing.T) {
 
 		dbNoticeMocker := MockDBClient[model.Notice](ctx)
 		redisMocker := MockRedis(ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		dbNoticeMocker = dbNoticeMocker.TakeOnce(mockNotice, nil)                           // 查询数据库中活跃的公告。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)     // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil) // 加载 Redis 限流脚本。
+		dbNoticeMocker = dbNoticeMocker.TakeOnce(mockNotice, nil)              // 查询数据库中活跃的公告。
 		defer dbNoticeMocker.Reset()
 		defer redisMocker.Reset()
 
@@ -63,9 +62,9 @@ func TestNoticeWebLast(t *testing.T) {
 
 		dbNoticeMocker := MockDBClient[model.Notice](ctx)
 		redisMocker := MockRedis(ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		dbNoticeMocker = dbNoticeMocker.TakeOnce(nil, gorm.ErrRecordNotFound)               // 查询数据库中活跃的公告（无数据）。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)     // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil) // 加载 Redis 限流脚本。
+		dbNoticeMocker = dbNoticeMocker.TakeOnce(nil, gorm.ErrRecordNotFound)  // 查询数据库中活跃的公告（无数据）。
 		defer dbNoticeMocker.Reset()
 		defer redisMocker.Reset()
 
@@ -85,9 +84,9 @@ func TestNoticeWebLast(t *testing.T) {
 
 		dbNoticeMocker := MockDBClient[model.Notice](ctx)
 		redisMocker := MockRedis(ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		dbNoticeMocker = dbNoticeMocker.TakeOnce(nil, gorm.ErrInvalidData)                  // 查询数据库中活跃的公告（数据库错误）。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)     // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil) // 加载 Redis 限流脚本。
+		dbNoticeMocker = dbNoticeMocker.TakeOnce(nil, gorm.ErrInvalidData)     // 查询数据库中活跃的公告（数据库错误）。
 		defer dbNoticeMocker.Reset()
 		defer redisMocker.Reset()
 

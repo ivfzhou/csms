@@ -22,6 +22,7 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 	gorm "gorm.io/gorm/logger"
 
+	"gitee.com/ivfzhou/csms/comm/cfg"
 	tus "gitee.com/ivfzhou/tus_client/v2"
 )
 
@@ -29,7 +30,7 @@ var (
 	initializedFlag       atomic.Int32
 	closeFunc             = func(context.Context) {}
 	getLoggerFunc         = func() Logger { return defaultLoggerImpl }
-	getLevelFunc          = func() Level { return LevelDebug }
+	getLevelFunc          = func() Level { return ParseLevel(cfg.Get().Log().Level()) }
 	getGormLoggerFunc     = func() gorm.Interface { return gorm.Default }
 	getCronLoggerFunc     = func() cron.Logger { return cron.DefaultLogger }
 	getRedisLoggerFunc    = func() RedisLogger { return defaultRedisLoggerImpl }

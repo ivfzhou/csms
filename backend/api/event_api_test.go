@@ -28,7 +28,6 @@ func TestEventWebList(t *testing.T) {
 
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
-		// 事件列表查询参数。
 		appID := util.FastRandomAlphaNumberString(32)
 		platform := model.AppPlatformAndroid
 		source := model.SourceWeb
@@ -38,22 +37,18 @@ func TestEventWebList(t *testing.T) {
 		endTime := time.Now().Add(time.Hour)
 		pageSize := 10
 		pageNumber := 1
-		// 模拟数据库中的应用列表数据（空结构体，仅占位）。
-		mockAppList := []*model.App{{}, {}, {}}
-		// 模拟数据库中的用户列表数据（空结构体，仅占位）。
-		mockUserList := []*model.User{{}, {}, {}}
-		// 模拟事件分表名列表。
-		mockTableNames := []string{"t_event"}
-		// 模拟数据库中的事件列表数据。
-		mockEventList := []*model.Event{{Content: "{}"}, {Content: "{}"}, {Content: "{}"}}
+		mockAppList := []*model.App{{}, {}, {}}                                            // 模拟数据库中的应用列表数据（空结构体，仅占位）。
+		mockUserList := []*model.User{{}, {}, {}}                                          // 模拟数据库中的用户列表数据（空结构体，仅占位）。
+		mockTableNames := []string{"t_event"}                                              // 模拟事件分表名列表。
+		mockEventList := []*model.Event{{Content: "{}"}, {Content: "{}"}, {Content: "{}"}} // 模拟数据库中的事件列表数据。
 
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbEventMocker := MockDBClient[model.Event](ctx)
 		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)       // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil)       // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)                        // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)                        // 加载 Redis 限流脚本。
 		redisMocker = redisMocker.GetOnce(Session, nil)                                           // 获取 Redis 用户会话数据。
 		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                      // 查询数据库登录用户信息。
 		dbUserRoleMocker = dbUserRoleMocker.CountOnce(0, nil)                                     // 校验是否为系统管理员（非管理员则走成员逻辑）。
@@ -94,10 +89,10 @@ func TestEventWebList(t *testing.T) {
 
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)     // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                        // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                   // 查询数据库登录用户信息。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 
@@ -150,30 +145,27 @@ func TestEventEventWebStatistic(t *testing.T) {
 
 	t.Run("正常测试", func(t *testing.T) {
 		ctx := context.Background()
-		// 事件统计查询参数。
 		appID := util.FastRandomAlphaNumberString(32)
 		beginTime := time.Now()
 		endTime := time.Now().AddDate(0, 10, 0)
 		timeStep := protocol.TimeStepDay
-		// 模拟事件分表名列表。
-		mockTableNames := []string{"t_event"}
-		// 模拟按天统计的事件数量数据。
-		mockStatisticData := []map[string]any{{"count": 1, "type": 1, "day": "20260710"}}
+		mockTableNames := []string{"t_event"}                                             // 模拟事件分表名列表。
+		mockStatisticData := []map[string]any{{"count": 1, "type": 1, "day": "20260710"}} // 模拟按天统计的事件数量数据。
 
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbEventMocker := MockDBClient[model.Event](ctx)
 		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
 		dbAppMocker := MockDBClient[model.App](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
-		dbAppMocker = dbAppMocker.ScanOnce(func(v any) { *v.(*int) = 1 }, nil)              // 查询用户有权限的应用数量。
-		dbEventMocker = dbEventMocker.EventGetTablesOnce(mockTableNames, nil)               // 获取事件分表名。
-		dbEventMocker = dbEventMocker.EventCountTypesWithDayOnce(mockStatisticData, nil)    // 按天统计各类事件数量。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)               // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil)           // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                 // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                  // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                             // 查询数据库登录用户信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                            // 校验系统管理员权限。
+		dbAppMocker = dbAppMocker.ScanOnce(func(v any) { *v.(*int) = 1 }, nil)           // 查询用户有权限的应用数量。
+		dbEventMocker = dbEventMocker.EventGetTablesOnce(mockTableNames, nil)            // 获取事件分表名。
+		dbEventMocker = dbEventMocker.EventCountTypesWithDayOnce(mockStatisticData, nil) // 按天统计各类事件数量。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbEventMocker.Reset()
@@ -198,12 +190,12 @@ func TestEventEventWebStatistic(t *testing.T) {
 		redisMocker := MockRedis(ctx)
 		dbUserMocker := MockDBClient[model.User](ctx)
 		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 防抖脚本。
-		redisMocker = redisMocker.ScriptLoadOnce(util.FastRandomAlphaNumberString(32), nil) // 加载 Redis 限流脚本。
-		redisMocker = redisMocker.EvalshaOnce(true, nil)                                    // 执行防抖过滤 Redis Lua 脚本。
-		redisMocker = redisMocker.GetOnce(Session, nil)                                     // 获取 Redis 用户会话数据。
-		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                // 查询数据库登录用户信息。
-		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                               // 校验系统管理员权限。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)     // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                       // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                        // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                   // 查询数据库登录用户信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                  // 校验系统管理员权限。
 		defer redisMocker.Reset()
 		defer dbUserMocker.Reset()
 		defer dbUserRoleMocker.Reset()

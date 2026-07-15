@@ -15,12 +15,12 @@ package internal
 import (
 	"io"
 
-	tus "gitee.com/ivfzhou/tus_client/v2"
 	"github.com/ivfzhou/cron/v3"
 	amqp "github.com/rabbitmq/amqp091-go"
 	gorm "gorm.io/gorm/logger"
 
 	"gitee.com/ivfzhou/csms/comm/log"
+	tus "gitee.com/ivfzhou/tus_client/v2"
 )
 
 type (
