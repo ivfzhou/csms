@@ -26,3 +26,106 @@ Date: {{date}}
         checkAPIResult(200, undefined)
     })
 %}
+
+
+### 测试通知 -- 添加
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+    request.variables.set("clients", [
+        {
+            case: '正常请求',
+            req: {
+                message: "这是一侧通知：<a heaf='/index.html'>回到首页</a>",
+                activatedTime: '2026-07-17 12:00:00',
+                expiredTime: '2027-07-17 12:00:00'
+            },
+            rsp: {
+                code: -200004
+            }
+        },
+        {
+            case: '结果时间比开始时间小',
+            req: {
+                message: "这是一侧通知：<a heaf='/index.html'>回到首页</a>",
+                activatedTime: '2027-07-17 12:00:00',
+                expiredTime: '2026-07-17 12:00:00'
+            },
+            rsp: {
+                code: 100002
+            }
+        },
+        {
+            case: '没通知内容',
+            req: {
+                message: '',
+                activatedTime: '2026-07-17 12:00:00',
+                expiredTime: '2027-07-17 12:00:00'
+            },
+            rsp: {
+                code: 100002
+            }
+        }
+    ])
+%}
+POST https://127.0.0.1/backend/web/notice/add
+Date: {{date}}
+Cookie: csms_user=admin; csms_session={{csms_session_admin}}
+Content-Type: application/json
+
+{
+  "message": "{{$.clients..req.message}}",
+  "activatedTime": "{{$.clients..req.activatedTime}}",
+  "expiredTime": "{{$.clients..req.expiredTime}}"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    let current = request.variables.get("clients")[request.iteration()]
+    client.test(`测试响应结果 -- 添加 -- ${current.case}`, () => {
+        checkAPIResult(200, current.rsp.code)
+    })
+%}
+
+
+### 测试通知 -- 列表
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/notice/list
+Date: {{date}}
+Cookie: csms_user=admin; csms_session={{csms_session_admin}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    let noticeId = response.body.data?.list[0]?.id
+    client.global.set('noticeId', noticeId)
+    client.log(`notice id is ${noticeId}`)
+    client.test('测试响应结果 -- 列表', () => {
+        checkAPIResult(200, undefined)
+    })
+%}
+
+
+### 测试通知 -- 删除
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+DELETE https://127.0.0.1/backend/web/notice/remove?id={{noticeId}}
+Date: {{date}}
+Cookie: csms_user=admin; csms_session={{csms_session_admin}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 删除', () => {
+        checkAPIResult(200, -200004)
+    })
+%}

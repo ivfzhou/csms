@@ -18,6 +18,7 @@ import ./http/open_api_test.http
 import ./http/android_api_test.http
 import ./http/windows_api_test.http
 import ./http/apple_api_test.http
+import ./http/notice_api_test.http
 
 
 ### 测试用户模块
@@ -54,3 +55,7 @@ run ./http/windows_api_test.http
 
 ### 测试 Apple 模块
 run ./http/apple_api_test.http
+
+
+### 测试 Notice 模块
+run ./http/notice_api_test.http

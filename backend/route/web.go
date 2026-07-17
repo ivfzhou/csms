@@ -815,6 +815,35 @@ func webNotice(r *gin.RouterGroup) {
 		"/last",
 		api.NoticeWebLast,
 	)
+	addRouteWithPermissions(
+		r,
+		http.MethodPost,
+		"/add",
+		permissionSystem,
+		filter.WebAuthenticateFilter,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		api.NoticeWebAdd,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/list",
+		permissionSystem,
+		filter.WebAuthenticateFilter,
+		filter.PermissionWebAuthenticateFilter,
+		api.NoticeWebList,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodDelete,
+		"/remove",
+		permissionSystem,
+		filter.WebAuthenticateFilter,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		api.NoticeWebRemove,
+	)
 }
 
 func addRoute(r *gin.RouterGroup, method string, path string, handlers ...gin.HandlerFunc) {

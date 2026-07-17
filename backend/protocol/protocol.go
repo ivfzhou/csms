@@ -46,6 +46,7 @@ func Initialize(ctx context.Context) {
 	initTodo()
 	initUser()
 	initWindows()
+	initNotice()
 
 	// 注册校验标签。
 	validator.RegisterValidation("han", func(fl vt.FieldLevel) bool {

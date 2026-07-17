@@ -4128,6 +4128,55 @@
                 }
             }
         },
+        "/web/notice/add": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Notice-WebAPI"
+                ],
+                "summary": "添加通知",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "Mon, 02 Jan 2006 15:04:05 GMT",
+                        "description": "请求日期",
+                        "name": "Date",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "csms_user=; csms_seesion=",
+                        "description": "会话凭据",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "请求体",
+                        "name": "_",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/protocol.NoticeWebAddReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/util.Response-any"
+                        }
+                    }
+                }
+            }
+        },
         "/web/notice/last": {
             "get": {
                 "produces": [
@@ -4152,6 +4201,90 @@
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/util.Response-protocol_NoticeWebLastRsp"
+                        }
+                    }
+                }
+            }
+        },
+        "/web/notice/list": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Notice-WebAPI"
+                ],
+                "summary": "通知列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "Mon, 02 Jan 2006 15:04:05 GMT",
+                        "description": "请求日期",
+                        "name": "Date",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "csms_user=; csms_seesion=",
+                        "description": "会话凭据",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/util.Response-protocol_NoticeWebListRsp"
+                        }
+                    }
+                }
+            }
+        },
+        "/web/notice/remove": {
+            "delete": {
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Notice-WebAPI"
+                ],
+                "summary": "删除通知",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "Mon, 02 Jan 2006 15:04:05 GMT",
+                        "description": "请求日期",
+                        "name": "Date",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "csms_user=; csms_seesion=",
+                        "description": "会话凭据",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "example": 1,
+                        "description": "通知主码",
+                        "name": "id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/util.Response-any"
                         }
                     }
                 }
@@ -7670,12 +7803,79 @@
                 }
             }
         },
+        "protocol.NoticeWebAddReq": {
+            "type": "object",
+            "required": [
+                "activatedTime",
+                "expiredTime",
+                "message"
+            ],
+            "properties": {
+                "activatedTime": {
+                    "description": "生效时间",
+                    "type": "string",
+                    "example": "2026-07-17 12:00:00"
+                },
+                "expiredTime": {
+                    "description": "过期时间",
+                    "type": "string",
+                    "example": "2026-07-18 12:00:00"
+                },
+                "message": {
+                    "description": "通知内容",
+                    "type": "string",
+                    "maxLength": 16777215,
+                    "example": "any thing"
+                }
+            }
+        },
         "protocol.NoticeWebLastRsp": {
             "type": "object",
             "properties": {
                 "message": {
-                    "description": "通知内容。",
+                    "description": "通知内容",
                     "type": "string"
+                }
+            }
+        },
+        "protocol.NoticeWebListItem": {
+            "type": "object",
+            "properties": {
+                "activatedTime": {
+                    "description": "生效时间",
+                    "type": "string"
+                },
+                "createdTime": {
+                    "description": "添加时间",
+                    "type": "string"
+                },
+                "expiredTime": {
+                    "description": "失效时间",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "通知主码",
+                    "type": "integer"
+                },
+                "message": {
+                    "description": "通知内容",
+                    "type": "string"
+                },
+                "user": {
+                    "description": "添加人",
+                    "type": "string"
+                }
+            }
+        },
+        "protocol.NoticeWebListRsp": {
+            "type": "object",
+            "properties": {
+                "list": {
+                    "description": "通知列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/protocol.NoticeWebListItem"
+                    }
                 }
             }
         },
@@ -9857,6 +10057,33 @@
                     "allOf": [
                         {
                             "$ref": "#/definitions/protocol.NoticeWebLastRsp"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "提示语",
+                    "type": "string",
+                    "example": "失败时的提示语"
+                }
+            }
+        },
+        "util.Response-protocol_NoticeWebListRsp": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应码，大于 0 表示错误",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/errs.Code"
+                        }
+                    ],
+                    "example": 0
+                },
+                "data": {
+                    "description": "响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/protocol.NoticeWebListRsp"
                         }
                     ]
                 },

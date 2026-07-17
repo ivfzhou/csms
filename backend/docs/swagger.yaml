@@ -1193,11 +1193,60 @@ definitions:
         example: 2026014ef83c03e2ce4f1f94c11168d1acd087
         type: string
     type: object
+  protocol.NoticeWebAddReq:
+    properties:
+      activatedTime:
+        description: 生效时间
+        example: "2026-07-17 12:00:00"
+        type: string
+      expiredTime:
+        description: 过期时间
+        example: "2026-07-18 12:00:00"
+        type: string
+      message:
+        description: 通知内容
+        example: any thing
+        maxLength: 16777215
+        type: string
+    required:
+    - activatedTime
+    - expiredTime
+    - message
+    type: object
   protocol.NoticeWebLastRsp:
     properties:
       message:
-        description: 通知内容。
+        description: 通知内容
         type: string
+    type: object
+  protocol.NoticeWebListItem:
+    properties:
+      activatedTime:
+        description: 生效时间
+        type: string
+      createdTime:
+        description: 添加时间
+        type: string
+      expiredTime:
+        description: 失效时间
+        type: string
+      id:
+        description: 通知主码
+        type: integer
+      message:
+        description: 通知内容
+        type: string
+      user:
+        description: 添加人
+        type: string
+    type: object
+  protocol.NoticeWebListRsp:
+    properties:
+      list:
+        description: 通知列表
+        items:
+          $ref: '#/definitions/protocol.NoticeWebListItem'
+        type: array
     type: object
   protocol.OpenWebApplyReq:
     properties:
@@ -2756,6 +2805,22 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/protocol.NoticeWebLastRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_NoticeWebListRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.NoticeWebListRsp'
         description: 响应数据
       message:
         description: 提示语
@@ -5908,6 +5973,39 @@ paths:
       summary: 上传分片
       tags:
       - File-WebAPI
+  /web/notice/add:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/protocol.NoticeWebAddReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 添加通知
+      tags:
+      - Notice-WebAPI
   /web/notice/last:
     get:
       parameters:
@@ -5925,6 +6023,63 @@ paths:
           schema:
             $ref: '#/definitions/util.Response-protocol_NoticeWebLastRsp'
       summary: 获取通知
+      tags:
+      - Notice-WebAPI
+  /web/notice/list:
+    get:
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_NoticeWebListRsp'
+      summary: 通知列表
+      tags:
+      - Notice-WebAPI
+  /web/notice/remove:
+    delete:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 通知主码
+        example: 1
+        in: query
+        name: id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-any'
+      summary: 删除通知
       tags:
       - Notice-WebAPI
   /web/open/apply/{appId}:

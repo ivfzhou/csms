@@ -4,11 +4,11 @@
 
 关于单元测试：测试范围为业务功能逻辑，包含了 route、filter、api、service 等包逻辑。不包括与第三方服务接口的逻辑，也就是与 MySQL、Redis、Tusd、HTTP Client、RabbitMQ、Fastlane 等的交互使用了模拟数据。单测目的是确保功能的表现与预期一致。
 
-关于 HTTP 接口测试：在第三方服务接口能实际使用的情况下，测试业务功能逻辑。在单机环境下，运行各类服务，然后发送 HTTP 请求模拟客户端行为，确保服务功能的表现符合预期。比单测环境更接近实际生产环境。
+关于 服务 HTTP 接口测试：在第三方服务接口能实际使用的情况下，测试业务功能逻辑。在单机环境下，运行各类服务，然后发送 HTTP 请求模拟客户端行为，确保服务功能的表现符合预期。比单测环境更接近实际生产环境。
 
 # 二、运行环境
 
-|       工具       |        版本号        |
+|      工具      |      版本号       |
 |:--------------:|:-----------------:|
 | Development OS |     Debian13      | 
 |     Golang     |       1.26        | 
@@ -57,8 +57,7 @@
 # 四、运行服务
 
 1. 启动 Redis、MySQL、RabbitMQ、Tusd、Nginx、Fastlane 服务。Nginx 配置参考文件 [nginx.conf](./nginx.conf)。
-1. 修改中间件连接配置等其他需修改配置参数 [baclend/config.ini](./backend/config.ini)、
-   [fastlane_proxy/config.ini](./fastlane_proxy/config.ini)。
+1. 修改中间件连接配置等其他需修改配置参数 [baclend/config.ini](./backend/config.ini)、[fastlane_proxy/config.ini](./fastlane_proxy/config.ini)。
 1. 创建数据库表：
     ```shell
     mysql -u <enter your name> -p --default-character-set=utf8mb4 < ./backend/database.sql
@@ -125,7 +124,7 @@
 1. 运行在操作系统 Linux 下。
 1. 清空并重新创建数据库和表。
 1. 启动各中间件服务。
-1. backend 服务添加参数。
+1. backend 服务添加参数 `-localTestMode -skipRateLimit`。
 1. 启动各类服务。
 1. 如果 Nginx 使用了自签名证书，须先将证书添加到 Java 证书信任库中：
     ```shell
@@ -138,15 +137,7 @@
 
 # 六、自动化签名工具使用
 
-展示签名工具帮助信息：
-```shell
-cd ./auto_signer
-./auto_signer --help
-```
-
-配置文件参考 [auto_signer/config.yml](./auto_signer/config.yml)。
-
-运行签名工具，退出码非零表示运行签名失败：
+运行签名工具，退出码非零表示运行签名失败，配置文件参考 [auto_signer/config.yml](./auto_signer/config.yml)：
 ```shell
 ./auto_signer -config ./config.yml
 ```
