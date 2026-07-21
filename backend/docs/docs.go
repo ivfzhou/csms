@@ -2142,6 +2142,146 @@ const docTemplate = `{
                 }
             }
         },
+        "/web/android/statisticSigningCost": {
+            "get": {
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Android-WebAPI"
+                ],
+                "summary": "获取应用的 Android 类型签名次数耗时统计信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "Mon, 02 Jan 2006 15:04:05 GMT",
+                        "description": "请求日期",
+                        "name": "Date",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "csms_user=; csms_seesion=",
+                        "description": "会话凭据",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "4ef83c03e2ce4f1f94c11168d1acd087",
+                        "description": "应用 ID",
+                        "name": "appId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "2024-01-01",
+                        "description": "开始时间",
+                        "name": "beginTime",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "2025-01-01",
+                        "description": "结束时间",
+                        "name": "endTime",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 3,
+                        "type": "integer",
+                        "example": 1,
+                        "description": "时间粒度",
+                        "name": "timeStep",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/util.Response-protocol_AndroidWebStatisticSigningCostRsp"
+                        }
+                    }
+                }
+            }
+        },
+        "/web/android/statisticSigningTimes": {
+            "get": {
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Android-WebAPI"
+                ],
+                "summary": "获取应用的 Android 类型签名次数统计信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "Mon, 02 Jan 2006 15:04:05 GMT",
+                        "description": "请求日期",
+                        "name": "Date",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "csms_user=; csms_seesion=",
+                        "description": "会话凭据",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "4ef83c03e2ce4f1f94c11168d1acd087",
+                        "description": "应用 ID",
+                        "name": "appId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "2024-01-01",
+                        "description": "开始时间",
+                        "name": "beginTime",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "2025-01-01",
+                        "description": "结束时间",
+                        "name": "endTime",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 3,
+                        "type": "integer",
+                        "example": 1,
+                        "description": "时间粒度",
+                        "name": "timeStep",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/util.Response-protocol_AndroidWebStatisticSigningTimesRsp"
+                        }
+                    }
+                }
+            }
+        },
         "/web/android/submitAABSigningJob/{appId}": {
             "post": {
                 "consumes": [
@@ -3688,6 +3828,146 @@ const docTemplate = `{
                 }
             }
         },
+        "/web/apple/statisticSigningCost": {
+            "get": {
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Apple-WebAPI"
+                ],
+                "summary": "获取应用的 Apple 类型签名次数耗时统计信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "Mon, 02 Jan 2006 15:04:05 GMT",
+                        "description": "请求日期",
+                        "name": "Date",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "csms_user=; csms_seesion=",
+                        "description": "会话凭据",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "4ef83c03e2ce4f1f94c11168d1acd087",
+                        "description": "应用 ID",
+                        "name": "appId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "2024-01-01",
+                        "description": "开始时间",
+                        "name": "beginTime",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "2025-01-01",
+                        "description": "结束时间",
+                        "name": "endTime",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 3,
+                        "type": "integer",
+                        "example": 1,
+                        "description": "时间粒度",
+                        "name": "timeStep",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/util.Response-protocol_AppleWebStatisticSigningCostRsp"
+                        }
+                    }
+                }
+            }
+        },
+        "/web/apple/statisticSigningTimes": {
+            "get": {
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Apple-WebAPI"
+                ],
+                "summary": "获取应用的 Apple 类型签名次数统计信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "Mon, 02 Jan 2006 15:04:05 GMT",
+                        "description": "请求日期",
+                        "name": "Date",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "csms_user=; csms_seesion=",
+                        "description": "会话凭据",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "4ef83c03e2ce4f1f94c11168d1acd087",
+                        "description": "应用 ID",
+                        "name": "appId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "2024-01-01",
+                        "description": "开始时间",
+                        "name": "beginTime",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "2025-01-01",
+                        "description": "结束时间",
+                        "name": "endTime",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 3,
+                        "type": "integer",
+                        "example": 1,
+                        "description": "时间粒度",
+                        "name": "timeStep",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/util.Response-protocol_AppleWebStatisticSigningTimesRsp"
+                        }
+                    }
+                }
+            }
+        },
         "/web/apple/submitSigningJob/{appId}": {
             "post": {
                 "consumes": [
@@ -3887,12 +4167,14 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "4ef83c03e2ce4f1f94c11168d1acd087",
                         "description": "应用 ID",
                         "name": "appId",
                         "in": "query"
                     },
                     {
                         "type": "string",
+                        "example": "2024-01-01",
                         "description": "开始时间",
                         "name": "beginTime",
                         "in": "query",
@@ -3900,6 +4182,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "2025-01-01",
                         "description": "结束时间",
                         "name": "endTime",
                         "in": "query"
@@ -3907,7 +4190,8 @@ const docTemplate = `{
                     {
                         "maximum": 3,
                         "type": "integer",
-                        "description": "时间粒度。",
+                        "example": 1,
+                        "description": "时间粒度",
                         "name": "timeStep",
                         "in": "query"
                     }
@@ -5994,6 +6278,216 @@ const docTemplate = `{
                 }
             }
         },
+        "/web/windows/statisticSigningCost": {
+            "get": {
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Windows-WebAPI"
+                ],
+                "summary": "获取应用的 Windows 类型签名次数耗时统计信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "Mon, 02 Jan 2006 15:04:05 GMT",
+                        "description": "请求日期",
+                        "name": "Date",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "csms_user=; csms_seesion=",
+                        "description": "会话凭据",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "4ef83c03e2ce4f1f94c11168d1acd087",
+                        "description": "应用 ID",
+                        "name": "appId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "2024-01-01",
+                        "description": "开始时间",
+                        "name": "beginTime",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "2025-01-01",
+                        "description": "结束时间",
+                        "name": "endTime",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 3,
+                        "type": "integer",
+                        "example": 1,
+                        "description": "时间粒度",
+                        "name": "timeStep",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/util.Response-protocol_WindowsWebStatisticSigningCostRsp"
+                        }
+                    }
+                }
+            }
+        },
+        "/web/windows/statisticSigningPassRate": {
+            "get": {
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Windows-WebAPI"
+                ],
+                "summary": "获获取应用的 Windows 类型签名通过率统计信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "Mon, 02 Jan 2006 15:04:05 GMT",
+                        "description": "请求日期",
+                        "name": "Date",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "csms_user=; csms_seesion=",
+                        "description": "会话凭据",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "4ef83c03e2ce4f1f94c11168d1acd087",
+                        "description": "应用 ID",
+                        "name": "appId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "2024-01-01",
+                        "description": "开始时间",
+                        "name": "beginTime",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "2025-01-01",
+                        "description": "结束时间",
+                        "name": "endTime",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 3,
+                        "type": "integer",
+                        "example": 1,
+                        "description": "时间粒度",
+                        "name": "timeStep",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/util.Response-protocol_WindowsWebStatisticSigningPassRateRsp"
+                        }
+                    }
+                }
+            }
+        },
+        "/web/windows/statisticSigningTimes": {
+            "get": {
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Windows-WebAPI"
+                ],
+                "summary": "获取应用的 Windows 类型签名次数统计信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "Mon, 02 Jan 2006 15:04:05 GMT",
+                        "description": "请求日期",
+                        "name": "Date",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "csms_user=; csms_seesion=",
+                        "description": "会话凭据",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "4ef83c03e2ce4f1f94c11168d1acd087",
+                        "description": "应用 ID",
+                        "name": "appId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "2024-01-01",
+                        "description": "开始时间",
+                        "name": "beginTime",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "2025-01-01",
+                        "description": "结束时间",
+                        "name": "endTime",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 3,
+                        "type": "integer",
+                        "example": 1,
+                        "description": "时间粒度",
+                        "name": "timeStep",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/util.Response-protocol_WindowsWebStatisticSigningTimesRsp"
+                        }
+                    }
+                }
+            }
+        },
         "/web/windows/submitSigningJob/{appId}": {
             "post": {
                 "consumes": [
@@ -6776,6 +7270,72 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/protocol.AndroidWebListSigningJobsItem"
+                    }
+                }
+            }
+        },
+        "protocol.AndroidWebStatisticSigningCostItem": {
+            "type": "object",
+            "properties": {
+                "aabSigningCost": {
+                    "description": "AAB 签名耗时",
+                    "type": "integer"
+                },
+                "apkSigningCost": {
+                    "description": "APK 签名耗时",
+                    "type": "integer"
+                },
+                "beginTime": {
+                    "description": "开始时间",
+                    "type": "string"
+                },
+                "patchSigningCost": {
+                    "description": "补丁签名耗时",
+                    "type": "integer"
+                }
+            }
+        },
+        "protocol.AndroidWebStatisticSigningCostRsp": {
+            "type": "object",
+            "properties": {
+                "list": {
+                    "description": "数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/protocol.AndroidWebStatisticSigningCostItem"
+                    }
+                }
+            }
+        },
+        "protocol.AndroidWebStatisticSigningTimesItem": {
+            "type": "object",
+            "properties": {
+                "aabSigningTimes": {
+                    "description": "AAB 签名次数",
+                    "type": "integer"
+                },
+                "apkSigningTimes": {
+                    "description": "APK 签名次数",
+                    "type": "integer"
+                },
+                "beginTime": {
+                    "description": "开始时间",
+                    "type": "string"
+                },
+                "patchSigningTimes": {
+                    "description": "补丁签名次数",
+                    "type": "integer"
+                }
+            }
+        },
+        "protocol.AndroidWebStatisticSigningTimesRsp": {
+            "type": "object",
+            "properties": {
+                "list": {
+                    "description": "数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/protocol.AndroidWebStatisticSigningTimesItem"
                     }
                 }
             }
@@ -7585,6 +8145,56 @@ const docTemplate = `{
                     "description": "设备 ID",
                     "type": "string",
                     "maxLength": 128
+                }
+            }
+        },
+        "protocol.AppleWebStatisticSigningCostItem": {
+            "type": "object",
+            "properties": {
+                "beginTime": {
+                    "description": "开始时间",
+                    "type": "string"
+                },
+                "signingCost": {
+                    "description": "签名耗时",
+                    "type": "integer"
+                }
+            }
+        },
+        "protocol.AppleWebStatisticSigningCostRsp": {
+            "type": "object",
+            "properties": {
+                "list": {
+                    "description": "数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/protocol.AppleWebStatisticSigningCostItem"
+                    }
+                }
+            }
+        },
+        "protocol.AppleWebStatisticSigningTimesItem": {
+            "type": "object",
+            "properties": {
+                "beginTime": {
+                    "description": "开始时间",
+                    "type": "string"
+                },
+                "signingTimes": {
+                    "description": "签名次数",
+                    "type": "integer"
+                }
+            }
+        },
+        "protocol.AppleWebStatisticSigningTimesRsp": {
+            "type": "object",
+            "properties": {
+                "list": {
+                    "description": "数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/protocol.AppleWebStatisticSigningTimesItem"
+                    }
                 }
             }
         },
@@ -9303,6 +9913,129 @@ const docTemplate = `{
                 }
             }
         },
+        "protocol.WindowsWebStatisticSigningCostItem": {
+            "type": "object",
+            "properties": {
+                "attestationSigningCost": {
+                    "description": "微软 Attestation 签名耗时",
+                    "type": "integer"
+                },
+                "beginTime": {
+                    "description": "开始时间",
+                    "type": "string"
+                },
+                "hlkAndWHQLCost": {
+                    "description": "HLK 兼容性测试 \u0026 WHQL 签名耗时",
+                    "type": "integer"
+                },
+                "peAndAttestationSigningCost": {
+                    "description": "PE \u0026 微软 Attestation 签名耗时",
+                    "type": "integer"
+                },
+                "peSigningCost": {
+                    "description": "PE 签名耗时",
+                    "type": "integer"
+                },
+                "whqlCost": {
+                    "description": "WHQL 签名耗时",
+                    "type": "integer"
+                }
+            }
+        },
+        "protocol.WindowsWebStatisticSigningCostRsp": {
+            "type": "object",
+            "properties": {
+                "list": {
+                    "description": "数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/protocol.WindowsWebStatisticSigningCostItem"
+                    }
+                }
+            }
+        },
+        "protocol.WindowsWebStatisticSigningPassRateItem": {
+            "type": "object",
+            "properties": {
+                "attestationSigningPassRate": {
+                    "description": "微软 Attestation 签名通过率",
+                    "type": "integer"
+                },
+                "beginTime": {
+                    "description": "开始时间",
+                    "type": "string"
+                },
+                "hlkAndWHQLPassRate": {
+                    "description": "HLK 兼容性测试 \u0026 WHQL 签名通过率",
+                    "type": "integer"
+                },
+                "peAndAttestationSigningPassRate": {
+                    "description": "PE \u0026 微软 Attestation 签名通过率",
+                    "type": "integer"
+                },
+                "peSigningPassRate": {
+                    "description": "PE 签名通过率",
+                    "type": "integer"
+                },
+                "whqlPassRate": {
+                    "description": "WHQL 签名通过率",
+                    "type": "integer"
+                }
+            }
+        },
+        "protocol.WindowsWebStatisticSigningPassRateRsp": {
+            "type": "object",
+            "properties": {
+                "list": {
+                    "description": "数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/protocol.WindowsWebStatisticSigningPassRateItem"
+                    }
+                }
+            }
+        },
+        "protocol.WindowsWebStatisticSigningTimesItem": {
+            "type": "object",
+            "properties": {
+                "attestationSigningTimes": {
+                    "description": "微软 Attestation 签名数量",
+                    "type": "integer"
+                },
+                "beginTime": {
+                    "description": "开始时间",
+                    "type": "string"
+                },
+                "hlkAndWHQLTimes": {
+                    "description": "HLK 兼容性测试 \u0026 WHQL 签名数量",
+                    "type": "integer"
+                },
+                "peAndAttestationSigningTimes": {
+                    "description": "PE \u0026 微软 Attestation 签名数量",
+                    "type": "integer"
+                },
+                "peSigningTimes": {
+                    "description": "PE 签名数量",
+                    "type": "integer"
+                },
+                "whqlTimes": {
+                    "description": "WHQL 签名数量",
+                    "type": "integer"
+                }
+            }
+        },
+        "protocol.WindowsWebStatisticSigningTimesRsp": {
+            "type": "object",
+            "properties": {
+                "list": {
+                    "description": "数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/protocol.WindowsWebStatisticSigningTimesItem"
+                    }
+                }
+            }
+        },
         "protocol.WindowsWebSubmitSigningJobReq": {
             "type": "object",
             "properties": {
@@ -9667,6 +10400,60 @@ const docTemplate = `{
                 }
             }
         },
+        "util.Response-protocol_AndroidWebStatisticSigningCostRsp": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应码，大于 0 表示错误",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/errs.Code"
+                        }
+                    ],
+                    "example": 0
+                },
+                "data": {
+                    "description": "响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/protocol.AndroidWebStatisticSigningCostRsp"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "提示语",
+                    "type": "string",
+                    "example": "失败时的提示语"
+                }
+            }
+        },
+        "util.Response-protocol_AndroidWebStatisticSigningTimesRsp": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应码，大于 0 表示错误",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/errs.Code"
+                        }
+                    ],
+                    "example": 0
+                },
+                "data": {
+                    "description": "响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/protocol.AndroidWebStatisticSigningTimesRsp"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "提示语",
+                    "type": "string",
+                    "example": "失败时的提示语"
+                }
+            }
+        },
         "util.Response-protocol_AppWebCountRsp": {
             "type": "object",
             "properties": {
@@ -9927,6 +10714,60 @@ const docTemplate = `{
                     "allOf": [
                         {
                             "$ref": "#/definitions/protocol.AppleWebListSigningJobsRsp"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "提示语",
+                    "type": "string",
+                    "example": "失败时的提示语"
+                }
+            }
+        },
+        "util.Response-protocol_AppleWebStatisticSigningCostRsp": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应码，大于 0 表示错误",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/errs.Code"
+                        }
+                    ],
+                    "example": 0
+                },
+                "data": {
+                    "description": "响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/protocol.AppleWebStatisticSigningCostRsp"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "提示语",
+                    "type": "string",
+                    "example": "失败时的提示语"
+                }
+            }
+        },
+        "util.Response-protocol_AppleWebStatisticSigningTimesRsp": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应码，大于 0 表示错误",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/errs.Code"
+                        }
+                    ],
+                    "example": 0
+                },
+                "data": {
+                    "description": "响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/protocol.AppleWebStatisticSigningTimesRsp"
                         }
                     ]
                 },
@@ -10683,6 +11524,87 @@ const docTemplate = `{
                     "allOf": [
                         {
                             "$ref": "#/definitions/protocol.WindowsWebListWHQLJobsRsp"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "提示语",
+                    "type": "string",
+                    "example": "失败时的提示语"
+                }
+            }
+        },
+        "util.Response-protocol_WindowsWebStatisticSigningCostRsp": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应码，大于 0 表示错误",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/errs.Code"
+                        }
+                    ],
+                    "example": 0
+                },
+                "data": {
+                    "description": "响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/protocol.WindowsWebStatisticSigningCostRsp"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "提示语",
+                    "type": "string",
+                    "example": "失败时的提示语"
+                }
+            }
+        },
+        "util.Response-protocol_WindowsWebStatisticSigningPassRateRsp": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应码，大于 0 表示错误",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/errs.Code"
+                        }
+                    ],
+                    "example": 0
+                },
+                "data": {
+                    "description": "响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/protocol.WindowsWebStatisticSigningPassRateRsp"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "提示语",
+                    "type": "string",
+                    "example": "失败时的提示语"
+                }
+            }
+        },
+        "util.Response-protocol_WindowsWebStatisticSigningTimesRsp": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应码，大于 0 表示错误",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/errs.Code"
+                        }
+                    ],
+                    "example": 0
+                },
+                "data": {
+                    "description": "响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/protocol.WindowsWebStatisticSigningTimesRsp"
                         }
                     ]
                 },

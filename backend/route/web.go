@@ -476,6 +476,24 @@ func webAndroid(r *gin.RouterGroup) {
 		filter.DatabaseTransactionFilter,
 		api.AndroidWebDeleteCertificate,
 	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/statisticSigningTimes",
+		permissionSystem,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		api.AndroidWebStatisticSigningTimes,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/statisticSigningCost",
+		permissionSystem,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		api.AndroidWebStatisticSigningCost,
+	)
 }
 
 func webWindows(r *gin.RouterGroup) {
@@ -621,6 +639,33 @@ func webWindows(r *gin.RouterGroup) {
 		filter.PermissionWebAuthenticateFilter,
 		filter.DatabaseTransactionFilter,
 		api.WindowsWebDeleteCertificate,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/statisticSigningTimes",
+		permissionSystem,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		api.WindowsWebStatisticSigningTimes,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/statisticSigningCost",
+		permissionSystem,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		api.WindowsWebStatisticSigningCost,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/statisticSigningPassRate",
+		permissionSystem,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		api.WindowsWebStatisticSigningPassRate,
 	)
 }
 
@@ -803,6 +848,24 @@ func webApple(r *gin.RouterGroup) {
 		permissionAppRead,
 		filter.PermissionWebAuthenticateFilter,
 		api.AppleWebDownloadCertificate,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/statisticSigningTimes",
+		permissionSystem,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		api.AppleWebStatisticSigningTimes,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/statisticSigningCost",
+		permissionSystem,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		api.AppleWebStatisticSigningCost,
 	)
 }
 

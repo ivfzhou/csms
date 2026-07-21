@@ -61,12 +61,42 @@ const (
 	methodTypeAppleSigningJobGetTables
 	methodTypeAndroidSigningJobCount2
 	methodTypeAndroidSigningJobList
+	methodTypeAndroidSigningJobCountWithDay
+	methodTypeAndroidSigningJobCountWithWeek
+	methodTypeAndroidSigningJobCountWithMonth
+	methodTypeAndroidSigningJobCostWithDay
+	methodTypeAndroidSigningJobCostWithWeek
+	methodTypeAndroidSigningJobCostWithMonth
 	methodTypeWindowsSigningJobGetTables
 	methodTypeWindowsSigningJobCount2
 	methodTypeWindowsSigningJobList
 	methodTypeWindowsSigningJobGetJobIDByStatus
+	methodTypeWindowsSigningJobCountWithDay
+	methodTypeWindowsSigningJobCountWithWeek
+	methodTypeWindowsSigningJobCountWithMonth
+	methodTypeWindowsSigningJobCostWithDay
+	methodTypeWindowsSigningJobCostWithWeek
+	methodTypeWindowsSigningJobCostWithMonth
+	methodTypeWindowsSigningJobPassRateWithDay
+	methodTypeWindowsSigningJobPassRateWithWeek
+	methodTypeWindowsSigningJobPassRateWithMonth
+	methodTypeWhqlJobCountWithDay
+	methodTypeWhqlJobCountWithWeek
+	methodTypeWhqlJobCountWithMonth
+	methodTypeWhqlJobCostWithDay
+	methodTypeWhqlJobCostWithWeek
+	methodTypeWhqlJobCostWithMonth
+	methodTypeWhqlJobPassRateWithDay
+	methodTypeWhqlJobPassRateWithWeek
+	methodTypeWhqlJobPassRateWithMonth
 	methodTypeAppleSigningJobCount2
 	methodTypeAppleSigningJobList
+	methodTypeAppleSigningJobCountWithDay
+	methodTypeAppleSigningJobCountWithWeek
+	methodTypeAppleSigningJobCountWithMonth
+	methodTypeAppleSigningJobCostWithDay
+	methodTypeAppleSigningJobCostWithWeek
+	methodTypeAppleSigningJobCostWithMonth
 )
 
 type DBClientMocker[Table any] interface {
@@ -90,11 +120,41 @@ type DBClientMocker[Table any] interface {
 	EventCountTypesWithWeekOnce(r []map[string]any, err error) DBClientMocker[Table]
 	EventCountTypesWithMonthOnce(r []map[string]any, err error) DBClientMocker[Table]
 	AndroidSigningJobListOnce(r []*Table, err error) DBClientMocker[Table]
+	AndroidSigningJobCountWithDayOnce(r []map[string]any, err error) DBClientMocker[Table]
+	AndroidSigningJobCountWithWeekOnce(r []map[string]any, err error) DBClientMocker[Table]
+	AndroidSigningJobCountWithMonthOnce(r []map[string]any, err error) DBClientMocker[Table]
+	AndroidSigningJobCostWithDayOnce(r []map[string]any, err error) DBClientMocker[Table]
+	AndroidSigningJobCostWithWeekOnce(r []map[string]any, err error) DBClientMocker[Table]
+	AndroidSigningJobCostWithMonthOnce(r []map[string]any, err error) DBClientMocker[Table]
 	WindowsSigningJobCount2Once(r int, err error) DBClientMocker[Table]
 	WindowsSigningJobListOnce(r []*Table, err error) DBClientMocker[Table]
 	WindowsSigningJobGetJobIDByStatusOnce(r []string, err error) DBClientMocker[Table]
+	WindowsSigningJobCountWithDayOnce(r []map[string]any, err error) DBClientMocker[Table]
+	WindowsSigningJobCountWithWeekOnce(r []map[string]any, err error) DBClientMocker[Table]
+	WindowsSigningJobCountWithMonthOnce(r []map[string]any, err error) DBClientMocker[Table]
+	WindowsSigningJobCostWithDayOnce(r []map[string]any, err error) DBClientMocker[Table]
+	WindowsSigningJobCostWithWeekOnce(r []map[string]any, err error) DBClientMocker[Table]
+	WindowsSigningJobCostWithMonthOnce(r []map[string]any, err error) DBClientMocker[Table]
+	WindowsSigningJobPassRateWithDayOnce(r []map[string]any, err error) DBClientMocker[Table]
+	WindowsSigningJobPassRateWithWeekOnce(r []map[string]any, err error) DBClientMocker[Table]
+	WindowsSigningJobPassRateWithMonthOnce(r []map[string]any, err error) DBClientMocker[Table]
+	WhqlJobCountWithDayOnce(r []map[string]any, err error) DBClientMocker[Table]
+	WhqlJobCountWithWeekOnce(r []map[string]any, err error) DBClientMocker[Table]
+	WhqlJobCountWithMonthOnce(r []map[string]any, err error) DBClientMocker[Table]
+	WhqlJobCostWithDayOnce(r []map[string]any, err error) DBClientMocker[Table]
+	WhqlJobCostWithWeekOnce(r []map[string]any, err error) DBClientMocker[Table]
+	WhqlJobCostWithMonthOnce(r []map[string]any, err error) DBClientMocker[Table]
+	WhqlJobPassRateWithDayOnce(r []map[string]any, err error) DBClientMocker[Table]
+	WhqlJobPassRateWithWeekOnce(r []map[string]any, err error) DBClientMocker[Table]
+	WhqlJobPassRateWithMonthOnce(r []map[string]any, err error) DBClientMocker[Table]
 	AppleSigningJobCount2Once(r int, err error) DBClientMocker[Table]
 	AppleSigningJobListOnce(r []*Table, err error) DBClientMocker[Table]
+	AppleSigningJobCountWithDayOnce(r []map[string]any, err error) DBClientMocker[Table]
+	AppleSigningJobCountWithWeekOnce(r []map[string]any, err error) DBClientMocker[Table]
+	AppleSigningJobCountWithMonthOnce(r []map[string]any, err error) DBClientMocker[Table]
+	AppleSigningJobCostWithDayOnce(r []map[string]any, err error) DBClientMocker[Table]
+	AppleSigningJobCostWithWeekOnce(r []map[string]any, err error) DBClientMocker[Table]
+	AppleSigningJobCostWithMonthOnce(r []map[string]any, err error) DBClientMocker[Table]
 	LastOnce(t *Table, err error) DBClientMocker[Table]
 	Reset()
 }
@@ -128,6 +188,10 @@ type androidSigningJobDo[Do any] struct {
 
 type windowsSigningJobDo[Do any] struct {
 	*commonDo[model.WindowsSigningJob, Do]
+}
+
+type whqlJobDo[Do any] struct {
+	*commonDo[model.WhqlJob, Do]
 }
 
 type appleSigningJobDo[Do any] struct {
@@ -213,6 +277,12 @@ func mockDBClient[Table, Do any](ctx context.Context, name string) DBClientMocke
 		windowsSigningJobDoVar.self = doI.(Do)
 		dbDo = windowsSigningJobDoVar.self
 		do = windowsSigningJobDoVar
+	case "WhqlJob":
+		whqlJobDoVar := &whqlJobDo[Do]{&commonDo[model.WhqlJob, Do]{datasLock: new(sync.Mutex), typeName: name}}
+		var doI any = whqlJobDoVar
+		whqlJobDoVar.self = doI.(Do)
+		dbDo = whqlJobDoVar.self
+		do = whqlJobDoVar
 	case "AppleSigningJob":
 		appleSigningJobDoVar := &appleSigningJobDo[Do]{&commonDo[model.AppleSigningJob, Do]{datasLock: new(sync.Mutex), typeName: name}}
 		var doI any = appleSigningJobDoVar
@@ -345,6 +415,36 @@ func (m *dbClientMocker[Table, Do]) AndroidSigningJobListOnce(r []*Table, err er
 	return m
 }
 
+func (m *dbClientMocker[Table, Do]) AndroidSigningJobCountWithDayOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeAndroidSigningJobCountWithDay, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) AndroidSigningJobCountWithWeekOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeAndroidSigningJobCountWithWeek, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) AndroidSigningJobCountWithMonthOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeAndroidSigningJobCountWithMonth, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) AndroidSigningJobCostWithDayOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeAndroidSigningJobCostWithDay, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) AndroidSigningJobCostWithWeekOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeAndroidSigningJobCostWithWeek, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) AndroidSigningJobCostWithMonthOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeAndroidSigningJobCostWithMonth, values: []any{r, err}})
+	return m
+}
+
 func (m *dbClientMocker[Table, Do]) WindowsSigningJobGetTablesOnce(r []string, err error) DBClientMocker[Table] {
 	m.do.append(&doResultData{method: methodTypeWindowsSigningJobGetTables, values: []any{r, err}})
 	return m
@@ -365,6 +465,96 @@ func (m *dbClientMocker[Table, Do]) WindowsSigningJobGetJobIDByStatusOnce(r []st
 	return m
 }
 
+func (m *dbClientMocker[Table, Do]) WindowsSigningJobCountWithDayOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeWindowsSigningJobCountWithDay, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) WindowsSigningJobCountWithWeekOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeWindowsSigningJobCountWithWeek, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) WindowsSigningJobCountWithMonthOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeWindowsSigningJobCountWithMonth, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) WindowsSigningJobCostWithDayOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeWindowsSigningJobCostWithDay, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) WindowsSigningJobCostWithWeekOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeWindowsSigningJobCostWithWeek, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) WindowsSigningJobCostWithMonthOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeWindowsSigningJobCostWithMonth, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) WindowsSigningJobPassRateWithDayOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeWindowsSigningJobPassRateWithDay, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) WindowsSigningJobPassRateWithWeekOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeWindowsSigningJobPassRateWithWeek, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) WindowsSigningJobPassRateWithMonthOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeWindowsSigningJobPassRateWithMonth, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) WhqlJobCountWithDayOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeWhqlJobCountWithDay, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) WhqlJobCountWithWeekOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeWhqlJobCountWithWeek, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) WhqlJobCountWithMonthOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeWhqlJobCountWithMonth, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) WhqlJobCostWithDayOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeWhqlJobCostWithDay, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) WhqlJobCostWithWeekOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeWhqlJobCostWithWeek, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) WhqlJobCostWithMonthOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeWhqlJobCostWithMonth, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) WhqlJobPassRateWithDayOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeWhqlJobPassRateWithDay, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) WhqlJobPassRateWithWeekOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeWhqlJobPassRateWithWeek, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) WhqlJobPassRateWithMonthOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeWhqlJobPassRateWithMonth, values: []any{r, err}})
+	return m
+}
+
 func (m *dbClientMocker[Table, Do]) AppleSigningJobGetTablesOnce(r []string, err error) DBClientMocker[Table] {
 	m.do.append(&doResultData{method: methodTypeAppleSigningJobGetTables, values: []any{r, err}})
 	return m
@@ -377,6 +567,36 @@ func (m *dbClientMocker[Table, Do]) AppleSigningJobCount2Once(r int, err error) 
 
 func (m *dbClientMocker[Table, Do]) AppleSigningJobListOnce(r []*Table, err error) DBClientMocker[Table] {
 	m.do.append(&doResultData{method: methodTypeAppleSigningJobList, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) AppleSigningJobCountWithDayOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeAppleSigningJobCountWithDay, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) AppleSigningJobCountWithWeekOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeAppleSigningJobCountWithWeek, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) AppleSigningJobCountWithMonthOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeAppleSigningJobCountWithMonth, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) AppleSigningJobCostWithDayOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeAppleSigningJobCostWithDay, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) AppleSigningJobCostWithWeekOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeAppleSigningJobCostWithWeek, values: []any{r, err}})
+	return m
+}
+
+func (m *dbClientMocker[Table, Do]) AppleSigningJobCostWithMonthOnce(r []map[string]any, err error) DBClientMocker[Table] {
+	m.do.append(&doResultData{method: methodTypeAppleSigningJobCostWithMonth, values: []any{r, err}})
 	return m
 }
 
@@ -777,6 +997,66 @@ func (c *androidSigningJobDo[Do]) GetTables(string) ([]string, error) {
 	panic(fmt.Sprintf("unhandle db %s AndroidSigningJobGetTables", c.typeName))
 }
 
+func (c *androidSigningJobDo[Do]) CountWithDay([]string, int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeAndroidSigningJobCountWithDay)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s AndroidSigningJobCountWithDay", c.typeName))
+}
+
+func (c *androidSigningJobDo[Do]) CountWithWeek([]string, int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeAndroidSigningJobCountWithWeek)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s AndroidSigningJobCountWithWeek", c.typeName))
+}
+
+func (c *androidSigningJobDo[Do]) CountWithMonth([]string, int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeAndroidSigningJobCountWithMonth)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s AndroidSigningJobCountWithMonth", c.typeName))
+}
+
+func (c *androidSigningJobDo[Do]) CostWithDay([]string, int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeAndroidSigningJobCostWithDay)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s AndroidSigningJobCostWithDay", c.typeName))
+}
+
+func (c *androidSigningJobDo[Do]) CostWithWeek([]string, int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeAndroidSigningJobCostWithWeek)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s AndroidSigningJobCostWithWeek", c.typeName))
+}
+
+func (c *androidSigningJobDo[Do]) CostWithMonth([]string, int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeAndroidSigningJobCostWithMonth)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s AndroidSigningJobCostWithMonth", c.typeName))
+}
+
 func (c *userDo[Do]) SearchByName(string) ([]*model.User, error) {
 	data := c.getResultData(methodTypeUserSearchByName)
 	if data != nil {
@@ -827,6 +1107,186 @@ func (c *windowsSigningJobDo[Do]) GetTables(string) ([]string, error) {
 	panic(fmt.Sprintf("unhandle db %s WindowsSigningJobGetTables", c.typeName))
 }
 
+func (c *windowsSigningJobDo[Do]) CountWithDay([]string, int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeWindowsSigningJobCountWithDay)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s WindowsSigningJobCountWithDay", c.typeName))
+}
+
+func (c *windowsSigningJobDo[Do]) CountWithWeek([]string, int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeWindowsSigningJobCountWithWeek)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s WindowsSigningJobCountWithWeek", c.typeName))
+}
+
+func (c *windowsSigningJobDo[Do]) CountWithMonth([]string, int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeWindowsSigningJobCountWithMonth)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s WindowsSigningJobCountWithMonth", c.typeName))
+}
+
+func (c *windowsSigningJobDo[Do]) CostWithDay([]string, int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeWindowsSigningJobCostWithDay)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s WindowsSigningJobCostWithDay", c.typeName))
+}
+
+func (c *windowsSigningJobDo[Do]) CostWithWeek([]string, int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeWindowsSigningJobCostWithWeek)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s WindowsSigningJobCostWithWeek", c.typeName))
+}
+
+func (c *windowsSigningJobDo[Do]) CostWithMonth([]string, int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeWindowsSigningJobCostWithMonth)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s WindowsSigningJobCostWithMonth", c.typeName))
+}
+
+func (c *windowsSigningJobDo[Do]) PassRateWithDay([]string, int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeWindowsSigningJobPassRateWithDay)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s WindowsSigningJobPassRateWithDay", c.typeName))
+}
+
+func (c *windowsSigningJobDo[Do]) PassRateWithWeek([]string, int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeWindowsSigningJobPassRateWithWeek)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s WindowsSigningJobPassRateWithWeek", c.typeName))
+}
+
+func (c *windowsSigningJobDo[Do]) PassRateWithMonth([]string, int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeWindowsSigningJobPassRateWithMonth)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s WindowsSigningJobPassRateWithMonth", c.typeName))
+}
+
+func (c *whqlJobDo[Do]) CountWithDay(int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeWhqlJobCountWithDay)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s WhqlJobCountWithDay", c.typeName))
+}
+
+func (c *whqlJobDo[Do]) CountWithWeek(int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeWhqlJobCountWithWeek)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s WhqlJobCountWithWeek", c.typeName))
+}
+
+func (c *whqlJobDo[Do]) CountWithMonth(int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeWhqlJobCountWithMonth)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s WhqlJobCountWithMonth", c.typeName))
+}
+
+func (c *whqlJobDo[Do]) CostWithDay(int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeWhqlJobCostWithDay)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s WhqlJobCostWithDay", c.typeName))
+}
+
+func (c *whqlJobDo[Do]) CostWithWeek(int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeWhqlJobCostWithWeek)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s WhqlJobCostWithWeek", c.typeName))
+}
+
+func (c *whqlJobDo[Do]) CostWithMonth(int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeWhqlJobCostWithMonth)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s WhqlJobCostWithMonth", c.typeName))
+}
+
+func (c *whqlJobDo[Do]) PassRateWithDay(int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeWhqlJobPassRateWithDay)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s WhqlJobPassRateWithDay", c.typeName))
+}
+
+func (c *whqlJobDo[Do]) PassRateWithWeek(int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeWhqlJobPassRateWithWeek)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s WhqlJobPassRateWithWeek", c.typeName))
+}
+
+func (c *whqlJobDo[Do]) PassRateWithMonth(int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeWhqlJobPassRateWithMonth)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s WhqlJobPassRateWithMonth", c.typeName))
+}
+
 func (c *appleSigningJobDo[Do]) List(_ []string, _ int, _ int, _ int) ([]*model.AppleSigningJob, error) {
 	data := c.getResultData(methodTypeAppleSigningJobList)
 	if data != nil {
@@ -855,4 +1315,64 @@ func (c *appleSigningJobDo[Do]) GetTables(string) ([]string, error) {
 		return r, err
 	}
 	panic(fmt.Sprintf("unhandle db %s AppleSigningJobGetTables", c.typeName))
+}
+
+func (c *appleSigningJobDo[Do]) CountWithDay([]string, int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeAppleSigningJobCountWithDay)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s AppleSigningJobCountWithDay", c.typeName))
+}
+
+func (c *appleSigningJobDo[Do]) CountWithWeek([]string, int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeAppleSigningJobCountWithWeek)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s AppleSigningJobCountWithWeek", c.typeName))
+}
+
+func (c *appleSigningJobDo[Do]) CountWithMonth([]string, int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeAppleSigningJobCountWithMonth)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s AppleSigningJobCountWithMonth", c.typeName))
+}
+
+func (c *appleSigningJobDo[Do]) CostWithDay([]string, int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeAppleSigningJobCostWithDay)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s AppleSigningJobCostWithDay", c.typeName))
+}
+
+func (c *appleSigningJobDo[Do]) CostWithWeek([]string, int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeAppleSigningJobCostWithWeek)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s AppleSigningJobCostWithWeek", c.typeName))
+}
+
+func (c *appleSigningJobDo[Do]) CostWithMonth([]string, int, time.Time, time.Time) ([]map[string]any, error) {
+	data := c.getResultData(methodTypeAppleSigningJobCostWithMonth)
+	if data != nil {
+		r, _ := data[0].([]map[string]any)
+		err, _ := data[1].(error)
+		return r, err
+	}
+	panic(fmt.Sprintf("unhandle db %s AppleSigningJobCostWithMonth", c.typeName))
 }

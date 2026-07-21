@@ -100,6 +100,9 @@ func main() {
 	generator.ApplyInterface(func(UserQuery) {}, generator.GenerateModel("t_user"))
 
 	type EventQuery interface {
+		// select TABLE_NAME from information_schema.TABLES where TABLE_SCHEMA = @db and TABLE_NAME like 't_event%'
+		GetTables(db string) ([]string, error)
+
 		// select * from (
 		// {{ for i, t := range tables }}
 		//    select * from @@t
@@ -156,9 +159,6 @@ func main() {
 		// group by `day`, `type`
 		// order by `day`
 		CountTypesWithMonth(tables []string, types []int, appID int, begin, end time.Time) ([]gen.M, error)
-
-		// select TABLE_NAME from information_schema.TABLES where TABLE_SCHEMA = @db and TABLE_NAME like 't_event%'
-		GetTables(db string) ([]string, error)
 	}
 	generator.ApplyInterface(func(EventQuery) {}, generator.GenerateModel("t_event"))
 
@@ -166,13 +166,6 @@ func main() {
 		// select TABLE_NAME from information_schema.TABLES where TABLE_SCHEMA = @db
 		// and TABLE_NAME like 't_windows_signing_job%'
 		GetTables(db string) ([]string, error)
-
-		// select t.job_id from (
-		// {{ for i, t := range tables }}
-		//    select * from @@t {{ if len(tables) - 1 != i }} union all {{ end }}
-		// {{ end }} ) t
-		// where t.status = @status
-		GetJobIDByStatus(tables []string, status int) ([]string, error)
 
 		// select * from (
 		// {{ for i, t := range tables }}
@@ -208,10 +201,111 @@ func main() {
 		// {{ end }}
 		Count2(tables []string, appID int, keyWord string, signingType, status int, certificateIDs []int,
 			userIDs []int) (int, error)
+
+		// select t.type `type`, count(*) `count`, date_format(t.created_time, '%Y%m%d') `day` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`, `type`
+		// order by `day`
+		CountWithDay(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select t.type `type`, count(*) `count`, date_format(date_sub(t.created_time, INTERVAL (dayofweek(t.created_time)-2) DAY), '%Y%m%d') `day` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`, `type`
+		// order by `day`
+		CountWithWeek(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select t.type `type`, count(*) `count`, date_format(t.created_time, '%Y%m') `day` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`, `type`
+		// order by `day`
+		CountWithMonth(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select t.type `type`, date_format(t.created_time, '%Y%m%d') `day`, cast(round(avg(timestampdiff(SECOND, t.created_time, ifnull(t.finished_time, now()))), 0) as signed) `cost` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end and status in (6, 7)
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`, `type`
+		// order by `day`
+		CostWithDay(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select t.type `type`, date_format(date_sub(t.created_time, INTERVAL (dayofweek(t.created_time)-2) DAY), '%Y%m%d') `day`, cast(round(avg(timestampdiff(SECOND, t.created_time, ifnull(t.finished_time, now()))), 0) as signed) `cost` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end and status in (6, 7)
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`, `type`
+		// order by `day`
+		CostWithWeek(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select t.type `type`, date_format(t.created_time, '%Y%m') `day`, cast(round(avg(timestampdiff(SECOND, t.created_time, ifnull(t.finished_time, now()))), 0) as signed) `cost` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end and status in (6, 7)
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`, `type`
+		// order by `day`
+		CostWithMonth(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select t.type `type`, date_format(t.created_time, '%Y%m%d') `day`, cast(round(sum(case t.status when 7 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end and status in (6, 7)
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`, `type`
+		// order by `day`
+		PassRateWithDay(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select t.type `type`, date_format(date_sub(t.created_time, INTERVAL (dayofweek(t.created_time)-2) DAY), '%Y%m%d') `day`, cast(round(sum(case t.status when 7 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end and status in (6, 7)
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`, `type`
+		// order by `day`
+		PassRateWithWeek(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select t.type `type`, date_format(t.created_time, '%Y%m') `day`, cast(round(sum(case t.status when 7 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end and status in (6, 7)
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`, `type`
+		// order by `day`
+		PassRateWithMonth(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select t.job_id from (
+		// {{ for i, t := range tables }}
+		//    select * from @@t {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// where t.status = @status
+		GetJobIDByStatus(tables []string, status int) ([]string, error)
 	}
 	generator.ApplyInterface(func(WindowsSigningJobQuery) {}, generator.GenerateModel("t_windows_signing_job"))
 
 	type AndroidSigningJobQuery interface {
+		// select TABLE_NAME from information_schema.TABLES where TABLE_SCHEMA = @db
+		// and TABLE_NAME like 't_android_signing_job%'
+		GetTables(db string) ([]string, error)
+
 		// select * from (
 		// {{ for i, t := range tables }}
 		//    select * from @@t {{ if len(tables) - 1 != i }} union all {{ end }}
@@ -244,9 +338,65 @@ func main() {
 		// {{ end }}
 		Count2(tables []string, appID int, keyWord string, status int, certificateIDs []int, userIDs []int) (int, error)
 
-		// select TABLE_NAME from information_schema.TABLES where TABLE_SCHEMA = @db
-		// and TABLE_NAME like 't_android_signing_job%'
-		GetTables(db string) ([]string, error)
+		// select t.type `type`, count(*) `count`, date_format(t.created_time, '%Y%m%d') `day` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`, `type`
+		// order by `day`
+		CountWithDay(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select t.type `type`, count(*) `count`, date_format(date_sub(t.created_time, INTERVAL (dayofweek(t.created_time)-2) DAY), '%Y%m%d') `day` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`, `type`
+		// order by `day`
+		CountWithWeek(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select t.type `type`, count(*) `count`, date_format(t.created_time, '%Y%m') `day` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`, `type`
+		// order by `day`
+		CountWithMonth(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select t.type `type`, date_format(t.created_time, '%Y%m%d') `day`, cast(round(avg(timestampdiff(SECOND, t.created_time, ifnull(t.finished_time, now()))), 0) as signed) `cost` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end and status in (2, 3)
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`, `type`
+		// order by `day`
+		CostWithDay(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select t.type `type`, date_format(date_sub(t.created_time, INTERVAL (dayofweek(t.created_time)-2) DAY), '%Y%m%d') `day`, cast(round(avg(timestampdiff(SECOND, t.created_time, ifnull(t.finished_time, now()))), 0) as signed) `cost` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end and status in (2, 3)
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`, `type`
+		// order by `day`
+		CostWithWeek(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select t.type `type`, date_format(t.created_time, '%Y%m') `day`, cast(round(avg(timestampdiff(SECOND, t.created_time, ifnull(t.finished_time, now()))), 0) as signed) `cost` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end and status in (2, 3)
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`, `type`
+		// order by `day`
+		CostWithMonth(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
 	}
 	generator.ApplyInterface(func(AndroidSigningJobQuery) {}, generator.GenerateModel("t_android_signing_job"))
 
@@ -269,8 +419,134 @@ func main() {
 		// {{ end }} ) t
 		// where t.app_id = @appID
 		Count2(tables []string, appID int) (int, error)
+
+		// select count(*) `count`, date_format(t.created_time, '%Y%m%d') `day` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`
+		// order by `day`
+		CountWithDay(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select count(*) `count`, date_format(date_sub(t.created_time, INTERVAL (dayofweek(t.created_time)-2) DAY), '%Y%m%d') `day` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`
+		// order by `day`
+		CountWithWeek(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select count(*) `count`, date_format(t.created_time, '%Y%m') `day` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`
+		// order by `day`
+		CountWithMonth(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select date_format(t.created_time, '%Y%m%d') `day`, cast(round(avg(timestampdiff(SECOND, t.created_time, ifnull(t.finished_time, now()))), 0) as signed) `cost` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end and status in (2, 3)
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`
+		// order by `day`
+		CostWithDay(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select date_format(date_sub(t.created_time, INTERVAL (dayofweek(t.created_time)-2) DAY), '%Y%m%d') `day`, cast(round(avg(timestampdiff(SECOND, t.created_time, ifnull(t.finished_time, now()))), 0) as signed) `cost` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end and status in (2, 3)
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`
+		// order by `day`
+		CostWithWeek(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select date_format(t.created_time, '%Y%m') `day`, cast(round(avg(timestampdiff(SECOND, t.created_time, ifnull(t.finished_time, now()))), 0) as signed) `cost` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end and status in (2, 3)
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`
+		// order by `day`
+		CostWithMonth(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
 	}
 	generator.ApplyInterface(func(AppleSigningJobQuery) {}, generator.GenerateModel("t_apple_signing_job"))
+
+	type WhqlJobQuery interface {
+		// select type `type`, count(*) `count`, date_format(created_time, '%Y%m%d') `day` from t_whql_job
+		// where created_time between @begin and @end
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		// group by `day`, `type`
+		// order by `day`
+		CountWithDay(appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select type `type`, count(*) `count`, date_format(date_sub(created_time, INTERVAL (dayofweek(created_time)-2) DAY), '%Y%m%d') `day` from t_whql_job
+		// where created_time between @begin and @end
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		// group by `day`, `type`
+		// order by `day`
+		CountWithWeek(appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select type `type`, count(*) `count`, date_format(created_time, '%Y%m') `day` from t_whql_job
+		// where created_time between @begin and @end
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		// group by `day`, `type`
+		// order by `day`
+		CountWithMonth(appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select type `type`, date_format(created_time, '%Y%m%d') `day`, cast(round(avg(timestampdiff(SECOND, created_time, ifnull(finished_time, now()))), 0) as signed) `cost` from t_whql_job
+		// where created_time between @begin and @end and status in (9, 10)
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		// group by `day`, `type`
+		// order by `day`
+		CostWithDay(appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select type `type`, date_format(date_sub(created_time, INTERVAL (dayofweek(created_time)-2) DAY), '%Y%m%d') `day`, cast(round(avg(timestampdiff(SECOND, created_time, ifnull(finished_time, now()))), 0) as signed) `cost` from t_whql_job
+		// where created_time between @begin and @end and status in (9, 10)
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		// group by `day`, `type`
+		// order by `day`
+		CostWithWeek(appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select type `type`, date_format(created_time, '%Y%m') `day`, cast(round(avg(timestampdiff(SECOND, created_time, ifnull(finished_time, now()))), 0) as signed) `cost` from t_whql_job
+		// where created_time between @begin and @end and status in (9, 10)
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		// group by `day`, `type`
+		// order by `day`
+		CostWithMonth(appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select type `type`, date_format(created_time, '%Y%m%d') `day`, cast(round(sum(case status when 10 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from t_whql_job
+		//    where created_time between @begin and @end and status in (9, 10)
+		//    {{ if appID > 0 }} and app_id = @appID {{ end }}
+		// group by `day`, `type`
+		// order by `day`
+		PassRateWithDay(appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select type `type`, date_format(date_sub(created_time, INTERVAL (dayofweek(created_time)-2) DAY), '%Y%m%d') `day`, cast(round(sum(case status when 10 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from t_whql_job
+		//    where created_time between @begin and @end and status in (9, 10)
+		//    {{ if appID > 0 }} and app_id = @appID {{ end }}
+		// group by `day`, `type`
+		// order by `day`
+		PassRateWithWeek(appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select type `type`, date_format(created_time, '%Y%m') `day`, cast(round(sum(case status when 10 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from t_whql_job
+		//    where created_time between @begin and @end and status in (9, 10)
+		//    {{ if appID > 0 }} and app_id = @appID {{ end }}
+		// group by `day`, `type`
+		// order by `day`
+		PassRateWithMonth(appID int, begin, end time.Time) ([]gen.M, error)
+	}
+	generator.ApplyInterface(func(WhqlJobQuery) {}, generator.GenerateModel("t_whql_job"))
 
 	generator.ApplyBasic(generator.GenerateAllTable()...)
 	generator.Execute()

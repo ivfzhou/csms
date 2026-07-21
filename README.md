@@ -57,7 +57,7 @@
 # 四、运行服务
 
 1. 启动 Redis、MySQL、RabbitMQ、Tusd、Nginx、Fastlane 服务。Nginx 配置参考文件 [nginx.conf](./nginx.conf)。
-1. 修改中间件连接配置等其他需修改配置参数 [baclend/config.ini](./backend/config.ini)、[fastlane_proxy/config.ini](./fastlane_proxy/config.ini)。
+1. 按需修改中间件连接配置和服务配置。
 1. 创建数据库表：
     ```shell
     mysql -u <enter your name> -p --default-character-set=utf8mb4 < ./backend/database.sql
@@ -67,12 +67,12 @@
     mkdir -p $HOME/fastlane
     cp ./fastlane_proxy/Fastfile.rb $HOME/fastlane/Fastfile
     ````
-1. 启动主服务（本地测试可添加参数 -localTestMode -skipRateLimit）：
+1. 启动主服务（本地测试可添加参数 -localTestMode -skipRateLimit），配置 [baclend/config.ini](./backend/config.ini)：
     ```shell
     cd ./backend
     ./backend -config ./config.ini -messageFilesDirectory ./ -javaBinaryPath $JAVA_HOME/bin/java -javaBinaryPathForPepk $JAVA_HOME/bin/java -keytoolBinaryPath $JAVA_HOME/bin/keytool -localIP 127.0.0.1 -pepkJarPath ./pepk.jar -cabextractFilePath ./cabextract
     ```
-1. 启动 fastlane_proxy 服务（本地测试可添加参数 -localTestMode）：
+1. 启动 fastlane_proxy 服务（本地测试可添加参数 -localTestMode），配置 [fastlane_proxy/config.ini](./fastlane_proxy/config.ini)：
     ```shell
     cd ./fastlane_proxy
     ./fastlane_proxy -config ./config.ini -messageFilesDirectory ./ -localIP 127.0.0.1
@@ -102,7 +102,7 @@
         cd .\hlk_manager
         .\hlk_manager.exe -config .\config.ini -localIP 192.168.137.106 -mode TestMachine -system "Windows 10 22H2_64"
         ```
-1. 启动 sign_server 服务：
+1. 启动 sign_server 服务，配置 [sign_server/config.ini](./sign_server/config.ini)：
     - Windows 签名服务。监听 Windows 证书表变动，自动刷新消费队列：
         ```cmd
         cd .\sign_server
@@ -121,11 +121,11 @@
 
 # 五、服务 HTTP 接口测试
 
-1. 运行在操作系统 Linux 下。
+1. 运行在 Linux 操作系统下。
 1. 清空并重新创建数据库和表。
 1. 启动各中间件服务。
-1. backend 服务添加参数 `-localTestMode -skipRateLimit`。
-1. 启动各类服务。
+1. 启动 backend 服务，启动参数添加 `-localTestMode -skipRateLimit`。
+1. 启动 fastlane_proxy 服务，启动参数添加 `-localTestMode`。
 1. 如果 Nginx 使用了自签名证书，须先将证书添加到 Java 证书信任库中：
     ```shell
     keytool -import -alias csms_ca -keystore $JAVA_HOME/lib/security/cacerts -file ca.crt

@@ -19,6 +19,8 @@ import (
 	"gorm.io/plugin/dbresolver"
 
 	"gitee.com/ivfzhou/csms/comm/model"
+
+	"time"
 )
 
 func newWindowsSigningJob(db *gorm.DB, opts ...gen.DOOption) windowsSigningJob {
@@ -218,9 +220,18 @@ type IWindowsSigningJobDo interface {
 	schema.Tabler
 
 	GetTables(db string) (result []string, err error)
-	GetJobIDByStatus(tables []string, status int) (result []string, err error)
 	List(tables []string, appID int, keyWord string, signingType int, status int, certificateIDs []int, userIDs []int, limit int, offset int) (result []*model.WindowsSigningJob, err error)
 	Count2(tables []string, appID int, keyWord string, signingType int, status int, certificateIDs []int, userIDs []int) (result int, err error)
+	CountWithDay(tables []string, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
+	CountWithWeek(tables []string, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
+	CountWithMonth(tables []string, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
+	CostWithDay(tables []string, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
+	CostWithWeek(tables []string, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
+	CostWithMonth(tables []string, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
+	PassRateWithDay(tables []string, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
+	PassRateWithWeek(tables []string, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
+	PassRateWithMonth(tables []string, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
+	GetJobIDByStatus(tables []string, status int) (result []string, err error)
 }
 
 // select TABLE_NAME from information_schema.TABLES where TABLE_SCHEMA = @db
@@ -231,34 +242,6 @@ func (w windowsSigningJobDo) GetTables(db string) (result []string, err error) {
 	var generateSQL strings.Builder
 	params = append(params, db)
 	generateSQL.WriteString("select TABLE_NAME from information_schema.TABLES where TABLE_SCHEMA = ? and TABLE_NAME like 't_windows_signing_job%' ")
-
-	var executeSQL *gorm.DB
-	executeSQL = w.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
-	err = executeSQL.Error
-
-	return
-}
-
-// select t.job_id from (
-// {{ for i, t := range tables }}
-//
-//	select * from @@t {{ if len(tables) - 1 != i }} union all {{ end }}
-//
-// {{ end }} ) t
-// where t.status = @status
-func (w windowsSigningJobDo) GetJobIDByStatus(tables []string, status int) (result []string, err error) {
-	var params []interface{}
-
-	var generateSQL strings.Builder
-	generateSQL.WriteString("select t.job_id from ( ")
-	for i, t := range tables {
-		generateSQL.WriteString("select * from " + w.Quote(t) + " ")
-		if len(tables)-1 != i {
-			generateSQL.WriteString("union all ")
-		}
-	}
-	params = append(params, status)
-	generateSQL.WriteString(") t where t.status = ? ")
 
 	var executeSQL *gorm.DB
 	executeSQL = w.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
@@ -390,6 +373,358 @@ func (w windowsSigningJobDo) Count2(tables []string, appID int, keyWord string, 
 
 	var executeSQL *gorm.DB
 	executeSQL = w.UnderlyingDB().Raw(generateSQL.String(), params...).Take(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// select t.type `type`, count(*) `count`, date_format(t.created_time, '%Y%m%d') `day` from (
+// {{ for i, t := range tables }}
+//
+//	select * from @@t where created_time between @begin and @end
+//	{{ if appID > 0 }} and app_id = @appID {{ end }}
+//	{{ if len(tables) - 1 != i }} union all {{ end }}
+//
+// {{ end }} ) t
+// group by `day`, `type`
+// order by `day`
+func (w windowsSigningJobDo) CountWithDay(tables []string, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	generateSQL.WriteString("select t.type `type`, count(*) `count`, date_format(t.created_time, '%Y%m%d') `day` from ( ")
+	for i, t := range tables {
+		params = append(params, begin)
+		params = append(params, end)
+		generateSQL.WriteString("select * from " + w.Quote(t) + " where created_time between ? and ? ")
+		if appID > 0 {
+			params = append(params, appID)
+			generateSQL.WriteString("and app_id = ? ")
+		}
+		if len(tables)-1 != i {
+			generateSQL.WriteString("union all ")
+		}
+	}
+	generateSQL.WriteString(") t group by `day`, `type` order by `day` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = w.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// select t.type `type`, count(*) `count`, date_format(date_sub(t.created_time, INTERVAL (dayofweek(t.created_time)-2) DAY), '%Y%m%d') `day` from (
+// {{ for i, t := range tables }}
+//
+//	select * from @@t where created_time between @begin and @end
+//	{{ if appID > 0 }} and app_id = @appID {{ end }}
+//	{{ if len(tables) - 1 != i }} union all {{ end }}
+//
+// {{ end }} ) t
+// group by `day`, `type`
+// order by `day`
+func (w windowsSigningJobDo) CountWithWeek(tables []string, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	generateSQL.WriteString("select t.type `type`, count(*) `count`, date_format(date_sub(t.created_time, INTERVAL (dayofweek(t.created_time)-2) DAY), '%Y%m%d') `day` from ( ")
+	for i, t := range tables {
+		params = append(params, begin)
+		params = append(params, end)
+		generateSQL.WriteString("select * from " + w.Quote(t) + " where created_time between ? and ? ")
+		if appID > 0 {
+			params = append(params, appID)
+			generateSQL.WriteString("and app_id = ? ")
+		}
+		if len(tables)-1 != i {
+			generateSQL.WriteString("union all ")
+		}
+	}
+	generateSQL.WriteString(") t group by `day`, `type` order by `day` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = w.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// select t.type `type`, count(*) `count`, date_format(t.created_time, '%Y%m') `day` from (
+// {{ for i, t := range tables }}
+//
+//	select * from @@t where created_time between @begin and @end
+//	{{ if appID > 0 }} and app_id = @appID {{ end }}
+//	{{ if len(tables) - 1 != i }} union all {{ end }}
+//
+// {{ end }} ) t
+// group by `day`, `type`
+// order by `day`
+func (w windowsSigningJobDo) CountWithMonth(tables []string, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	generateSQL.WriteString("select t.type `type`, count(*) `count`, date_format(t.created_time, '%Y%m') `day` from ( ")
+	for i, t := range tables {
+		params = append(params, begin)
+		params = append(params, end)
+		generateSQL.WriteString("select * from " + w.Quote(t) + " where created_time between ? and ? ")
+		if appID > 0 {
+			params = append(params, appID)
+			generateSQL.WriteString("and app_id = ? ")
+		}
+		if len(tables)-1 != i {
+			generateSQL.WriteString("union all ")
+		}
+	}
+	generateSQL.WriteString(") t group by `day`, `type` order by `day` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = w.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// select t.type `type`, date_format(t.created_time, '%Y%m%d') `day`, cast(round(avg(timestampdiff(SECOND, t.created_time, ifnull(t.finished_time, now()))), 0) as signed) `cost` from (
+// {{ for i, t := range tables }}
+//
+//	select * from @@t where created_time between @begin and @end and status in (6, 7)
+//	{{ if appID > 0 }} and app_id = @appID {{ end }}
+//	{{ if len(tables) - 1 != i }} union all {{ end }}
+//
+// {{ end }} ) t
+// group by `day`, `type`
+// order by `day`
+func (w windowsSigningJobDo) CostWithDay(tables []string, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	generateSQL.WriteString("select t.type `type`, date_format(t.created_time, '%Y%m%d') `day`, cast(round(avg(timestampdiff(SECOND, t.created_time, ifnull(t.finished_time, now()))), 0) as signed) `cost` from ( ")
+	for i, t := range tables {
+		params = append(params, begin)
+		params = append(params, end)
+		generateSQL.WriteString("select * from " + w.Quote(t) + " where created_time between ? and ? and status in (6, 7) ")
+		if appID > 0 {
+			params = append(params, appID)
+			generateSQL.WriteString("and app_id = ? ")
+		}
+		if len(tables)-1 != i {
+			generateSQL.WriteString("union all ")
+		}
+	}
+	generateSQL.WriteString(") t group by `day`, `type` order by `day` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = w.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// select t.type `type`, date_format(date_sub(t.created_time, INTERVAL (dayofweek(t.created_time)-2) DAY), '%Y%m%d') `day`, cast(round(avg(timestampdiff(SECOND, t.created_time, ifnull(t.finished_time, now()))), 0) as signed) `cost` from (
+// {{ for i, t := range tables }}
+//
+//	select * from @@t where created_time between @begin and @end and status in (6, 7)
+//	{{ if appID > 0 }} and app_id = @appID {{ end }}
+//	{{ if len(tables) - 1 != i }} union all {{ end }}
+//
+// {{ end }} ) t
+// group by `day`, `type`
+// order by `day`
+func (w windowsSigningJobDo) CostWithWeek(tables []string, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	generateSQL.WriteString("select t.type `type`, date_format(date_sub(t.created_time, INTERVAL (dayofweek(t.created_time)-2) DAY), '%Y%m%d') `day`, cast(round(avg(timestampdiff(SECOND, t.created_time, ifnull(t.finished_time, now()))), 0) as signed) `cost` from ( ")
+	for i, t := range tables {
+		params = append(params, begin)
+		params = append(params, end)
+		generateSQL.WriteString("select * from " + w.Quote(t) + " where created_time between ? and ? and status in (6, 7) ")
+		if appID > 0 {
+			params = append(params, appID)
+			generateSQL.WriteString("and app_id = ? ")
+		}
+		if len(tables)-1 != i {
+			generateSQL.WriteString("union all ")
+		}
+	}
+	generateSQL.WriteString(") t group by `day`, `type` order by `day` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = w.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// select t.type `type`, date_format(t.created_time, '%Y%m') `day`, cast(round(avg(timestampdiff(SECOND, t.created_time, ifnull(t.finished_time, now()))), 0) as signed) `cost` from (
+// {{ for i, t := range tables }}
+//
+//	select * from @@t where created_time between @begin and @end and status in (6, 7)
+//	{{ if appID > 0 }} and app_id = @appID {{ end }}
+//	{{ if len(tables) - 1 != i }} union all {{ end }}
+//
+// {{ end }} ) t
+// group by `day`, `type`
+// order by `day`
+func (w windowsSigningJobDo) CostWithMonth(tables []string, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	generateSQL.WriteString("select t.type `type`, date_format(t.created_time, '%Y%m') `day`, cast(round(avg(timestampdiff(SECOND, t.created_time, ifnull(t.finished_time, now()))), 0) as signed) `cost` from ( ")
+	for i, t := range tables {
+		params = append(params, begin)
+		params = append(params, end)
+		generateSQL.WriteString("select * from " + w.Quote(t) + " where created_time between ? and ? and status in (6, 7) ")
+		if appID > 0 {
+			params = append(params, appID)
+			generateSQL.WriteString("and app_id = ? ")
+		}
+		if len(tables)-1 != i {
+			generateSQL.WriteString("union all ")
+		}
+	}
+	generateSQL.WriteString(") t group by `day`, `type` order by `day` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = w.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// select t.type `type`, date_format(t.created_time, '%Y%m%d') `day`, cast(round(sum(case t.status when 7 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from (
+// {{ for i, t := range tables }}
+//
+//	select * from @@t where created_time between @begin and @end and status in (6, 7)
+//	{{ if appID > 0 }} and app_id = @appID {{ end }}
+//	{{ if len(tables) - 1 != i }} union all {{ end }}
+//
+// {{ end }} ) t
+// group by `day`, `type`
+// order by `day`
+func (w windowsSigningJobDo) PassRateWithDay(tables []string, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	generateSQL.WriteString("select t.type `type`, date_format(t.created_time, '%Y%m%d') `day`, cast(round(sum(case t.status when 7 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from ( ")
+	for i, t := range tables {
+		params = append(params, begin)
+		params = append(params, end)
+		generateSQL.WriteString("select * from " + w.Quote(t) + " where created_time between ? and ? and status in (6, 7) ")
+		if appID > 0 {
+			params = append(params, appID)
+			generateSQL.WriteString("and app_id = ? ")
+		}
+		if len(tables)-1 != i {
+			generateSQL.WriteString("union all ")
+		}
+	}
+	generateSQL.WriteString(") t group by `day`, `type` order by `day` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = w.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// select t.type `type`, date_format(date_sub(t.created_time, INTERVAL (dayofweek(t.created_time)-2) DAY), '%Y%m%d') `day`, cast(round(sum(case t.status when 7 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from (
+// {{ for i, t := range tables }}
+//
+//	select * from @@t where created_time between @begin and @end and status in (6, 7)
+//	{{ if appID > 0 }} and app_id = @appID {{ end }}
+//	{{ if len(tables) - 1 != i }} union all {{ end }}
+//
+// {{ end }} ) t
+// group by `day`, `type`
+// order by `day`
+func (w windowsSigningJobDo) PassRateWithWeek(tables []string, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	generateSQL.WriteString("select t.type `type`, date_format(date_sub(t.created_time, INTERVAL (dayofweek(t.created_time)-2) DAY), '%Y%m%d') `day`, cast(round(sum(case t.status when 7 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from ( ")
+	for i, t := range tables {
+		params = append(params, begin)
+		params = append(params, end)
+		generateSQL.WriteString("select * from " + w.Quote(t) + " where created_time between ? and ? and status in (6, 7) ")
+		if appID > 0 {
+			params = append(params, appID)
+			generateSQL.WriteString("and app_id = ? ")
+		}
+		if len(tables)-1 != i {
+			generateSQL.WriteString("union all ")
+		}
+	}
+	generateSQL.WriteString(") t group by `day`, `type` order by `day` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = w.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// select t.type `type`, date_format(t.created_time, '%Y%m') `day`, cast(round(sum(case t.status when 7 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from (
+// {{ for i, t := range tables }}
+//
+//	select * from @@t where created_time between @begin and @end and status in (6, 7)
+//	{{ if appID > 0 }} and app_id = @appID {{ end }}
+//	{{ if len(tables) - 1 != i }} union all {{ end }}
+//
+// {{ end }} ) t
+// group by `day`, `type`
+// order by `day`
+func (w windowsSigningJobDo) PassRateWithMonth(tables []string, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	generateSQL.WriteString("select t.type `type`, date_format(t.created_time, '%Y%m') `day`, cast(round(sum(case t.status when 7 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from ( ")
+	for i, t := range tables {
+		params = append(params, begin)
+		params = append(params, end)
+		generateSQL.WriteString("select * from " + w.Quote(t) + " where created_time between ? and ? and status in (6, 7) ")
+		if appID > 0 {
+			params = append(params, appID)
+			generateSQL.WriteString("and app_id = ? ")
+		}
+		if len(tables)-1 != i {
+			generateSQL.WriteString("union all ")
+		}
+	}
+	generateSQL.WriteString(") t group by `day`, `type` order by `day` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = w.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// select t.job_id from (
+// {{ for i, t := range tables }}
+//
+//	select * from @@t {{ if len(tables) - 1 != i }} union all {{ end }}
+//
+// {{ end }} ) t
+// where t.status = @status
+func (w windowsSigningJobDo) GetJobIDByStatus(tables []string, status int) (result []string, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	generateSQL.WriteString("select t.job_id from ( ")
+	for i, t := range tables {
+		generateSQL.WriteString("select * from " + w.Quote(t) + " ")
+		if len(tables)-1 != i {
+			generateSQL.WriteString("union all ")
+		}
+	}
+	params = append(params, status)
+	generateSQL.WriteString(") t where t.status = ? ")
+
+	var executeSQL *gorm.DB
+	executeSQL = w.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
 	err = executeSQL.Error
 
 	return

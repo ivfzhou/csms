@@ -427,6 +427,52 @@ definitions:
           $ref: '#/definitions/protocol.AndroidWebListSigningJobsItem'
         type: array
     type: object
+  protocol.AndroidWebStatisticSigningCostItem:
+    properties:
+      aabSigningCost:
+        description: AAB 签名耗时
+        type: integer
+      apkSigningCost:
+        description: APK 签名耗时
+        type: integer
+      beginTime:
+        description: 开始时间
+        type: string
+      patchSigningCost:
+        description: 补丁签名耗时
+        type: integer
+    type: object
+  protocol.AndroidWebStatisticSigningCostRsp:
+    properties:
+      list:
+        description: 数据
+        items:
+          $ref: '#/definitions/protocol.AndroidWebStatisticSigningCostItem'
+        type: array
+    type: object
+  protocol.AndroidWebStatisticSigningTimesItem:
+    properties:
+      aabSigningTimes:
+        description: AAB 签名次数
+        type: integer
+      apkSigningTimes:
+        description: APK 签名次数
+        type: integer
+      beginTime:
+        description: 开始时间
+        type: string
+      patchSigningTimes:
+        description: 补丁签名次数
+        type: integer
+    type: object
+  protocol.AndroidWebStatisticSigningTimesRsp:
+    properties:
+      list:
+        description: 数据
+        items:
+          $ref: '#/definitions/protocol.AndroidWebStatisticSigningTimesItem'
+        type: array
+    type: object
   protocol.AndroidWebSubmitAABSigningJobReq:
     properties:
       certificateId:
@@ -1028,6 +1074,40 @@ definitions:
         type: string
     required:
     - udid
+    type: object
+  protocol.AppleWebStatisticSigningCostItem:
+    properties:
+      beginTime:
+        description: 开始时间
+        type: string
+      signingCost:
+        description: 签名耗时
+        type: integer
+    type: object
+  protocol.AppleWebStatisticSigningCostRsp:
+    properties:
+      list:
+        description: 数据
+        items:
+          $ref: '#/definitions/protocol.AppleWebStatisticSigningCostItem'
+        type: array
+    type: object
+  protocol.AppleWebStatisticSigningTimesItem:
+    properties:
+      beginTime:
+        description: 开始时间
+        type: string
+      signingTimes:
+        description: 签名次数
+        type: integer
+    type: object
+  protocol.AppleWebStatisticSigningTimesRsp:
+    properties:
+      list:
+        description: 数据
+        items:
+          $ref: '#/definitions/protocol.AppleWebStatisticSigningTimesItem'
+        type: array
     type: object
   protocol.AppleWebSubmitSigningJobReq:
     properties:
@@ -2338,6 +2418,93 @@ definitions:
           $ref: '#/definitions/protocol.WindowsWebListWHQLJobsItem'
         type: array
     type: object
+  protocol.WindowsWebStatisticSigningCostItem:
+    properties:
+      attestationSigningCost:
+        description: 微软 Attestation 签名耗时
+        type: integer
+      beginTime:
+        description: 开始时间
+        type: string
+      hlkAndWHQLCost:
+        description: HLK 兼容性测试 & WHQL 签名耗时
+        type: integer
+      peAndAttestationSigningCost:
+        description: PE & 微软 Attestation 签名耗时
+        type: integer
+      peSigningCost:
+        description: PE 签名耗时
+        type: integer
+      whqlCost:
+        description: WHQL 签名耗时
+        type: integer
+    type: object
+  protocol.WindowsWebStatisticSigningCostRsp:
+    properties:
+      list:
+        description: 数据
+        items:
+          $ref: '#/definitions/protocol.WindowsWebStatisticSigningCostItem'
+        type: array
+    type: object
+  protocol.WindowsWebStatisticSigningPassRateItem:
+    properties:
+      attestationSigningPassRate:
+        description: 微软 Attestation 签名通过率
+        type: integer
+      beginTime:
+        description: 开始时间
+        type: string
+      hlkAndWHQLPassRate:
+        description: HLK 兼容性测试 & WHQL 签名通过率
+        type: integer
+      peAndAttestationSigningPassRate:
+        description: PE & 微软 Attestation 签名通过率
+        type: integer
+      peSigningPassRate:
+        description: PE 签名通过率
+        type: integer
+      whqlPassRate:
+        description: WHQL 签名通过率
+        type: integer
+    type: object
+  protocol.WindowsWebStatisticSigningPassRateRsp:
+    properties:
+      list:
+        description: 数据
+        items:
+          $ref: '#/definitions/protocol.WindowsWebStatisticSigningPassRateItem'
+        type: array
+    type: object
+  protocol.WindowsWebStatisticSigningTimesItem:
+    properties:
+      attestationSigningTimes:
+        description: 微软 Attestation 签名数量
+        type: integer
+      beginTime:
+        description: 开始时间
+        type: string
+      hlkAndWHQLTimes:
+        description: HLK 兼容性测试 & WHQL 签名数量
+        type: integer
+      peAndAttestationSigningTimes:
+        description: PE & 微软 Attestation 签名数量
+        type: integer
+      peSigningTimes:
+        description: PE 签名数量
+        type: integer
+      whqlTimes:
+        description: WHQL 签名数量
+        type: integer
+    type: object
+  protocol.WindowsWebStatisticSigningTimesRsp:
+    properties:
+      list:
+        description: 数据
+        items:
+          $ref: '#/definitions/protocol.WindowsWebStatisticSigningTimesItem'
+        type: array
+    type: object
   protocol.WindowsWebSubmitSigningJobReq:
     properties:
       certificateId:
@@ -2571,6 +2738,38 @@ definitions:
         example: 失败时的提示语
         type: string
     type: object
+  util.Response-protocol_AndroidWebStatisticSigningCostRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.AndroidWebStatisticSigningCostRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_AndroidWebStatisticSigningTimesRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.AndroidWebStatisticSigningTimesRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
   util.Response-protocol_AppWebCountRsp:
     properties:
       code:
@@ -2725,6 +2924,38 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/protocol.AppleWebListSigningJobsRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_AppleWebStatisticSigningCostRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.AppleWebStatisticSigningCostRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_AppleWebStatisticSigningTimesRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.AppleWebStatisticSigningTimesRsp'
         description: 响应数据
       message:
         description: 提示语
@@ -3173,6 +3404,54 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/protocol.WindowsWebListWHQLJobsRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_WindowsWebStatisticSigningCostRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.WindowsWebStatisticSigningCostRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_WindowsWebStatisticSigningPassRateRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.WindowsWebStatisticSigningPassRateRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_WindowsWebStatisticSigningTimesRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.WindowsWebStatisticSigningTimesRsp'
         description: 响应数据
       message:
         description: 提示语
@@ -4606,6 +4885,104 @@ paths:
       summary: 删除证书主体
       tags:
       - Android-WebAPI
+  /web/android/statisticSigningCost:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: query
+        name: appId
+        type: string
+      - description: 开始时间
+        example: "2024-01-01"
+        in: query
+        name: beginTime
+        required: true
+        type: string
+      - description: 结束时间
+        example: "2025-01-01"
+        in: query
+        name: endTime
+        type: string
+      - description: 时间粒度
+        example: 1
+        in: query
+        maximum: 3
+        name: timeStep
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_AndroidWebStatisticSigningCostRsp'
+      summary: 获取应用的 Android 类型签名次数耗时统计信息
+      tags:
+      - Android-WebAPI
+  /web/android/statisticSigningTimes:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: query
+        name: appId
+        type: string
+      - description: 开始时间
+        example: "2024-01-01"
+        in: query
+        name: beginTime
+        required: true
+        type: string
+      - description: 结束时间
+        example: "2025-01-01"
+        in: query
+        name: endTime
+        type: string
+      - description: 时间粒度
+        example: 1
+        in: query
+        maximum: 3
+        name: timeStep
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_AndroidWebStatisticSigningTimesRsp'
+      summary: 获取应用的 Android 类型签名次数统计信息
+      tags:
+      - Android-WebAPI
   /web/android/submitAABSigningJob/{appId}:
     post:
       consumes:
@@ -5665,6 +6042,104 @@ paths:
       summary: 删除 Push 证书
       tags:
       - Apple-WebAPI
+  /web/apple/statisticSigningCost:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: query
+        name: appId
+        type: string
+      - description: 开始时间
+        example: "2024-01-01"
+        in: query
+        name: beginTime
+        required: true
+        type: string
+      - description: 结束时间
+        example: "2025-01-01"
+        in: query
+        name: endTime
+        type: string
+      - description: 时间粒度
+        example: 1
+        in: query
+        maximum: 3
+        name: timeStep
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_AppleWebStatisticSigningCostRsp'
+      summary: 获取应用的 Apple 类型签名次数耗时统计信息
+      tags:
+      - Apple-WebAPI
+  /web/apple/statisticSigningTimes:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: query
+        name: appId
+        type: string
+      - description: 开始时间
+        example: "2024-01-01"
+        in: query
+        name: beginTime
+        required: true
+        type: string
+      - description: 结束时间
+        example: "2025-01-01"
+        in: query
+        name: endTime
+        type: string
+      - description: 时间粒度
+        example: 1
+        in: query
+        maximum: 3
+        name: timeStep
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_AppleWebStatisticSigningTimesRsp'
+      summary: 获取应用的 Apple 类型签名次数统计信息
+      tags:
+      - Apple-WebAPI
   /web/apple/submitSigningJob/{appId}:
     post:
       consumes:
@@ -5802,19 +6277,23 @@ paths:
         required: true
         type: string
       - description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
         in: query
         name: appId
         type: string
       - description: 开始时间
+        example: "2024-01-01"
         in: query
         name: beginTime
         required: true
         type: string
       - description: 结束时间
+        example: "2025-01-01"
         in: query
         name: endTime
         type: string
-      - description: 时间粒度。
+      - description: 时间粒度
+        example: 1
         in: query
         maximum: 3
         name: timeStep
@@ -7253,6 +7732,153 @@ paths:
           schema:
             $ref: '#/definitions/util.Response-any'
       summary: 删除公司证书
+      tags:
+      - Windows-WebAPI
+  /web/windows/statisticSigningCost:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: query
+        name: appId
+        type: string
+      - description: 开始时间
+        example: "2024-01-01"
+        in: query
+        name: beginTime
+        required: true
+        type: string
+      - description: 结束时间
+        example: "2025-01-01"
+        in: query
+        name: endTime
+        type: string
+      - description: 时间粒度
+        example: 1
+        in: query
+        maximum: 3
+        name: timeStep
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_WindowsWebStatisticSigningCostRsp'
+      summary: 获取应用的 Windows 类型签名次数耗时统计信息
+      tags:
+      - Windows-WebAPI
+  /web/windows/statisticSigningPassRate:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: query
+        name: appId
+        type: string
+      - description: 开始时间
+        example: "2024-01-01"
+        in: query
+        name: beginTime
+        required: true
+        type: string
+      - description: 结束时间
+        example: "2025-01-01"
+        in: query
+        name: endTime
+        type: string
+      - description: 时间粒度
+        example: 1
+        in: query
+        maximum: 3
+        name: timeStep
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_WindowsWebStatisticSigningPassRateRsp'
+      summary: 获获取应用的 Windows 类型签名通过率统计信息
+      tags:
+      - Windows-WebAPI
+  /web/windows/statisticSigningTimes:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: query
+        name: appId
+        type: string
+      - description: 开始时间
+        example: "2024-01-01"
+        in: query
+        name: beginTime
+        required: true
+        type: string
+      - description: 结束时间
+        example: "2025-01-01"
+        in: query
+        name: endTime
+        type: string
+      - description: 时间粒度
+        example: 1
+        in: query
+        maximum: 3
+        name: timeStep
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_WindowsWebStatisticSigningTimesRsp'
+      summary: 获取应用的 Windows 类型签名次数统计信息
       tags:
       - Windows-WebAPI
   /web/windows/submitSigningJob/{appId}:

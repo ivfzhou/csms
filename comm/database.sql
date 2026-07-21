@@ -268,6 +268,7 @@ create table if not exists t_windows_signing_job
     updated_time   timestamp on update current_timestamp() comment '更新时间',
     index idx_app_id (app_id) using btree,
     index idx_status (status) using btree,
+    index idx_created_time (created_time) using btree,
     unique index uidx_job_id (job_id) using btree
 ) engine innodb comment 'Windows 签名任务表';
 
@@ -299,6 +300,7 @@ create table if not exists t_whql_job
     updated_time      timestamp on update current_timestamp() comment '更新时间',
     index idx_app_id (app_id) using btree,
     index idx_status (status) using btree,
+    index idx_created_time (created_time) using btree,
     unique index uidx_job_id (job_id) using btree
 ) engine innodb comment 'WHQL 签名任务表';
 
@@ -320,6 +322,7 @@ create table if not exists t_android_signing_job
     status            tinyint unsigned not null comment '状态，1=进行中，2=成功，3=失败',
     created_time      timestamp        not null comment '提交时间',
     index idx_app_id (app_id) using btree,
+    index idx_created_time (created_time) using btree,
     unique index uidx_job_id (job_id) using btree
 ) engine innodb comment '安卓签名任务表';
 
@@ -338,6 +341,7 @@ create table if not exists t_apple_signing_job
     status         tinyint unsigned not null comment '状态，1=进行中、2=成功、3=失败',
     created_time   timestamp        not null comment '提交时间',
     index idx_app_id (app_id) using btree,
+    index idx_created_time (created_time) using btree,
     unique index uidx_job_id (job_id) using btree
 ) engine innodb comment '苹果签名任务表';
 

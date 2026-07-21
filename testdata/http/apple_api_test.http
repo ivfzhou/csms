@@ -157,7 +157,7 @@ Cookie: csms_user=admin; csms_session={{csms_session_admin}}
 %}
 
 
-### 测试 - Apple -- 注册测试设备
+### 测试 Apple -- 注册测试设备
 < {%
     import {initWebAPI} from './http_util.js'
 
@@ -587,63 +587,6 @@ Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
 %}
 
 
-### 测试 Apple OpenAPI -- 提交签名任务
-< {%
-    import {createAuthorization} from './http_util.js'
-
-    const appId = client.global.get('appleAppId')
-    const apiAccountId = 'apple_api_account';
-    const secret = client.global.get(apiAccountId)
-    client.log(appId, apiAccountId, secret)
-    const token = createAuthorization(appId, apiAccountId, secret)
-    request.variables.set('token', token)
-%}
-POST https://127.0.0.1/backend/api/apple/submitSigningJob
-Content-Type: application/json
-Authorization: Bearer {{token}}
-
-{
-  "profileId": "{{profileId}}",
-  "fileId": "{{ipaFileId}}"
-}
-
-> {%
-    import {checkAPIResult} from './http_util.js'
-
-    const jobId = response.body.data.jobId
-    client.test('测试响应结果 -- 提交签名任务', () => {
-        checkAPIResult(200, undefined)
-        client.assert(jobId, 'jobId is empty')
-    })
-    client.global.set('appleJobId', jobId)
-%}
-
-
-### 测试 Apple OpenAPI -- 获取签名任务信息
-< {%
-    import {createAuthorization} from './http_util.js'
-
-    const appId = client.global.get('appleAppId')
-    const apiAccountId = 'apple_api_account';
-    const secret = client.global.get(apiAccountId)
-    client.log(appId, apiAccountId, secret)
-    const token = createAuthorization(appId, apiAccountId, secret)
-    request.variables.set('token', token)
-%}
-GET https://127.0.0.1/backend/api/apple/getSigningJobInformation?jobId={{appleJobId}}
-Authorization: Bearer {{token}}
-
-> {%
-    import {checkAPIResult} from './http_util.js'
-
-    const info = response.body.data
-    client.test('测试响应结果 -- 获取签名任务信息', () => {
-        checkAPIResult(200, undefined)
-        client.assert(info, 'info is empty')
-    })
-%}
-
-
 ### 测试 Apple -- 获取签名任务信息列表
 < {%
     import {initWebAPI} from './http_util.js'
@@ -795,5 +738,102 @@ Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
 
     client.test('测试响应结果 -- 删除 Push 证书', () => {
         checkAPIResult(200, -200004)
+    })
+%}
+
+
+### 测试 Apple -- 获取应用的 Apple 类型签名次数统计信息
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/apple/statisticSigningTimes?appId={{appleAppId}}&beginTime=2024-07-01&
+    endTime=2029-08-01&timeStep=3
+Date: {{date}}
+Cookie: csms_user=admin; csms_session={{csms_session_admin}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 获取应用的 Apple 类型签名次数统计信息', () => {
+        checkAPIResult(200, undefined)
+    })
+%}
+
+
+### 测试 Apple -- 获取应用的 Apple 类型签名耗时统计信息
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/apple/statisticSigningCost?appId={{appleAppId}}&beginTime=2024-07-01&
+    endTime=2029-08-01&timeStep=2
+Date: {{date}}
+Cookie: csms_user=admin; csms_session={{csms_session_admin}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 获取应用的 Apple 类型签名次数耗时统计信息', () => {
+        checkAPIResult(200, undefined)
+    })
+%}
+
+
+### 测试 Apple OpenAPI -- 提交签名任务
+< {%
+    import {createAuthorization} from './http_util.js'
+
+    const appId = client.global.get('appleAppId')
+    const apiAccountId = 'apple_api_account';
+    const secret = client.global.get(apiAccountId)
+    client.log(appId, apiAccountId, secret)
+    const token = createAuthorization(appId, apiAccountId, secret)
+    request.variables.set('token', token)
+%}
+POST https://127.0.0.1/backend/api/apple/submitSigningJob
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "profileId": "{{profileId}}",
+  "fileId": "{{ipaFileId}}"
+}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const jobId = response.body.data.jobId
+    client.test('测试响应结果 -- 提交签名任务', () => {
+        checkAPIResult(200, undefined)
+        client.assert(jobId, 'jobId is empty')
+    })
+    client.global.set('appleJobId', jobId)
+%}
+
+
+### 测试 Apple OpenAPI -- 获取签名任务信息
+< {%
+    import {createAuthorization} from './http_util.js'
+
+    const appId = client.global.get('appleAppId')
+    const apiAccountId = 'apple_api_account';
+    const secret = client.global.get(apiAccountId)
+    client.log(appId, apiAccountId, secret)
+    const token = createAuthorization(appId, apiAccountId, secret)
+    request.variables.set('token', token)
+%}
+GET https://127.0.0.1/backend/api/apple/getSigningJobInformation?jobId={{appleJobId}}
+Authorization: Bearer {{token}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    const info = response.body.data
+    client.test('测试响应结果 -- 获取签名任务信息', () => {
+        checkAPIResult(200, undefined)
+        client.assert(info, 'info is empty')
     })
 %}

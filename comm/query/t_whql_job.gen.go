@@ -7,6 +7,7 @@ package query
 import (
 	"context"
 	"database/sql"
+	"strings"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -18,6 +19,8 @@ import (
 	"gorm.io/plugin/dbresolver"
 
 	"gitee.com/ivfzhou/csms/comm/model"
+
+	"time"
 )
 
 func newWhqlJob(db *gorm.DB, opts ...gen.DOOption) whqlJob {
@@ -243,6 +246,259 @@ type IWhqlJobDo interface {
 	Returning(value interface{}, columns ...string) IWhqlJobDo
 	UnderlyingDB() *gorm.DB
 	schema.Tabler
+
+	CountWithDay(appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
+	CountWithWeek(appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
+	CountWithMonth(appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
+	CostWithDay(appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
+	CostWithWeek(appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
+	CostWithMonth(appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
+	PassRateWithDay(appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
+	PassRateWithWeek(appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
+	PassRateWithMonth(appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
+}
+
+// select type `type`, count(*) `count`, date_format(created_time, '%Y%m%d') `day` from t_whql_job
+// where created_time between @begin and @end
+//
+//	{{ if appID > 0 }} and app_id = @appID {{ end }}
+//
+// group by `day`, `type`
+// order by `day`
+func (w whqlJobDo) CountWithDay(appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	params = append(params, begin)
+	params = append(params, end)
+	generateSQL.WriteString("select type `type`, count(*) `count`, date_format(created_time, '%Y%m%d') `day` from t_whql_job where created_time between ? and ? ")
+	if appID > 0 {
+		params = append(params, appID)
+		generateSQL.WriteString("and app_id = ? ")
+	}
+	generateSQL.WriteString("group by `day`, `type` order by `day` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = w.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// select type `type`, count(*) `count`, date_format(date_sub(created_time, INTERVAL (dayofweek(created_time)-2) DAY), '%Y%m%d') `day` from t_whql_job
+// where created_time between @begin and @end
+//
+//	{{ if appID > 0 }} and app_id = @appID {{ end }}
+//
+// group by `day`, `type`
+// order by `day`
+func (w whqlJobDo) CountWithWeek(appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	params = append(params, begin)
+	params = append(params, end)
+	generateSQL.WriteString("select type `type`, count(*) `count`, date_format(date_sub(created_time, INTERVAL (dayofweek(created_time)-2) DAY), '%Y%m%d') `day` from t_whql_job where created_time between ? and ? ")
+	if appID > 0 {
+		params = append(params, appID)
+		generateSQL.WriteString("and app_id = ? ")
+	}
+	generateSQL.WriteString("group by `day`, `type` order by `day` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = w.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// select type `type`, count(*) `count`, date_format(created_time, '%Y%m') `day` from t_whql_job
+// where created_time between @begin and @end
+//
+//	{{ if appID > 0 }} and app_id = @appID {{ end }}
+//
+// group by `day`, `type`
+// order by `day`
+func (w whqlJobDo) CountWithMonth(appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	params = append(params, begin)
+	params = append(params, end)
+	generateSQL.WriteString("select type `type`, count(*) `count`, date_format(created_time, '%Y%m') `day` from t_whql_job where created_time between ? and ? ")
+	if appID > 0 {
+		params = append(params, appID)
+		generateSQL.WriteString("and app_id = ? ")
+	}
+	generateSQL.WriteString("group by `day`, `type` order by `day` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = w.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// select type `type`, date_format(created_time, '%Y%m%d') `day`, cast(round(avg(timestampdiff(SECOND, created_time, ifnull(finished_time, now()))), 0) as signed) `cost` from t_whql_job
+// where created_time between @begin and @end and status in (9, 10)
+//
+//	{{ if appID > 0 }} and app_id = @appID {{ end }}
+//
+// group by `day`, `type`
+// order by `day`
+func (w whqlJobDo) CostWithDay(appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	params = append(params, begin)
+	params = append(params, end)
+	generateSQL.WriteString("select type `type`, date_format(created_time, '%Y%m%d') `day`, cast(round(avg(timestampdiff(SECOND, created_time, ifnull(finished_time, now()))), 0) as signed) `cost` from t_whql_job where created_time between ? and ? and status in (9, 10) ")
+	if appID > 0 {
+		params = append(params, appID)
+		generateSQL.WriteString("and app_id = ? ")
+	}
+	generateSQL.WriteString("group by `day`, `type` order by `day` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = w.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// select type `type`, date_format(date_sub(created_time, INTERVAL (dayofweek(created_time)-2) DAY), '%Y%m%d') `day`, cast(round(avg(timestampdiff(SECOND, created_time, ifnull(finished_time, now()))), 0) as signed) `cost` from t_whql_job
+// where created_time between @begin and @end and status in (9, 10)
+//
+//	{{ if appID > 0 }} and app_id = @appID {{ end }}
+//
+// group by `day`, `type`
+// order by `day`
+func (w whqlJobDo) CostWithWeek(appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	params = append(params, begin)
+	params = append(params, end)
+	generateSQL.WriteString("select type `type`, date_format(date_sub(created_time, INTERVAL (dayofweek(created_time)-2) DAY), '%Y%m%d') `day`, cast(round(avg(timestampdiff(SECOND, created_time, ifnull(finished_time, now()))), 0) as signed) `cost` from t_whql_job where created_time between ? and ? and status in (9, 10) ")
+	if appID > 0 {
+		params = append(params, appID)
+		generateSQL.WriteString("and app_id = ? ")
+	}
+	generateSQL.WriteString("group by `day`, `type` order by `day` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = w.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// select type `type`, date_format(created_time, '%Y%m') `day`, cast(round(avg(timestampdiff(SECOND, created_time, ifnull(finished_time, now()))), 0) as signed) `cost` from t_whql_job
+// where created_time between @begin and @end and status in (9, 10)
+//
+//	{{ if appID > 0 }} and app_id = @appID {{ end }}
+//
+// group by `day`, `type`
+// order by `day`
+func (w whqlJobDo) CostWithMonth(appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	params = append(params, begin)
+	params = append(params, end)
+	generateSQL.WriteString("select type `type`, date_format(created_time, '%Y%m') `day`, cast(round(avg(timestampdiff(SECOND, created_time, ifnull(finished_time, now()))), 0) as signed) `cost` from t_whql_job where created_time between ? and ? and status in (9, 10) ")
+	if appID > 0 {
+		params = append(params, appID)
+		generateSQL.WriteString("and app_id = ? ")
+	}
+	generateSQL.WriteString("group by `day`, `type` order by `day` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = w.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// select type `type`, date_format(created_time, '%Y%m%d') `day`, cast(round(sum(case status when 10 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from t_whql_job
+//
+//	where created_time between @begin and @end and status in (9, 10)
+//	{{ if appID > 0 }} and app_id = @appID {{ end }}
+//
+// group by `day`, `type`
+// order by `day`
+func (w whqlJobDo) PassRateWithDay(appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	params = append(params, begin)
+	params = append(params, end)
+	generateSQL.WriteString("select type `type`, date_format(created_time, '%Y%m%d') `day`, cast(round(sum(case status when 10 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from t_whql_job where created_time between ? and ? and status in (9, 10) ")
+	if appID > 0 {
+		params = append(params, appID)
+		generateSQL.WriteString("and app_id = ? ")
+	}
+	generateSQL.WriteString("group by `day`, `type` order by `day` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = w.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// select type `type`, date_format(date_sub(created_time, INTERVAL (dayofweek(created_time)-2) DAY), '%Y%m%d') `day`, cast(round(sum(case status when 10 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from t_whql_job
+//
+//	where created_time between @begin and @end and status in (9, 10)
+//	{{ if appID > 0 }} and app_id = @appID {{ end }}
+//
+// group by `day`, `type`
+// order by `day`
+func (w whqlJobDo) PassRateWithWeek(appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	params = append(params, begin)
+	params = append(params, end)
+	generateSQL.WriteString("select type `type`, date_format(date_sub(created_time, INTERVAL (dayofweek(created_time)-2) DAY), '%Y%m%d') `day`, cast(round(sum(case status when 10 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from t_whql_job where created_time between ? and ? and status in (9, 10) ")
+	if appID > 0 {
+		params = append(params, appID)
+		generateSQL.WriteString("and app_id = ? ")
+	}
+	generateSQL.WriteString("group by `day`, `type` order by `day` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = w.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// select type `type`, date_format(created_time, '%Y%m') `day`, cast(round(sum(case status when 10 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from t_whql_job
+//
+//	where created_time between @begin and @end and status in (9, 10)
+//	{{ if appID > 0 }} and app_id = @appID {{ end }}
+//
+// group by `day`, `type`
+// order by `day`
+func (w whqlJobDo) PassRateWithMonth(appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	params = append(params, begin)
+	params = append(params, end)
+	generateSQL.WriteString("select type `type`, date_format(created_time, '%Y%m') `day`, cast(round(sum(case status when 10 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from t_whql_job where created_time between ? and ? and status in (9, 10) ")
+	if appID > 0 {
+		params = append(params, appID)
+		generateSQL.WriteString("and app_id = ? ")
+	}
+	generateSQL.WriteString("group by `day`, `type` order by `day` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = w.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
 }
 
 func (w whqlJobDo) Debug() IWhqlJobDo {

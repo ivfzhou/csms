@@ -179,12 +179,27 @@ type IEventDo interface {
 	UnderlyingDB() *gorm.DB
 	schema.Tabler
 
+	GetTables(db string) (result []string, err error)
 	List(tables []string, appIDs []int, userIDs []int, begin time.Time, end time.Time, typ int, limit int, offset int) (result []*model.Event, err error)
 	Count2(tables []string, appIDs []int, userIDs []int, begin time.Time, end time.Time, typ int) (result int, err error)
 	CountTypesWithDay(tables []string, types []int, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
 	CountTypesWithWeek(tables []string, types []int, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
 	CountTypesWithMonth(tables []string, types []int, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
-	GetTables(db string) (result []string, err error)
+}
+
+// select TABLE_NAME from information_schema.TABLES where TABLE_SCHEMA = @db and TABLE_NAME like 't_event%'
+func (e eventDo) GetTables(db string) (result []string, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	params = append(params, db)
+	generateSQL.WriteString("select TABLE_NAME from information_schema.TABLES where TABLE_SCHEMA = ? and TABLE_NAME like 't_event%' ")
+
+	var executeSQL *gorm.DB
+	executeSQL = e.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
 }
 
 // select * from (
@@ -400,21 +415,6 @@ func (e eventDo) CountTypesWithMonth(tables []string, types []int, appID int, be
 		}
 	}
 	generateSQL.WriteString(") t group by `day`, `type` order by `day` ")
-
-	var executeSQL *gorm.DB
-	executeSQL = e.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
-	err = executeSQL.Error
-
-	return
-}
-
-// select TABLE_NAME from information_schema.TABLES where TABLE_SCHEMA = @db and TABLE_NAME like 't_event%'
-func (e eventDo) GetTables(db string) (result []string, err error) {
-	var params []interface{}
-
-	var generateSQL strings.Builder
-	params = append(params, db)
-	generateSQL.WriteString("select TABLE_NAME from information_schema.TABLES where TABLE_SCHEMA = ? and TABLE_NAME like 't_event%' ")
 
 	var executeSQL *gorm.DB
 	executeSQL = e.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert

@@ -23,7 +23,7 @@ type AppleSigningJob struct {
 	Source       int       `gorm:"column:source;type:tinyint(4) unsigned;not null;comment:来源，1=页面、2=OpenAPI" json:"source"`                               // 来源，1=页面、2=OpenAPI
 	FinishedTime time.Time `gorm:"column:finished_time;type:timestamp;comment:结束时间" json:"finished_time"`                                                 // 结束时间
 	Status       int       `gorm:"column:status;type:tinyint(4) unsigned;not null;comment:状态，1=进行中、2=成功、3=失败" json:"status"`                              // 状态，1=进行中、2=成功、3=失败
-	CreatedTime  time.Time `gorm:"column:created_time;type:timestamp;not null;comment:提交时间" json:"created_time"`                                          // 提交时间
+	CreatedTime  time.Time `gorm:"column:created_time;type:timestamp;not null;index:idx_created_time,priority:1;comment:提交时间" json:"created_time"`        // 提交时间
 }
 
 // TableName AppleSigningJob's table name

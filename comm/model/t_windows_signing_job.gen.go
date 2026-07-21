@@ -27,7 +27,7 @@ type WindowsSigningJob struct {
 	FinishedTime  time.Time `gorm:"column:finished_time;type:timestamp;comment:结束时间" json:"finished_time"`                                                                                                           // 结束时间
 	FinishPeTime  time.Time `gorm:"column:finish_pe_time;type:timestamp;comment:完成 PE 签名时间" json:"finish_pe_time"`                                                                                                   // 完成 PE 签名时间
 	Status        int       `gorm:"column:status;type:tinyint(4) unsigned;not null;index:idx_status,priority:1;comment:状态，1=签名中、2=等待 Cab 签名、3=Cab 签名中、4=待 Attestation 签名、5=Attestation 签名中、6=失败、7=成功" json:"status"` // 状态，1=签名中、2=等待 Cab 签名、3=Cab 签名中、4=待 Attestation 签名、5=Attestation 签名中、6=失败、7=成功
-	CreatedTime   time.Time `gorm:"column:created_time;type:timestamp;not null;comment:提交时间" json:"created_time"`                                                                                                    // 提交时间
+	CreatedTime   time.Time `gorm:"column:created_time;type:timestamp;not null;index:idx_created_time,priority:1;comment:提交时间" json:"created_time"`                                                                  // 提交时间
 	UpdatedTime   time.Time `gorm:"column:updated_time;type:timestamp;comment:更新时间" json:"updated_time"`                                                                                                             // 更新时间
 }
 

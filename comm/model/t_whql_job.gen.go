@@ -34,7 +34,7 @@ type WhqlJob struct {
 	FinishedTime    time.Time `gorm:"column:finished_time;type:timestamp;comment:结束时间" json:"finished_time"`                                                                                                                                   // 结束时间
 	FinishTestTime  time.Time `gorm:"column:finish_test_time;type:timestamp;comment:测试结束时间" json:"finish_test_time"`                                                                                                                           // 测试结束时间
 	Status          int       `gorm:"column:status;type:tinyint(4) unsigned;not null;index:idx_status,priority:1;comment:状态，1=待HLK测试、2=测试机初始化中、3=测试机初始化完毕，4=启动HLK测试中，5=HLK测试中，6=HLK测试完毕、7=HLKX 文件签名中、8=等待 WHQL认证结果中、9=失败、10=成功" json:"status"` // 状态，1=待HLK测试、2=测试机初始化中、3=测试机初始化完毕，4=启动HLK测试中，5=HLK测试中，6=HLK测试完毕、7=HLKX 文件签名中、8=等待 WHQL认证结果中、9=失败、10=成功
-	CreatedTime     time.Time `gorm:"column:created_time;type:timestamp;not null;comment:提交时间" json:"created_time"`                                                                                                                            // 提交时间
+	CreatedTime     time.Time `gorm:"column:created_time;type:timestamp;not null;index:idx_created_time,priority:1;comment:提交时间" json:"created_time"`                                                                                          // 提交时间
 	UpdatedTime     time.Time `gorm:"column:updated_time;type:timestamp;comment:更新时间" json:"updated_time"`                                                                                                                                     // 更新时间
 }
 

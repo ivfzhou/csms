@@ -37,16 +37,24 @@ type Time time.Time
 
 // Initialize 初始化。
 func Initialize(ctx context.Context) {
-	initAndroid()
-	initApp()
-	initApple()
-	initEvent()
-	initFile()
-	initOpen()
-	initTodo()
-	initUser()
-	initWindows()
-	initNotice()
+	initAndroidWebProtocol()
+	initAndroidOpenProtocol()
+	initAndroidInternalProtocol()
+	initAppWebProtocol()
+	initAppleWebProtocol()
+	initAppleOpenProtocol()
+	initAppleInternalProtocol()
+	initEventWebProtocol()
+	initFileWebProtocol()
+	initFileOpenProtocol()
+	initFileInternalProtocol()
+	initOpenWebProtocol()
+	initTodoWebProtocol()
+	initUserWebProtocol()
+	initWindowsWebProtocol()
+	initWindowsOpenProtocol()
+	initWindowsInternalProtocol()
+	initNoticeWebProtocol()
 
 	// 注册校验标签。
 	validator.RegisterValidation("han", func(fl vt.FieldLevel) bool {
