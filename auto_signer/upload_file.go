@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -30,88 +29,69 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	bp "gitee.com/ivfzhou/csms/backend/protocol"
 	cc "gitee.com/ivfzhou/csms/comm/consts"
-	cl "gitee.com/ivfzhou/csms/comm/log"
 	"gitee.com/ivfzhou/csms/comm/model"
 	"gitee.com/ivfzhou/csms/comm/util"
 	gu "gitee.com/ivfzhou/goroutine-util"
 )
 
 // UploadFile 上传文件。
-func UploadFile(cfg *Configuration, token string) (string, string, bool) {
-	// 检查下文件。
-	fileInfo, err := os.Stat(cfg.Base.InFile)
-	if err != nil {
-		log.Println(cl.LevelError, "failed to get file info", err)
-		return "", token, false
-	}
-	if fileInfo.IsDir() {
-		log.Println(cl.LevelError, cfg.Base.InFile, "is a directory")
-		return "", token, false
-	}
-
+func UploadFile(cfg *Configuration, token string, fileSize int64, step *StepRunner) (string, string, []string, error) {
+	info := make([]string, 0, 3)
 	// 获取 MD5 值。
-	log.Println(cl.LevelInfo, "calculate file md5")
-	fileSize := fileInfo.Size()
 	fileMD5, err := calculateFileMD5(cfg.Base.InFile, fileSize)
 	if err != nil {
-		return "", token, false
+		return token, "", nil, err
 	}
-	log.Println(cl.LevelInfo, "file md5 is", fileMD5)
-	log.Println(cl.LevelInfo, "file size is", fileSize)
+	info = append(info, fmt.Sprintf("文件 MD5: %s", fileMD5), fmt.Sprintf("文件大小: %s", FormatSize(fileSize)))
 
 	// 初始化上传。
-	log.Println(cl.LevelInfo, "initial upload file")
 	fileID, token, exist, err := initializeUploading(cfg, token, fileSize, fileMD5, filepath.Base(cfg.Base.InFile))
 	if err != nil {
-		return "", token, false
+		return token, "", nil, nil
 	}
 	if exist {
-		log.Println(cl.LevelInfo, "file exists")
-		return fileID, token, true
+		info = append(info, fmt.Sprintf("文件已存在: %s", fileID))
+		return token, fileID, info, nil
 	}
 
 	// 上传文件分片。
-	log.Println(cl.LevelInfo, "upload file parts")
-	token, err = uploadFileParts(cfg, token, fileID, fileSize)
+	token, err = uploadFileParts(cfg, token, fileID, fileSize, step)
 	if err != nil {
-		return "", token, false
+		return token, "", nil, err
 	}
 
 	// 合并分片。
-	log.Println(cl.LevelInfo, "merge file parts")
 	token, err = mergeFileParts(cfg, token, fileID)
 	if err != nil {
-		return "", token, false
+		return token, "", nil, err
 	}
 
-	return fileID, token, true
+	return token, fileID, info, nil
 }
 
 func calculateFileMD5(filePath string, fileSize int64) (string, error) {
 	hash := md5.New()
 	fileStream, err := os.Open(filePath)
 	if err != nil {
-		log.Println(cl.LevelError, "failed to open file", err)
-		return "", err
+		return "", fmt.Errorf("请检查输入文件：%v", err)
 	}
 	defer func() {
 		if err = fileStream.Close(); err != nil {
-			log.Println(cl.LevelError, "failed to close file", err)
+			_, _ = fmt.Fprintf(os.Stderr, "failed to close file %s: %v\n", filePath, err)
 		}
 	}()
 
 	written, err := io.Copy(hash, fileStream)
 	if err != nil {
-		log.Println(cl.LevelError, "failed to read file", err)
-		return "", err
+		return "", fmt.Errorf("计算输入文件 MD5 失败：%v", err)
 	}
 	if written != fileSize {
-		log.Println(cl.LevelError, "failed to read file", written, fileSize)
-		return "", errors.New("failed to read file fully")
+		return "", fmt.Errorf("计算输入文件MD5 失败，未能完整读取文件")
 	}
 
 	return hex.EncodeToString(hash.Sum(nil)), nil
@@ -123,7 +103,7 @@ func initializeUploading(cfg *Configuration, token string, fileSize int64, fileM
 	retryTimes := HTTPRetryTimes
 
 Do:
-	// 构建请求参数，
+	// 构建请求参数。
 	typ := model.FileTypeWindowsSigning
 	switch cfg.Base.JobType {
 	case JobTypeWHQL:
@@ -135,8 +115,7 @@ Do:
 	case JobTypeApple:
 		typ = model.FileTypeAppleSigning
 	default:
-		log.Println(cl.LevelError, "invalid job type", cfg.Base.JobType)
-		return "", token, false, fmt.Errorf("invalid job type: %s", cfg.Base.JobType)
+		return "", token, false, fmt.Errorf("请检查任务类型：%s", cfg.Base.JobType)
 	}
 	reqBodyBytes, _ := json.Marshal(&bp.FileAPIInitialReq{
 		Name: fileName,
@@ -144,12 +123,11 @@ Do:
 		MD5:  fileMD5,
 		Type: typ,
 	})
-	reqURL := fmt.Sprintf("%s/%s", strings.TrimRight(cfg.Base.ServerAddress, "/"),
+	reqURL := fmt.Sprintf("%s/%s", strings.TrimRight(ServerAddress, "/"),
 		path.Join(cc.ServiceNameBackend, bp.HTTPPathFileAPIInitializeUploadFile))
 	request, err := http.NewRequest(http.MethodPost, reqURL, bytes.NewReader(reqBodyBytes))
 	if err != nil {
-		log.Println(cl.LevelError, "failed to create http request", err)
-		return "", token, false, err
+		return "", token, false, fmt.Errorf("创建 HTTP 请求失败：%v", err)
 	}
 	request.Header.Set("Content-Type", "application/json; charset=utf-8")
 	request.Header.Set("Authorization", token)
@@ -158,15 +136,13 @@ Do:
 	// 发送请求。
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
-		log.Println(cl.LevelError, "failed to do http request", err)
-		return "", token, false, err
+		return "", token, false, fmt.Errorf("发送 HTTP 请求失败：%v", err)
 	}
 	if response == nil {
 		retryTimes--
 		if retryTimes < 0 {
-			return "", token, false, errors.New("nil http response")
+			return "", token, false, fmt.Errorf("空的 HTTP 响应体")
 		}
-		log.Println(cl.LevelWarn, "try initializing file uploading again")
 		time.Sleep(time.Second)
 		goto Do
 	}
@@ -175,164 +151,62 @@ Do:
 	switch response.StatusCode {
 	case http.StatusBadRequest, http.StatusForbidden, http.StatusInternalServerError:
 		result := ReadAndUnmarshal[util.Response[bp.FileAPIInitialRsp]](response.Body)
-		log.Println(cl.LevelError, "failed to initialize file uploading", result.Code, result.Message,
-			response.Header.Get(cc.HTTPHeaderRequestID))
-		return "", token, false, fmt.Errorf("%d %s", result.Code, result.Message)
+		return "", token, false, fmt.Errorf("初始化文件上传失败：%d %s %s",
+			result.Code, result.Message, response.Header.Get(cc.HTTPHeaderRequestID))
 	case http.StatusUnauthorized:
 		result := ReadAndUnmarshal[util.Response[bp.FileAPIInitialRsp]](response.Body)
-		log.Println(cl.LevelWarn, "access token is invalid", result.Code, result.Message)
 		token, _ = CreateAuthorization(cfg)
 		retryTimes--
 		if retryTimes < 0 {
-			return "", token, false, fmt.Errorf("%d %s", result.Code, result.Message)
+			return "", token, false, fmt.Errorf("初始化文件上传失败，请检查凭证是否有权限：%d %s %s",
+				result.Code, result.Message, response.Header.Get(cc.HTTPHeaderRequestID))
 		}
-		log.Println(cl.LevelWarn, "try initializing file uploading again")
 		time.Sleep(time.Second)
 		goto Do
 	case http.StatusTooManyRequests:
 		CloseIO(response.Body)
-		log.Println(cl.LevelWarn, "rate limit reached, try initializing file uploading again")
 		time.Sleep(time.Second)
 		goto Do
 	case http.StatusOK:
 		result := ReadAndUnmarshal[util.Response[bp.FileAPIInitialRsp]](response.Body)
 		return result.Data.FileID, token, result.Data.Exist, nil
 	default:
-		log.Println(cl.LevelError, "invalid response status", response.Status, string(ReadAndClose(response.Body)))
 		retryTimes--
 		if retryTimes < 0 {
-			return "", token, false, fmt.Errorf("invalid response status %s", response.Status)
+			return "", token, false, fmt.Errorf("初始化文件上传失败，响应信息：%s %s %s",
+				response.Status, response.Header.Get(cc.HTTPHeaderRequestID), string(ReadAndClose(response.Body)))
 		}
-		log.Println(cl.LevelWarn, "try initializing file uploading again")
+		CloseIO(response.Body)
 		time.Sleep(time.Second)
 		token, _ = CreateAuthorization(cfg)
 		goto Do
 	}
 }
 
-func uploadFileParts(cfg *Configuration, token string, fileID string, fileSize int64) (string, error) {
+func uploadFileParts(cfg *Configuration, token string, fileID string, fileSize int64, step *StepRunner) (string, error) {
 	// 处理请求数据。
 	fileStream, err := os.Open(cfg.Base.InFile)
 	if err != nil {
-		log.Println(cl.LevelError, "failed to open file", err)
-		return token, err
+		return token, fmt.Errorf("读取输入文件失败，请检查文件路径：%v", err)
 	}
 	defer func() {
 		if err = fileStream.Close(); err != nil {
-			log.Println(cl.LevelError, "failed to close file", err)
+			_, _ = fmt.Fprintf(os.Stderr, "failed to close file %s: %v\n", cfg.Base.InFile, err)
 		}
 	}()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	reqURL := fmt.Sprintf("%s/%s", strings.TrimRight(cfg.Base.ServerAddress, "/"),
+	reqURL := fmt.Sprintf("%s/%s", strings.TrimRight(ServerAddress, "/"),
 		path.Join(cc.ServiceNameBackend, bp.HTTPPathFileAPIUploadFilePart))
 	token, _ = CreateAuthorization(cfg)
 
-	// 上传文件分片。
+	// 按分片读取文件，同时计数总块数。
 	type Data struct {
 		Bytes  []byte
 		Number int
 		Token  string
 	}
-	add, wait := gu.NewRunner(ctx, runtime.NumCPU(), func(ctx context.Context, t *Data) error {
-		log.Println(cl.LevelInfo, "upload file chunk", t.Number, len(t.Bytes))
-
-		retryTimes := HTTPRetryTimes
-
-	Do:
-		// 构建请求体。
-		buf := &bytes.Buffer{}
-		writer := multipart.NewWriter(buf)
-		err2 := writer.WriteField("fileId", fileID)
-		if err2 != nil {
-			log.Println(cl.LevelError, "failed to create multipart", err2)
-			return err2
-		}
-		if err2 = writer.WriteField("chunkNumber", strconv.Itoa(t.Number)); err2 != nil {
-			log.Println(cl.LevelError, "failed to create multipart", err2)
-			return err2
-		}
-		w, err2 := writer.CreateFormFile("chunk", "chunk")
-		if err2 != nil {
-			log.Println(cl.LevelError, "failed to create multipart", err2)
-			return err2
-		}
-		n, err2 := w.Write(t.Bytes)
-		if err2 != nil {
-			log.Println(cl.LevelError, "failed to create multipart", err2)
-			return err2
-		}
-		if n != len(t.Bytes) {
-			log.Println(cl.LevelError, "failed to create multipart", n, len(t.Bytes))
-			return err2
-		}
-		if err2 = writer.Close(); err2 != nil {
-			log.Println(cl.LevelError, "failed to close multipart writer", err2)
-			return err2
-		}
-
-		// 发送请求。
-		request, err2 := http.NewRequest(http.MethodPost, reqURL, buf)
-		if err2 != nil {
-			log.Println(cl.LevelError, "failed to create http request", err2)
-			return err2
-		}
-		request.Header.Set("Content-Type", writer.FormDataContentType())
-		request.Header.Set("Authorization", t.Token)
-		request.ContentLength = int64(buf.Len())
-		response, err2 := http.DefaultClient.Do(request)
-		if err2 != nil {
-			log.Println(cl.LevelError, "failed to do http request", err2)
-			return err2
-		}
-		if response == nil {
-			retryTimes--
-			if retryTimes < 0 {
-				return errors.New("nil http response")
-			}
-			log.Println(cl.LevelWarn, "try uploading file part again")
-			time.Sleep(time.Second)
-			goto Do
-		}
-
-		// 处理结果。
-		switch response.StatusCode {
-		case http.StatusTooManyRequests:
-			CloseIO(response.Body)
-			log.Println(cl.LevelWarn, "rate limit reached, try uploading file part again")
-			time.Sleep(time.Second)
-			goto Do
-		case http.StatusBadRequest, http.StatusInternalServerError, http.StatusForbidden, http.StatusRequestTimeout:
-			result := ReadAndUnmarshal[util.Response[any]](response.Body)
-			log.Println(cl.LevelError, "failed to upload file part", result.Code, result.Message,
-				response.Header.Get(cc.HTTPHeaderRequestID))
-			return fmt.Errorf("%d %s", result.Code, result.Message)
-		case http.StatusUnauthorized:
-			result := ReadAndUnmarshal[util.Response[any]](response.Body)
-			log.Println(cl.LevelWarn, "access token is invalid", result.Code, result.Message)
-			token, _ = CreateAuthorization(cfg)
-			retryTimes--
-			if retryTimes < 0 {
-				return fmt.Errorf("access token is invalid %v %v", result.Code, result.Message)
-			}
-			log.Println(cl.LevelWarn, "try uploading file part again")
-			time.Sleep(time.Second)
-			goto Do
-		case http.StatusNoContent:
-			return nil
-		default:
-			log.Println(cl.LevelError, "invalid response status", response.Status, string(ReadAndClose(response.Body)))
-			retryTimes--
-			if retryTimes < 0 {
-				return fmt.Errorf("http status is invalid %s", response.Status)
-			}
-			log.Println(cl.LevelWarn, "try uploading file part again")
-			time.Sleep(time.Second)
-			goto Do
-		}
-	})
-
-	// 读取文件。
+	var allParts []Data
 	number := 1
 	finishReading := true
 	totalReadBytes := int64(0)
@@ -341,15 +215,13 @@ func uploadFileParts(cfg *Configuration, token string, fileID string, fileSize i
 		buf := make([]byte, UploadFilePartSize)
 		n, err2 := io.ReadFull(fileStream, buf)
 		if err2 != nil {
-			if errors.Is(err2, io.ErrUnexpectedEOF) { // 读完了，还剩一点。
+			if errors.Is(err2, io.ErrUnexpectedEOF) {
 				buf = buf[:n]
 				finishReading = false
-			} else if errors.Is(err2, io.EOF) { // 读完了。
+			} else if errors.Is(err2, io.EOF) {
 				break
 			} else {
-				log.Println(cl.LevelError, "failed to read file", err2)
-				cancel()
-				return token, err2
+				return token, fmt.Errorf("读取输入文件失败，请检查文件路径：%v", err)
 			}
 		}
 		totalReadBytes += int64(len(buf))
@@ -357,25 +229,133 @@ func uploadFileParts(cfg *Configuration, token string, fileID string, fileSize i
 			beginTime = time.Now()
 			token, _ = CreateAuthorization(cfg)
 		}
-		if err2 = add(&Data{buf, number, token}, true); err2 != nil {
-			log.Println(cl.LevelError, "failed to upload file", err2)
-			return token, err2
-		}
+		allParts = append(allParts, Data{buf, number, token})
 		number++
+	}
+
+	totalParts := int64(len(allParts))
+
+	// 并发上传计数器。
+	var completedParts int64
+
+	// 启动进度报告协程。
+	progressDone := make(chan struct{})
+	go func() {
+		ticker := time.NewTicker(200 * time.Millisecond)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				done := atomic.LoadInt64(&completedParts)
+				step.UpdateRunning(fmt.Sprintf("上传中... %d/%d 分片", done, totalParts))
+			case <-progressDone:
+				return
+			}
+		}
+	}()
+
+	add, wait := gu.NewRunner(ctx, runtime.NumCPU(), func(ctx context.Context, t *Data) error {
+		retryTimes := HTTPRetryTimes
+
+	Do:
+		// 构建请求体。
+		buf := &bytes.Buffer{}
+		writer := multipart.NewWriter(buf)
+		err2 := writer.WriteField("fileId", fileID)
+		if err2 != nil {
+			return err2
+		}
+		if err2 = writer.WriteField("chunkNumber", strconv.Itoa(t.Number)); err2 != nil {
+			return err2
+		}
+		w, err2 := writer.CreateFormFile("chunk", "chunk")
+		if err2 != nil {
+			return err2
+		}
+		n, err2 := w.Write(t.Bytes)
+		if err2 != nil {
+			return err2
+		}
+		if n != len(t.Bytes) {
+			return fmt.Errorf("failed to create multipart: %d != %d", n, len(t.Bytes))
+		}
+		if err2 = writer.Close(); err2 != nil {
+			return err2
+		}
+
+		// 发送请求。
+		request, err2 := http.NewRequest(http.MethodPost, reqURL, buf)
+		if err2 != nil {
+			return err2
+		}
+		request.Header.Set("Content-Type", writer.FormDataContentType())
+		request.Header.Set("Authorization", t.Token)
+		request.ContentLength = int64(buf.Len())
+		response, err2 := http.DefaultClient.Do(request)
+		if err2 != nil {
+			return err2
+		}
+		if response == nil {
+			retryTimes--
+			if retryTimes < 0 {
+				return errors.New("nil http response")
+			}
+			time.Sleep(time.Second)
+			goto Do
+		}
+
+		// 处理结果。
+		switch response.StatusCode {
+		case http.StatusTooManyRequests:
+			CloseIO(response.Body)
+			time.Sleep(time.Second)
+			goto Do
+		case http.StatusBadRequest, http.StatusInternalServerError, http.StatusForbidden, http.StatusRequestTimeout:
+			result := ReadAndUnmarshal[util.Response[any]](response.Body)
+			return fmt.Errorf("%d %s %s", result.Code, response.Header.Get(cc.HTTPHeaderRequestID), result.Message)
+		case http.StatusUnauthorized:
+			result := ReadAndUnmarshal[util.Response[any]](response.Body)
+			token, _ = CreateAuthorization(cfg)
+			retryTimes--
+			if retryTimes < 0 {
+				return fmt.Errorf("access token is invalid %v %v", result.Code, result.Message)
+			}
+			time.Sleep(time.Second)
+			goto Do
+		case http.StatusNoContent:
+			atomic.AddInt64(&completedParts, 1)
+			return nil
+		default:
+			retryTimes--
+			if retryTimes < 0 {
+				return fmt.Errorf("http status is invalid %s %s", response.Status, string(ReadAndClose(response.Body)))
+			}
+			time.Sleep(time.Second)
+			goto Do
+		}
+	})
+
+	// 提交所有任务。
+	for i := range allParts {
+		if err2 := add(&allParts[i], true); err2 != nil {
+			close(progressDone)
+			return token, fmt.Errorf("上传文件失败：%v", err2)
+		}
 	}
 
 	// 等待上传完毕。
 	if err = wait(false); err != nil {
-		log.Println(cl.LevelError, "failed to upload file", err)
-		return token, err
+		close(progressDone)
+		return token, fmt.Errorf("上传文件失败：%v", err)
 	}
+	close(progressDone)
+
+	// 最终进度刷新。
+	step.UpdateRunning(fmt.Sprintf("上传中... %d/%d 分片", totalParts, totalParts))
 
 	// 校验字节数。
 	if totalReadBytes != fileSize {
-		log.Println(cl.LevelError, "the number of bytes uploaded is different from the number of bytes in the file",
-			fileSize, totalReadBytes)
-		return token, fmt.Errorf("the number of bytes uploaded is different from the number of bytes in the file %v %v",
-			fileSize, totalReadBytes)
+		return token, fmt.Errorf("上传文件失败，上传字节数不相等：%v!=%v", fileSize, totalReadBytes)
 	}
 
 	token, _ = CreateAuthorization(cfg)
@@ -388,27 +368,24 @@ func mergeFileParts(cfg *Configuration, token string, fileID string) (string, er
 Do:
 	// 构建请求体。
 	query := util.EncodeStructToURLQuery(&bp.FileAPIMergePartsReq{FileID: fileID})
-	reqURL := fmt.Sprintf("%s/%s?%s", strings.TrimRight(cfg.Base.ServerAddress, "/"),
+	reqURL := fmt.Sprintf("%s/%s?%s", strings.TrimRight(ServerAddress, "/"),
 		path.Join(cc.ServiceNameBackend, bp.HTTPPathFileAPIMergeFilePart), query)
 	request, err := http.NewRequest(http.MethodGet, reqURL, nil)
 	if err != nil {
-		log.Println(cl.LevelError, "failed to create http request", err)
-		return token, err
+		return token, fmt.Errorf("创建 HTTP 请求失败：%v", err)
 	}
 	request.Header.Set("Authorization", token)
 
 	// 发送请求。
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
-		log.Println(cl.LevelError, "failed to do http request", err)
-		return token, err
+		return token, fmt.Errorf("发送 HTTP 请求失败：%v", err)
 	}
 	if response == nil {
 		retryTimes--
 		if retryTimes < 0 {
-			return token, errors.New("nil http response")
+			return token, fmt.Errorf("空的 HTTP 响应体")
 		}
-		log.Println(cl.LevelWarn, "try merging file again")
 		time.Sleep(time.Second)
 		goto Do
 	}
@@ -417,35 +394,30 @@ Do:
 	switch response.StatusCode {
 	case http.StatusTooManyRequests:
 		CloseIO(response.Body)
-		log.Println(cl.LevelWarn, "rate limit reached, try merging file again")
 		time.Sleep(time.Second)
 		goto Do
 	case http.StatusBadRequest, http.StatusInternalServerError, http.StatusForbidden, http.StatusRequestTimeout:
 		result := ReadAndUnmarshal[util.Response[any]](response.Body)
-		log.Println(cl.LevelError, "failed to merge file", result.Code, result.Message,
-			response.Header.Get(cc.HTTPHeaderRequestID))
-		return token, fmt.Errorf("%d %s", result.Code, result.Message)
+		return token, fmt.Errorf("合并分片失败：%d %s %s", result.Code, result.Message, response.Header.Get(cc.HTTPHeaderRequestID))
 	case http.StatusUnauthorized:
 		result := ReadAndUnmarshal[util.Response[any]](response.Body)
-		log.Println(cl.LevelWarn, "access token is invalid", result.Code, result.Message)
 		token, _ = CreateAuthorization(cfg)
 		retryTimes--
 		if retryTimes < 0 {
-			return token, fmt.Errorf("access token is invalid %v %v", result.Code, result.Message)
+			return token, fmt.Errorf("合并分片失败，请检查凭证权限：%v %v %v", result.Code, result.Message, response.Header.Get(cc.HTTPHeaderRequestID))
 		}
-		log.Println(cl.LevelWarn, "try merging file again")
 		time.Sleep(time.Second)
 		goto Do
 	case http.StatusNoContent:
 		CloseIO(response.Body)
 		return token, nil
 	default:
-		log.Println(cl.LevelError, "invalid response status", response.Status, string(ReadAndClose(response.Body)))
 		retryTimes--
 		if retryTimes < 0 {
-			return token, fmt.Errorf("http code is invalid %s", response.Status)
+			return token, fmt.Errorf("合并分片失败，响应信息：%s %s %s",
+				response.Status, response.Header.Get(cc.HTTPHeaderRequestID), string(ReadAndClose(response.Body)))
 		}
-		log.Println(cl.LevelWarn, "try merging file again")
+		CloseIO(response.Body)
 		time.Sleep(time.Second)
 		goto Do
 	}

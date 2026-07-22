@@ -630,3 +630,34 @@ func AppleWebStatisticSigningCost(c *gin.Context) {
 	log.Info(ctx, "response data for statistic job signing cost", rsp)
 	util.ResponseData(c, rsp)
 }
+
+// AppleWebStatisticSigningPassRate 获取应用的 Apple 类型签名通过率统计信息。
+//
+//	@Summary	获获取应用的 Apple 类型签名通过率统计信息
+//	@Tags		Apple-WebAPI
+//	@Accept		application/x-www-form-urlencoded
+//	@Produce	application/json
+//	@Param		Date	header		string											true	"请求日期"	example(Mon, 02 Jan 2006 15:04:05 GMT)
+//	@Param		Cookie	header		string											true	"会话凭据"	example(csms_user=; csms_seesion=)
+//	@Param		_		query		protocol.AppleWebStatisticSigningPassRateReq	true	"请求参数"
+//	@Response	200		{object}	util.Response[protocol.AppleWebStatisticSigningPassRateRsp]
+//	@Router		/web/apple/statisticSigningPassRate [get]
+func AppleWebStatisticSigningPassRate(c *gin.Context) {
+	ctx := c.Request.Context()
+	var req protocol.AppleWebStatisticSigningPassRateReq
+	err := c.ShouldBind(&req)
+	if err != nil {
+		log.Warn(ctx, "failed to parse request parameters", err)
+		util.ResponseError(c, err)
+		return
+	}
+	log.Info(ctx, "request parameters for statistic job signing pass rate", &req)
+	rsp, err := service.AppleWebStatisticSigningPassRate(ctx, &req)
+	if err != nil {
+		log.Warn(ctx, "failed to statistic job signing pass rate", err, &req)
+		util.ResponseError(c, err)
+		return
+	}
+	log.Info(ctx, "response data for statistic job signing pass rate", rsp)
+	util.ResponseData(c, rsp)
+}

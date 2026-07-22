@@ -450,6 +450,29 @@ definitions:
           $ref: '#/definitions/protocol.AndroidWebStatisticSigningCostItem'
         type: array
     type: object
+  protocol.AndroidWebStatisticSigningPassRateItem:
+    properties:
+      aabSigningPassRate:
+        description: AAB 签名通过率
+        type: integer
+      apkSigningPassRate:
+        description: APK 签名通过率
+        type: integer
+      beginTime:
+        description: 开始时间
+        type: string
+      patchSigningPassRate:
+        description: 补丁签名通过率
+        type: integer
+    type: object
+  protocol.AndroidWebStatisticSigningPassRateRsp:
+    properties:
+      list:
+        description: 数据
+        items:
+          $ref: '#/definitions/protocol.AndroidWebStatisticSigningPassRateItem'
+        type: array
+    type: object
   protocol.AndroidWebStatisticSigningTimesItem:
     properties:
       aabSigningTimes:
@@ -1090,6 +1113,23 @@ definitions:
         description: 数据
         items:
           $ref: '#/definitions/protocol.AppleWebStatisticSigningCostItem'
+        type: array
+    type: object
+  protocol.AppleWebStatisticSigningPassRateItem:
+    properties:
+      beginTime:
+        description: 开始时间
+        type: string
+      signingPassRate:
+        description: 签名通过率
+        type: integer
+    type: object
+  protocol.AppleWebStatisticSigningPassRateRsp:
+    properties:
+      list:
+        description: 数据
+        items:
+          $ref: '#/definitions/protocol.AppleWebStatisticSigningPassRateItem'
         type: array
     type: object
   protocol.AppleWebStatisticSigningTimesItem:
@@ -2754,6 +2794,22 @@ definitions:
         example: 失败时的提示语
         type: string
     type: object
+  util.Response-protocol_AndroidWebStatisticSigningPassRateRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.AndroidWebStatisticSigningPassRateRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
   util.Response-protocol_AndroidWebStatisticSigningTimesRsp:
     properties:
       code:
@@ -2940,6 +2996,22 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/protocol.AppleWebStatisticSigningCostRsp'
+        description: 响应数据
+      message:
+        description: 提示语
+        example: 失败时的提示语
+        type: string
+    type: object
+  util.Response-protocol_AppleWebStatisticSigningPassRateRsp:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errs.Code'
+        description: 响应码，大于 0 表示错误
+        example: 0
+      data:
+        allOf:
+        - $ref: '#/definitions/protocol.AppleWebStatisticSigningPassRateRsp'
         description: 响应数据
       message:
         description: 提示语
@@ -4934,6 +5006,55 @@ paths:
       summary: 获取应用的 Android 类型签名次数耗时统计信息
       tags:
       - Android-WebAPI
+  /web/android/statisticSigningPassRate:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: query
+        name: appId
+        type: string
+      - description: 开始时间
+        example: "2024-01-01"
+        in: query
+        name: beginTime
+        required: true
+        type: string
+      - description: 结束时间
+        example: "2025-01-01"
+        in: query
+        name: endTime
+        type: string
+      - description: 时间粒度
+        example: 1
+        in: query
+        maximum: 3
+        name: timeStep
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_AndroidWebStatisticSigningPassRateRsp'
+      summary: 获获取应用的 Android 类型签名通过率统计信息
+      tags:
+      - Android-WebAPI
   /web/android/statisticSigningTimes:
     get:
       consumes:
@@ -6089,6 +6210,55 @@ paths:
           schema:
             $ref: '#/definitions/util.Response-protocol_AppleWebStatisticSigningCostRsp'
       summary: 获取应用的 Apple 类型签名次数耗时统计信息
+      tags:
+      - Apple-WebAPI
+  /web/apple/statisticSigningPassRate:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: 请求日期
+        example: Mon, 02 Jan 2006 15:04:05 GMT
+        in: header
+        name: Date
+        required: true
+        type: string
+      - description: 会话凭据
+        example: csms_user=; csms_seesion=
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: 应用 ID
+        example: 4ef83c03e2ce4f1f94c11168d1acd087
+        in: query
+        name: appId
+        type: string
+      - description: 开始时间
+        example: "2024-01-01"
+        in: query
+        name: beginTime
+        required: true
+        type: string
+      - description: 结束时间
+        example: "2025-01-01"
+        in: query
+        name: endTime
+        type: string
+      - description: 时间粒度
+        example: 1
+        in: query
+        maximum: 3
+        name: timeStep
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/util.Response-protocol_AppleWebStatisticSigningPassRateRsp'
+      summary: 获获取应用的 Apple 类型签名通过率统计信息
       tags:
       - Apple-WebAPI
   /web/apple/statisticSigningTimes:

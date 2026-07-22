@@ -91,7 +91,15 @@ Cookie: csms_user=zhangsan; csms_session={{csms_session_zhangsan}}
 
 {
   "accountId": "{{windowsApiAccountId}}",
-  "authorities": [1, 2, 3, 4, 9, 10, 11],
+  "authorities": [
+    1,
+    2,
+    3,
+    4,
+    9,
+    10,
+    11
+  ],
   "requestIp": "*,127.0.0.1",
   "frequency": 500
 }

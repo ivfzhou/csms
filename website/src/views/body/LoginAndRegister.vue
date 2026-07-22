@@ -273,15 +273,15 @@ const handlePreview = async file => {
 
 <template>
   <div class="csms-body-loginandregister">
-    <Transition name="title" mode="out-in">
-      <div class="csms-body-loginandregister-title" :key="isLogin">{{ isLogin ? '用户登陆' : '注册用户' }}</div>
+    <Transition mode="out-in" name="title">
+      <div :key="isLogin" class="csms-body-loginandregister-title">{{ isLogin ? '用户登陆' : '注册用户' }}</div>
     </Transition>
-    <Form class="csms-body-loginandregister-form" @finish="finishForm" :rules="formRules" :model="formState"
-          :label-col="{span: 6}" :wrapper-col="{span: 18}" validateFirst autocomplete="on">
+    <Form :label-col="{span: 6}" :model="formState" :rules="formRules" :wrapper-col="{span: 18}"
+          autocomplete="on" class="csms-body-loginandregister-form" validateFirst @finish="finishForm">
       <Transition @beforeEnter="onBeforeEnter" @enter="onEnter" @leave="onLeave">
-        <FormItem label="头像" name="avatar" required v-if="!isLogin">
-          <Upload :fileList="formState.avatar" listType="picture-card" :beforeUpload="avatarBeforeUpload"
-                  @remove="removeAvatar" accept="image/png,image/jpeg,image/jpg" @preview="handlePreview">
+        <FormItem v-if="!isLogin" label="头像" name="avatar" required>
+          <Upload :beforeUpload="avatarBeforeUpload" :fileList="formState.avatar" accept="image/png,image/jpeg,image/jpg"
+                  listType="picture-card" @preview="handlePreview" @remove="removeAvatar">
             <div v-if="formState.avatar.length <= 0">
               <LoadingOutlined v-if="isAvatarLoading"/>
               <PlusOutlined v-else/>
@@ -289,7 +289,7 @@ const handlePreview = async file => {
           </Upload>
         </FormItem>
       </Transition>
-      <FormItem label="用户名" name="username" hasFeedback required validateFirst>
+      <FormItem hasFeedback label="用户名" name="username" required validateFirst>
         <Input v-model:value="formState.username" autocomplete="username"
                placeholder="请输入用户名，6 到 32 位字符，由数字和字母组成，第一个字符需为字母">
           <template #prefix>
@@ -298,7 +298,7 @@ const handlePreview = async file => {
         </Input>
       </FormItem>
       <Transition @beforeEnter="onBeforeEnter" @enter="onEnter" @leave="onLeave">
-        <FormItem label="中文名" name="nickname" hasFeedback validateFirst required v-if="!isLogin">
+        <FormItem v-if="!isLogin" hasFeedback label="中文名" name="nickname" required validateFirst>
           <Input v-model:value="formState.nickname" placeholder="请输入中文名，2 到 16 位汉字">
             <template #prefix>
               <IdcardOutlined/>
@@ -306,8 +306,8 @@ const handlePreview = async file => {
           </Input>
         </FormItem>
       </Transition>
-      <FormItem label="密码" name="password" hasFeedback validateFirst required>
-        <InputPassword v-model:value="formState.password" autocomplete="current-password" :visibilityToggle="isLogin"
+      <FormItem hasFeedback label="密码" name="password" required validateFirst>
+        <InputPassword v-model:value="formState.password" :visibilityToggle="isLogin" autocomplete="current-password"
                        placeholder="请输入密码，至少 6 位可打印字符">
           <template #prefix>
             <LockOutlined/>
@@ -315,17 +315,17 @@ const handlePreview = async file => {
         </InputPassword>
       </FormItem>
       <Transition @beforeEnter="onBeforeEnter" @enter="onEnter" @leave="onLeave">
-        <FormItem label="确认密码" name="passwordConfirm" hasFeedback validateFirst required v-if="!isLogin">
-          <InputPassword v-model:value="formState.passwordConfirm" placeholder="请再次输入密码"
-                         :visibilityToggle="isLogin">
+        <FormItem v-if="!isLogin" hasFeedback label="确认密码" name="passwordConfirm" required validateFirst>
+          <InputPassword v-model:value="formState.passwordConfirm" :visibilityToggle="isLogin"
+                         placeholder="请再次输入密码">
             <template #prefix>
               <LockOutlined/>
             </template>
           </InputPassword>
         </FormItem>
       </Transition>
-      <Transition @beforeEnter="onBeforeEnter" @enter="onEnter" @leave="onLeave" required>
-        <FormItem label="部门" name="department" hasFeedback validateFirst v-if="!isLogin">
+      <Transition required @beforeEnter="onBeforeEnter" @enter="onEnter" @leave="onLeave">
+        <FormItem v-if="!isLogin" hasFeedback label="部门" name="department" validateFirst>
           <Input v-model:value="formState.department" placeholder="请输入部门信息，最多 1024 个字符，组织单元间以 / 分隔">
             <template #prefix>
               <HomeOutlined/>
@@ -335,13 +335,13 @@ const handlePreview = async file => {
       </Transition>
       <FormItem :wrapperCol="{span: 18, offset: 6}">
         <div class="csms-body-loginandregister-form-button-inner">
-          <Button type="primary" htmlType="submit">{{ isLogin ? '登陆' : '注册' }}</Button>
+          <Button htmlType="submit" type="primary">{{ isLogin ? '登陆' : '注册' }}</Button>
           <a @click="isLogin = !isLogin">{{ isLogin ? '没账号？去注册' : '有账号？去登陆' }}</a>
         </div>
       </FormItem>
     </Form>
-    <Modal :open="previewVisible" :title="previewTitle" :footer="null" @cancel="handleCancel">
-      <img alt="头像" style="width: 100%" :src="previewImage"/>
+    <Modal :footer="null" :open="previewVisible" :title="previewTitle" @cancel="handleCancel">
+      <img :src="previewImage" alt="头像" style="width: 100%"/>
     </Modal>
   </div>
 </template>

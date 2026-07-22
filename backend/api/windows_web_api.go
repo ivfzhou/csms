@@ -578,10 +578,10 @@ func WindowsWebStatisticSigningPassRate(c *gin.Context) {
 	log.Info(ctx, "request parameters for statistic job signing pass rate", &req)
 	rsp, err := service.WindowsWebStatisticSigningPassRate(ctx, &req)
 	if err != nil {
-		log.Warn(ctx, "failed to statistic job signing cost", err, &req)
+		log.Warn(ctx, "failed to statistic job signing pass rate", err, &req)
 		util.ResponseError(c, err)
 		return
 	}
-	log.Info(ctx, "response data for statistic job signing  pass rate", rsp)
+	log.Info(ctx, "response data for statistic job signing pass rate", rsp)
 	util.ResponseData(c, rsp)
 }

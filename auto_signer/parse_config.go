@@ -14,12 +14,11 @@ package main
 
 import (
 	"flag"
-	"log"
+	"fmt"
 	"os"
+	"path/filepath"
 
 	"gopkg.in/yaml.v3"
-
-	cl "gitee.com/ivfzhou/csms/comm/log"
 )
 
 var configFilePath string
@@ -28,8 +27,6 @@ var configFilePath string
 type Configuration struct {
 	// 基础
 	Base struct {
-		// 服务地址
-		ServerAddress string `yaml:"serverAddress"`
 		// 应用 ID
 		AppID string `yaml:"appId"`
 		// 请求凭证 ID
@@ -48,7 +45,7 @@ type Configuration struct {
 		// Windows 签名
 		Windows struct {
 			// 任务类型
-			SigningType string `yaml:"signingType"`
+			Type string `yaml:"type"`
 			// 证书 ID
 			CertificateID string `yaml:"certificateId"`
 		} `yaml:"windows"`
@@ -86,24 +83,77 @@ type Configuration struct {
 
 // AddConfigCommandFlag 添加命令参数。
 func AddConfigCommandFlag() {
-	flag.StringVar(&configFilePath, "config", "config.yml", "required, config file location")
+	flag.StringVar(&configFilePath, "config", "config.yml", "config file location")
 }
 
-// ParseConfig 获取配置。
-func ParseConfig() (*Configuration, bool) {
+// ParseConfig 获取配置，
+func ParseConfig() (*Configuration, string, int64, []string, error) {
 	// 读取配置文件。
 	fileData, err := os.ReadFile(configFilePath)
 	if err != nil {
-		log.Println(cl.LevelError, "failed to read config file", err)
-		return nil, false
+		return nil, "", 0, nil, fmt.Errorf("请检查配置文件路径：%v", err)
 	}
 
 	// 反序列化配置数据。
 	var cfgData Configuration
 	if err = yaml.Unmarshal(fileData, &cfgData); err != nil {
-		log.Println(cl.LevelError, "failed to parse config file data", err)
-		return nil, false
+		return nil, "", 0, nil, fmt.Errorf("请检查配置文件 YAML 格式：%v", err)
 	}
 
-	return &cfgData, true
+	// 解析输入文件路径并获取文件大小。
+	inFilePath, err := filepath.Abs(cfgData.Base.InFile)
+	if err != nil {
+		return nil, "", 0, nil, fmt.Errorf("请检查输入文件路径：%v", err)
+	}
+	fileInfo, err := os.Stat(inFilePath)
+	if err != nil {
+		return nil, "", 0, nil, fmt.Errorf("请检查输入文件是否存在：%v", err)
+	}
+	if fileInfo.IsDir() {
+		return nil, "", 0, nil, fmt.Errorf("输入文件路径不能是文件夹：%v", err)
+	}
+	fileSize := fileInfo.Size()
+
+	// 解析输出文件路径。
+	outFilePath, err := filepath.Abs(cfgData.Base.OutFile)
+	if err != nil {
+		return nil, "", 0, nil, fmt.Errorf("请检查输出文件路径：%v", err)
+	}
+
+	// WHQL 配置校验。
+	if cfgData.Base.JobType == JobTypeWHQL && len(cfgData.SignConfig.WHQL.TestConfigFilePath) > 0 {
+		_, err = filepath.Abs(cfgData.SignConfig.WHQL.TestConfigFilePath)
+		if err != nil {
+			return nil, "", 0, nil, fmt.Errorf("请检查 HLK 测试配置文件路径：%v", err)
+		}
+	}
+
+	// 生成请求凭证。
+	token, err := CreateAuthorization(&cfgData)
+	if err != nil {
+		return nil, "", 0, nil, err
+	}
+
+	// 生成打印信息。
+	info := make([]string, 0, 12)
+	info = append(info, fmt.Sprintf("应用 ID: %s", cfgData.Base.AppID))
+	info = append(info, fmt.Sprintf("凭证 ID: %s", cfgData.Base.AccountID))
+	info = append(info, fmt.Sprintf("输入文件: %s (%s)", inFilePath, FormatSize(fileSize)))
+	info = append(info, fmt.Sprintf("输出文件: %s", outFilePath))
+	info = append(info, fmt.Sprintf("任务类型: %s", cfgData.Base.JobType))
+	switch cfgData.Base.JobType {
+	case JobTypeWindows:
+		info = append(info, fmt.Sprintf("签名类型: %s", cfgData.SignConfig.Windows.Type))
+		info = append(info, fmt.Sprintf("证书 ID: %s", cfgData.SignConfig.Windows.CertificateID))
+	case JobTypeWHQL:
+		info = append(info, fmt.Sprintf("签名类型: %s", cfgData.SignConfig.WHQL.Type))
+		info = append(info, fmt.Sprintf("测试系统: %s", cfgData.SignConfig.WHQL.TestSystem))
+	case JobTypeAndroid:
+		info = append(info, fmt.Sprintf("签名类型: %s", cfgData.SignConfig.Android.Type))
+		info = append(info, fmt.Sprintf("证书 ID: %s", cfgData.SignConfig.Android.CertificateID))
+	case JobTypeApple:
+		info = append(info, fmt.Sprintf("描述文件: %s", cfgData.SignConfig.Apple.ProvisionID))
+	}
+
+	return &cfgData, token, fileSize, info, nil
 }

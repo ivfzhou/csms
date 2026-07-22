@@ -298,6 +298,36 @@ type AndroidWebStatisticSigningCostItem struct {
 	PatchSigningCost int `json:"patchSigningCost,omitempty"`
 }
 
+// AndroidWebStatisticSigningPassRateReq 获取应用的 Android 类型签名通过率统计信息请求体。
+type AndroidWebStatisticSigningPassRateReq struct {
+	// 应用 ID
+	AppID string `form:"appId" binding:"omitempty,len=32,alphanum" example:"4ef83c03e2ce4f1f94c11168d1acd087"`
+	// 开始时间
+	BeginTime time.Time `form:"beginTime" time_format:"2006-01-02" binding:"required" example:"2024-01-01"`
+	// 结束时间
+	EndTime time.Time `form:"endTime" time_format:"2006-01-02" binding:"gtfield=BeginTime" example:"2025-01-01"`
+	// 时间粒度
+	TimeStep int `form:"timeStep" binding:"gt=0,max=3" example:"1"`
+}
+
+// AndroidWebStatisticSigningPassRateRsp 获取应用的 Android 类型签名通过率统计信息响应体。
+type AndroidWebStatisticSigningPassRateRsp struct {
+	// 数据
+	List []*AndroidWebStatisticSigningPassRateItem `json:"list,omitempty"`
+}
+
+// AndroidWebStatisticSigningPassRateItem 签名通过率信息。
+type AndroidWebStatisticSigningPassRateItem struct {
+	// 开始时间
+	BeginTime string `json:"beginTime,omitempty"`
+	// APK 签名通过率
+	ApkSigningPassRate int `json:"apkSigningPassRate,omitempty"`
+	// AAB 签名通过率
+	AabSigningPassRate int `json:"aabSigningPassRate,omitempty"`
+	// 补丁签名通过率
+	PatchSigningPassRate int `json:"patchSigningPassRate,omitempty"`
+}
+
 func initAndroidWebProtocol() {
 	validator.AddTranslationMessage(reflect.TypeFor[AndroidWebAddOrganizationReq](), validator.TranslationMessage{
 		"CommonName": {
@@ -682,6 +712,40 @@ func initAndroidWebProtocol() {
 		},
 	})
 	validator.AddTranslationMessage(reflect.TypeFor[AndroidWebStatisticSigningCostReq](), validator.TranslationMessage{
+		"AppID": {
+			"len": {
+				i18n.LanguageChinese: "应用不存在于系统",
+				i18n.LanguageEnglish: "app does not exist in the system",
+			},
+			"alphanum": {
+				i18n.LanguageChinese: "应用不存在于系统",
+				i18n.LanguageEnglish: "app does not exist in the system",
+			},
+		},
+		"BeginTime": {
+			"required": {
+				i18n.LanguageChinese: "请选择开始时间",
+				i18n.LanguageEnglish: "please choose a start time",
+			},
+		},
+		"EndTime": {
+			"gtfield": {
+				i18n.LanguageChinese: "结束时间不能比开始时间小",
+				i18n.LanguageEnglish: "end time cannot be shorter than the start time",
+			},
+		},
+		"TimeStep": {
+			"gt": {
+				i18n.LanguageChinese: "错误的时间粒度",
+				i18n.LanguageEnglish: "wrong time granularity",
+			},
+			"max": {
+				i18n.LanguageChinese: "错误的时间粒度",
+				i18n.LanguageEnglish: "wrong time granularity",
+			},
+		},
+	})
+	validator.AddTranslationMessage(reflect.TypeFor[AndroidWebStatisticSigningPassRateReq](), validator.TranslationMessage{
 		"AppID": {
 			"len": {
 				i18n.LanguageChinese: "应用不存在于系统",

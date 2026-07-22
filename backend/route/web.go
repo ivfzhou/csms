@@ -494,6 +494,15 @@ func webAndroid(r *gin.RouterGroup) {
 		filter.PermissionWebAuthenticateFilter,
 		api.AndroidWebStatisticSigningCost,
 	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/statisticSigningPassRate",
+		permissionSystem,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		api.AndroidWebStatisticSigningPassRate,
+	)
 }
 
 func webWindows(r *gin.RouterGroup) {
@@ -866,6 +875,15 @@ func webApple(r *gin.RouterGroup) {
 		filter.AntiShakeFilter,
 		filter.PermissionWebAuthenticateFilter,
 		api.AppleWebStatisticSigningCost,
+	)
+	addRouteWithPermissions(
+		r,
+		http.MethodGet,
+		"/statisticSigningPassRate",
+		permissionSystem,
+		filter.AntiShakeFilter,
+		filter.PermissionWebAuthenticateFilter,
+		api.AppleWebStatisticSigningPassRate,
 	)
 }
 

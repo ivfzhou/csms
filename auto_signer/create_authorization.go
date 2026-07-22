@@ -13,16 +13,14 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-
-	cl "gitee.com/ivfzhou/csms/comm/log"
 )
 
 // CreateAuthorization 获取请求凭证。
-func CreateAuthorization(cfg *Configuration) (string, bool) {
+func CreateAuthorization(cfg *Configuration) (string, error) {
 	now := time.Now()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &jwt.RegisteredClaims{
 		Issuer:    cfg.Base.AppID,
@@ -33,8 +31,7 @@ func CreateAuthorization(cfg *Configuration) (string, bool) {
 	})
 	tokenString, err := token.SignedString([]byte(cfg.Base.Secret))
 	if err != nil {
-		log.Println(cl.LevelError, "failed to create authorization token", err)
-		return "", false
+		return "", fmt.Errorf("生成请求凭证失败，请检查凭证配置：%v", err)
 	}
-	return "Bearer " + tokenString, true
+	return "Bearer " + tokenString, nil
 }

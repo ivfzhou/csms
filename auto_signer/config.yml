@@ -1,26 +1,24 @@
 base:
-  # 服务地址，必填。
-  serverAddress: https://127.0.0.1
   # 应用 ID，必填。
-  appId: 2c67a70dc650487aa7336cdac77c22d8
+  appId: 3f3e426d48fc480e9a543d39bc1c2411
   # 请求凭证 ID，必填。
-  accountId: apple_api_account
+  accountId: windows_api_account
   # 请求凭证密钥，必填。
-  secret: Ak0K(v^x4I75eWJPpl(.B'R"nFc#ZNf:)f8Mi-*~s$#]zBN9gxKpmQ$T8-a{e$AdPRzCb*uJpn9k9(0Z]-43a4_m[VY*.]MXEzBfcpzWqi'nk1^/+~zm]v9\0X;qX&W)
+  secret: p02YboFVdQ"]^1OF\N5iX(;,'D?wv}-wg:'q5RY|w>`q!Ns#34^J"'-6].Id}xL2}c2mz9M^PWi&8AkV8X'4,#DD}rcxM$09q:`s3!r=R^.e5z!m8AdBYtv]l>/y6I@k
   # 待签名文件，必填。
-  inFile: ..\testdata\file\VansonMod_v2.1.ipa
+  inFile: /home/ivfzhou/文档/Win11_25H2_China_GGK_Chinese_Simplified_x64_v2.iso
   # 签名结果文件，必填。
-  outFile: ..\testdata\file\VansonMod_v2.1_signed.ipa
+  outFile: /home/ivfzhou/文档/Win11_25H2_China_GGK_Chinese_Simplified_x64_v2.iso.1
   # 任务类型，必填。windows、whql、android、apple。
-  jobType: apple
+  jobType: windows
 
 signConfig:
   # Windows 签名。
   windows:
     # 任务类型，必填。pe、attestation、peAndAttestation。
-    signingType: pe
+    type: pe
     # 证书 ID，必填。
-    certificateId: 8abc97bed31d43d4ba0b7b364dc6fe02
+    certificateId: 933b9d84bbcb4a0596a454a903324446
   # WHQL 认证。
   whql:
     # 任务类型，必填。hlk、testAndHlk。

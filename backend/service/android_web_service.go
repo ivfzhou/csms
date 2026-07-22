@@ -2595,6 +2595,138 @@ func AndroidWebStatisticSigningCost(ctx context.Context, req *protocol.AndroidWe
 	return
 }
 
+// AndroidWebStatisticSigningPassRate 获取应用的 Android 类型签名通过率统计信息。
+func AndroidWebStatisticSigningPassRate(ctx context.Context, req *protocol.AndroidWebStatisticSigningPassRateReq) (
+	rsp *protocol.AndroidWebStatisticSigningPassRateRsp, err error) {
+
+	// 获取上下文信息。
+	var user *model.User
+	{
+		log.Info(ctx, "get context information")
+		user = ctxs.User(ctx)
+		if user == nil {
+			log.Warn(ctx, "unknown context", user)
+			err = errs.New(consts.ErrSystem)
+			return
+		}
+	}
+
+	// 查询应用信息。
+	var appID int
+	{
+		if len(req.AppID) > 0 {
+			log.Info(ctx, "get app information")
+			appQuery := conn.MySQLClient(ctx).App
+			err = appQuery.WithContext(ctx).Select(
+				appQuery.ID,
+			).Where(
+				appQuery.AppID.Eq(req.AppID),
+			).Scan(&appID)
+			if err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					log.Warn(ctx, "app not found")
+					return nil, errs.New(consts.ErrParameterInvalid)
+				}
+				log.Error(ctx, "failed to retrieve app information from database", err)
+				return nil, errs.NewWithError(consts.ErrSystem, err)
+			}
+		}
+	}
+
+	// 查询数据库，获取任务数量。
+	var sqlResult []map[string]any
+	{
+		log.Info(ctx, "get pass rate of android job")
+
+		// 包含结束日期的记录。
+		req.EndTime = req.EndTime.AddDate(0, 0, 1).Add(-time.Second)
+
+		var tableNames []string
+		tableNames, err = filterAndroidSigningJobTables(ctx, req.BeginTime, req.EndTime)
+		if err != nil {
+			return nil, err
+		}
+		if len(tableNames) <= 0 {
+			return &protocol.AndroidWebStatisticSigningPassRateRsp{}, nil
+		}
+		androidSigningJobDo := conn.MySQLClient(ctx).AndroidSigningJob
+		switch req.TimeStep {
+		case protocol.TimeStepDay:
+			sqlResult, err = androidSigningJobDo.WithContext(ctx).PassRateWithDay(tableNames, appID, req.BeginTime, req.EndTime)
+		case protocol.TimeStepWeek:
+			sqlResult, err = androidSigningJobDo.WithContext(ctx).PassRateWithWeek(tableNames, appID, req.BeginTime, req.EndTime)
+		case protocol.TimeStepMonth:
+			sqlResult, err = androidSigningJobDo.WithContext(ctx).PassRateWithMonth(tableNames, appID, req.BeginTime, req.EndTime)
+		default:
+			log.Warn(ctx, "unknown time step", req.TimeStep)
+			return nil, errs.New(consts.ErrParameterInvalid)
+		}
+		if err != nil {
+			log.Error(ctx, "failed to query android job from database", err)
+			return nil, errs.NewWithError(consts.ErrSystem, err)
+		}
+	}
+
+	// 转换数据。
+	var items []*protocol.AndroidWebStatisticSigningPassRateItem
+	{
+		log.Info(ctx, "deal sql data")
+		items = make([]*protocol.AndroidWebStatisticSigningPassRateItem, 0, len(sqlResult)/2)
+		item := &protocol.AndroidWebStatisticSigningPassRateItem{}
+		for _, v := range sqlResult {
+			if v == nil {
+				continue
+			}
+			day := fmt.Sprintf("%s", v["day"])
+			var typ int
+			typ, err = strconv.Atoi(fmt.Sprintf("%v", v["type"]))
+			if err != nil {
+				log.Error(ctx, "failed to convert type to int", err, v["type"])
+			}
+			var rate int
+			rate, err = strconv.Atoi(fmt.Sprintf("%v", v["rate"]))
+			if err != nil {
+				log.Error(ctx, "failed to convert rate to int", err, v["rate"])
+			}
+			var t time.Time
+			switch req.TimeStep {
+			case protocol.TimeStepDay:
+				t, err = time.Parse("20060102", day)
+			case protocol.TimeStepWeek:
+				t, err = time.Parse("20060102", day)
+			case protocol.TimeStepMonth:
+				t, err = time.Parse("200601", day)
+			}
+			if err != nil {
+				log.Error(ctx, "failed to parse day", err, day)
+				continue
+			}
+			if len(item.BeginTime) <= 0 {
+				item.BeginTime = formatDate(&t)
+				items = append(items, item)
+			}
+			beginTime := formatDate(&t)
+			if beginTime != item.BeginTime {
+				item = &protocol.AndroidWebStatisticSigningPassRateItem{BeginTime: beginTime}
+				items = append(items, item)
+			}
+			switch typ {
+			case model.AndroidSigningJobTypeAPK:
+				item.ApkSigningPassRate = rate
+			case model.AndroidSigningJobTypeAAB:
+				item.AabSigningPassRate = rate
+			case model.AndroidSigningJobTypePatch:
+				item.PatchSigningPassRate = rate
+			default: // noop
+			}
+		}
+	}
+
+	rsp = &protocol.AndroidWebStatisticSigningPassRateRsp{List: items}
+
+	return
+}
+
 func createAndroidSigningJob(ctx context.Context, job *model.AndroidSigningJob) error {
 	androidSignJobTxDo := conn.MySQLTxClient(ctx).AndroidSigningJob.Table(model.GetAndroidSigningJobByID(job.JobID))
 	selectedFields := make([]field.Expr, 0, 12)
@@ -2659,7 +2791,7 @@ func filterAndroidSigningJobTables(ctx context.Context, begin, end time.Time) ([
 		}
 	}
 	if !end.IsZero() {
-		for i := len(allTables) - 1; i >= 0; i-- {
+		for i := range slices.Backward(allTables) {
 			if allTables[i] <= endTable {
 				allTables = allTables[:i+1]
 				break
@@ -2692,7 +2824,7 @@ func parseKeystore(ctx context.Context, jksPath, storepass string) (*keystoreInf
 	}
 	lines := strings.Split(string(outputBytes), "\n")
 	jksInfo := keystoreInfo{}
-	for i := len(lines) - 1; i >= 0; i-- {
+	for i := range slices.Backward(lines) {
 		v := util.TrimBlank(lines[i])
 		if len(v) <= 0 || !strings.Contains(v, ":") {
 			continue

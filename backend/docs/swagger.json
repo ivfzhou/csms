@@ -2207,6 +2207,76 @@
                 }
             }
         },
+        "/web/android/statisticSigningPassRate": {
+            "get": {
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Android-WebAPI"
+                ],
+                "summary": "获获取应用的 Android 类型签名通过率统计信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "Mon, 02 Jan 2006 15:04:05 GMT",
+                        "description": "请求日期",
+                        "name": "Date",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "csms_user=; csms_seesion=",
+                        "description": "会话凭据",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "4ef83c03e2ce4f1f94c11168d1acd087",
+                        "description": "应用 ID",
+                        "name": "appId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "2024-01-01",
+                        "description": "开始时间",
+                        "name": "beginTime",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "2025-01-01",
+                        "description": "结束时间",
+                        "name": "endTime",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 3,
+                        "type": "integer",
+                        "example": 1,
+                        "description": "时间粒度",
+                        "name": "timeStep",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/util.Response-protocol_AndroidWebStatisticSigningPassRateRsp"
+                        }
+                    }
+                }
+            }
+        },
         "/web/android/statisticSigningTimes": {
             "get": {
                 "consumes": [
@@ -3888,6 +3958,76 @@
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/util.Response-protocol_AppleWebStatisticSigningCostRsp"
+                        }
+                    }
+                }
+            }
+        },
+        "/web/apple/statisticSigningPassRate": {
+            "get": {
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Apple-WebAPI"
+                ],
+                "summary": "获获取应用的 Apple 类型签名通过率统计信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "Mon, 02 Jan 2006 15:04:05 GMT",
+                        "description": "请求日期",
+                        "name": "Date",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "csms_user=; csms_seesion=",
+                        "description": "会话凭据",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "4ef83c03e2ce4f1f94c11168d1acd087",
+                        "description": "应用 ID",
+                        "name": "appId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "2024-01-01",
+                        "description": "开始时间",
+                        "name": "beginTime",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "2025-01-01",
+                        "description": "结束时间",
+                        "name": "endTime",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 3,
+                        "type": "integer",
+                        "example": 1,
+                        "description": "时间粒度",
+                        "name": "timeStep",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/util.Response-protocol_AppleWebStatisticSigningPassRateRsp"
                         }
                     }
                 }
@@ -7302,6 +7442,39 @@
                 }
             }
         },
+        "protocol.AndroidWebStatisticSigningPassRateItem": {
+            "type": "object",
+            "properties": {
+                "aabSigningPassRate": {
+                    "description": "AAB 签名通过率",
+                    "type": "integer"
+                },
+                "apkSigningPassRate": {
+                    "description": "APK 签名通过率",
+                    "type": "integer"
+                },
+                "beginTime": {
+                    "description": "开始时间",
+                    "type": "string"
+                },
+                "patchSigningPassRate": {
+                    "description": "补丁签名通过率",
+                    "type": "integer"
+                }
+            }
+        },
+        "protocol.AndroidWebStatisticSigningPassRateRsp": {
+            "type": "object",
+            "properties": {
+                "list": {
+                    "description": "数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/protocol.AndroidWebStatisticSigningPassRateItem"
+                    }
+                }
+            }
+        },
         "protocol.AndroidWebStatisticSigningTimesItem": {
             "type": "object",
             "properties": {
@@ -8164,6 +8337,31 @@
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/protocol.AppleWebStatisticSigningCostItem"
+                    }
+                }
+            }
+        },
+        "protocol.AppleWebStatisticSigningPassRateItem": {
+            "type": "object",
+            "properties": {
+                "beginTime": {
+                    "description": "开始时间",
+                    "type": "string"
+                },
+                "signingPassRate": {
+                    "description": "签名通过率",
+                    "type": "integer"
+                }
+            }
+        },
+        "protocol.AppleWebStatisticSigningPassRateRsp": {
+            "type": "object",
+            "properties": {
+                "list": {
+                    "description": "数据",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/protocol.AppleWebStatisticSigningPassRateItem"
                     }
                 }
             }
@@ -10422,6 +10620,33 @@
                 }
             }
         },
+        "util.Response-protocol_AndroidWebStatisticSigningPassRateRsp": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应码，大于 0 表示错误",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/errs.Code"
+                        }
+                    ],
+                    "example": 0
+                },
+                "data": {
+                    "description": "响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/protocol.AndroidWebStatisticSigningPassRateRsp"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "提示语",
+                    "type": "string",
+                    "example": "失败时的提示语"
+                }
+            }
+        },
         "util.Response-protocol_AndroidWebStatisticSigningTimesRsp": {
             "type": "object",
             "properties": {
@@ -10736,6 +10961,33 @@
                     "allOf": [
                         {
                             "$ref": "#/definitions/protocol.AppleWebStatisticSigningCostRsp"
+                        }
+                    ]
+                },
+                "message": {
+                    "description": "提示语",
+                    "type": "string",
+                    "example": "失败时的提示语"
+                }
+            }
+        },
+        "util.Response-protocol_AppleWebStatisticSigningPassRateRsp": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "响应码，大于 0 表示错误",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/errs.Code"
+                        }
+                    ],
+                    "example": 0
+                },
+                "data": {
+                    "description": "响应数据",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/protocol.AppleWebStatisticSigningPassRateRsp"
                         }
                     ]
                 },

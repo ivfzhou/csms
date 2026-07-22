@@ -3102,6 +3102,125 @@ func AppleWebStatisticSigningCost(ctx context.Context, req *protocol.AppleWebSta
 	return
 }
 
+// AppleWebStatisticSigningPassRate 获取应用的 Apple 类型签名通过率统计信息。
+func AppleWebStatisticSigningPassRate(ctx context.Context, req *protocol.AppleWebStatisticSigningPassRateReq) (
+	rsp *protocol.AppleWebStatisticSigningPassRateRsp, err error) {
+
+	// 获取上下文信息。
+	var user *model.User
+	{
+		log.Info(ctx, "get context information")
+		user = ctxs.User(ctx)
+		if user == nil {
+			log.Warn(ctx, "unknown context", user)
+			err = errs.New(consts.ErrSystem)
+			return
+		}
+	}
+
+	// 查询应用信息。
+	var appID int
+	{
+		if len(req.AppID) > 0 {
+			log.Info(ctx, "get app information")
+			appQuery := conn.MySQLClient(ctx).App
+			err = appQuery.WithContext(ctx).Select(
+				appQuery.ID,
+			).Where(
+				appQuery.AppID.Eq(req.AppID),
+			).Scan(&appID)
+			if err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					log.Warn(ctx, "app not found")
+					return nil, errs.New(consts.ErrParameterInvalid)
+				}
+				log.Error(ctx, "failed to retrieve app information from database", err)
+				return nil, errs.NewWithError(consts.ErrSystem, err)
+			}
+		}
+	}
+
+	// 查询数据库，获取任务数量。
+	var sqlResult []map[string]any
+	{
+		log.Info(ctx, "get pass rate of apple job")
+
+		// 包含结束日期的记录。
+		req.EndTime = req.EndTime.AddDate(0, 0, 1).Add(-time.Second)
+
+		var tableNames []string
+		tableNames, err = filterAppleSigningJobTables(ctx, req.BeginTime, req.EndTime)
+		if err != nil {
+			return nil, err
+		}
+		if len(tableNames) <= 0 {
+			return &protocol.AppleWebStatisticSigningPassRateRsp{}, nil
+		}
+		appleSigningJobDo := conn.MySQLClient(ctx).AppleSigningJob
+		switch req.TimeStep {
+		case protocol.TimeStepDay:
+			sqlResult, err = appleSigningJobDo.WithContext(ctx).PassRateWithDay(tableNames, appID, req.BeginTime, req.EndTime)
+		case protocol.TimeStepWeek:
+			sqlResult, err = appleSigningJobDo.WithContext(ctx).PassRateWithWeek(tableNames, appID, req.BeginTime, req.EndTime)
+		case protocol.TimeStepMonth:
+			sqlResult, err = appleSigningJobDo.WithContext(ctx).PassRateWithMonth(tableNames, appID, req.BeginTime, req.EndTime)
+		default:
+			log.Warn(ctx, "unknown time step", req.TimeStep)
+			return nil, errs.New(consts.ErrParameterInvalid)
+		}
+		if err != nil {
+			log.Error(ctx, "failed to query apple job from database", err)
+			return nil, errs.NewWithError(consts.ErrSystem, err)
+		}
+	}
+
+	// 转换数据。
+	var items []*protocol.AppleWebStatisticSigningPassRateItem
+	{
+		log.Info(ctx, "deal sql data")
+		items = make([]*protocol.AppleWebStatisticSigningPassRateItem, 0, len(sqlResult)/2)
+		item := &protocol.AppleWebStatisticSigningPassRateItem{}
+		for _, v := range sqlResult {
+			if v == nil {
+				continue
+			}
+			day := fmt.Sprintf("%s", v["day"])
+			var rate int
+			rate, err = strconv.Atoi(fmt.Sprintf("%v", v["rate"]))
+			if err != nil {
+				log.Error(ctx, "failed to convert rate to int", err, v["rate"])
+			}
+			var t time.Time
+			switch req.TimeStep {
+			case protocol.TimeStepDay:
+				t, err = time.Parse("20060102", day)
+			case protocol.TimeStepWeek:
+				t, err = time.Parse("20060102", day)
+			case protocol.TimeStepMonth:
+				t, err = time.Parse("200601", day)
+			}
+			if err != nil {
+				log.Error(ctx, "failed to parse day", err, day)
+				continue
+			}
+			if len(item.BeginTime) <= 0 {
+				item.BeginTime = formatDate(&t)
+				items = append(items, item)
+			}
+			beginTime := formatDate(&t)
+			if beginTime != item.BeginTime {
+				item = &protocol.AppleWebStatisticSigningPassRateItem{BeginTime: beginTime}
+				items = append(items, item)
+			}
+			item.SigningPassRate = rate
+		}
+	}
+
+	rsp = &protocol.AppleWebStatisticSigningPassRateRsp{List: items}
+
+	return
+}
+
 func generateAppleAPIToken(ctx context.Context) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, &jwt.MapClaims{
 		"iss": cfg.Get().AppleAPI().IssuerID(),
@@ -3222,7 +3341,7 @@ func filterAppleSigningJobTables(ctx context.Context, begin, end time.Time) ([]s
 		}
 	}
 	if !end.IsZero() {
-		for i := len(allTables) - 1; i >= 0; i-- {
+		for i := range slices.Backward(allTables) {
 			if allTables[i] <= endTable {
 				allTables = allTables[:i+1]
 				break

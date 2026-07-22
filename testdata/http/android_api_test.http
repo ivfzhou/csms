@@ -570,6 +570,26 @@ Cookie: csms_user=admin; csms_session={{csms_session_admin}}
 %}
 
 
+### 测试 Android -- 获取应用的 Android 类型签名通过率统计信息
+< {%
+    import {initWebAPI} from './http_util.js'
+
+    initWebAPI()
+%}
+GET https://127.0.0.1/backend/web/android/statisticSigningPassRate?appId={{androidAppId}}&beginTime=2024-07-01&
+    endTime=2029-08-01&timeStep=3
+Date: {{date}}
+Cookie: csms_user=admin; csms_session={{csms_session_admin}}
+
+> {%
+    import {checkAPIResult} from './http_util.js'
+
+    client.test('测试响应结果 -- 获取应用的 Android 类型签名通过率统计信息', () => {
+        checkAPIResult(200, undefined)
+    })
+%}
+
+
 ### 测试 Android OpenAPI -- 下载安卓证书
 < {%
     import {createAuthorization} from './http_util.js'

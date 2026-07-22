@@ -208,6 +208,9 @@ type IAppleSigningJobDo interface {
 	CostWithDay(tables []string, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
 	CostWithWeek(tables []string, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
 	CostWithMonth(tables []string, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
+	PassRateWithDay(tables []string, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
+	PassRateWithWeek(tables []string, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
+	PassRateWithMonth(tables []string, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error)
 }
 
 // select TABLE_NAME from information_schema.TABLES where TABLE_SCHEMA = @db
@@ -480,6 +483,114 @@ func (a appleSigningJobDo) CostWithMonth(tables []string, appID int, begin time.
 
 	var generateSQL strings.Builder
 	generateSQL.WriteString("select date_format(t.created_time, '%Y%m') `day`, cast(round(avg(timestampdiff(SECOND, t.created_time, ifnull(t.finished_time, now()))), 0) as signed) `cost` from ( ")
+	for i, t := range tables {
+		params = append(params, begin)
+		params = append(params, end)
+		generateSQL.WriteString("select * from " + a.Quote(t) + " where created_time between ? and ? and status in (2, 3) ")
+		if appID > 0 {
+			params = append(params, appID)
+			generateSQL.WriteString("and app_id = ? ")
+		}
+		if len(tables)-1 != i {
+			generateSQL.WriteString("union all ")
+		}
+	}
+	generateSQL.WriteString(") t group by `day` order by `day` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = a.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// select date_format(t.created_time, '%Y%m%d') `day`, cast(round(sum(case t.status when 2 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from (
+// {{ for i, t := range tables }}
+//
+//	select * from @@t where created_time between @begin and @end and status in (2, 3)
+//	{{ if appID > 0 }} and app_id = @appID {{ end }}
+//	{{ if len(tables) - 1 != i }} union all {{ end }}
+//
+// {{ end }} ) t
+// group by `day`
+// order by `day`
+func (a appleSigningJobDo) PassRateWithDay(tables []string, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	generateSQL.WriteString("select date_format(t.created_time, '%Y%m%d') `day`, cast(round(sum(case t.status when 2 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from ( ")
+	for i, t := range tables {
+		params = append(params, begin)
+		params = append(params, end)
+		generateSQL.WriteString("select * from " + a.Quote(t) + " where created_time between ? and ? and status in (2, 3) ")
+		if appID > 0 {
+			params = append(params, appID)
+			generateSQL.WriteString("and app_id = ? ")
+		}
+		if len(tables)-1 != i {
+			generateSQL.WriteString("union all ")
+		}
+	}
+	generateSQL.WriteString(") t group by `day` order by `day` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = a.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// select date_format(date_sub(t.created_time, INTERVAL (dayofweek(t.created_time)-2) DAY), '%Y%m%d') `day`, cast(round(sum(case t.status when 2 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from (
+// {{ for i, t := range tables }}
+//
+//	select * from @@t where created_time between @begin and @end and status in (2, 3)
+//	{{ if appID > 0 }} and app_id = @appID {{ end }}
+//	{{ if len(tables) - 1 != i }} union all {{ end }}
+//
+// {{ end }} ) t
+// group by `day`
+// order by `day`
+func (a appleSigningJobDo) PassRateWithWeek(tables []string, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	generateSQL.WriteString("select date_format(date_sub(t.created_time, INTERVAL (dayofweek(t.created_time)-2) DAY), '%Y%m%d') `day`, cast(round(sum(case t.status when 2 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from ( ")
+	for i, t := range tables {
+		params = append(params, begin)
+		params = append(params, end)
+		generateSQL.WriteString("select * from " + a.Quote(t) + " where created_time between ? and ? and status in (2, 3) ")
+		if appID > 0 {
+			params = append(params, appID)
+			generateSQL.WriteString("and app_id = ? ")
+		}
+		if len(tables)-1 != i {
+			generateSQL.WriteString("union all ")
+		}
+	}
+	generateSQL.WriteString(") t group by `day` order by `day` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = a.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// select date_format(t.created_time, '%Y%m') `day`, cast(round(sum(case t.status when 2 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from (
+// {{ for i, t := range tables }}
+//
+//	select * from @@t where created_time between @begin and @end and status in (2, 3)
+//	{{ if appID > 0 }} and app_id = @appID {{ end }}
+//	{{ if len(tables) - 1 != i }} union all {{ end }}
+//
+// {{ end }} ) t
+// group by `day`
+// order by `day`
+func (a appleSigningJobDo) PassRateWithMonth(tables []string, appID int, begin time.Time, end time.Time) (result []map[string]interface{}, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	generateSQL.WriteString("select date_format(t.created_time, '%Y%m') `day`, cast(round(sum(case t.status when 2 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from ( ")
 	for i, t := range tables {
 		params = append(params, begin)
 		params = append(params, end)

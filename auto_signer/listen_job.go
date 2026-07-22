@@ -14,7 +14,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"path"
 	"strings"
@@ -22,332 +21,307 @@ import (
 
 	bp "gitee.com/ivfzhou/csms/backend/protocol"
 	cc "gitee.com/ivfzhou/csms/comm/consts"
-	cl "gitee.com/ivfzhou/csms/comm/log"
 	"gitee.com/ivfzhou/csms/comm/util"
 )
 
 // ListenWindowsJob 监听任务结果。
-func ListenWindowsJob(cfg *Configuration, token, jobID string) (string, string, bool) {
+func ListenWindowsJob(cfg *Configuration, token, jobID string, step *StepRunner) (string, string, []string, error) {
 	beginTime := time.Now()
 	var info *bp.WindowsAPIGetSigningJobInformationRsp
-	var ok bool
+	var err error
 	for range time.Tick(3 * time.Second) {
-		info, token, ok = getWindowsSigningJob(cfg, token, jobID)
-		if !ok {
-			return "", token, false
+		info, token, err = getWindowsSigningJob(cfg, token, jobID)
+		if err != nil {
+			return token, "", nil, err
 		}
 
 		if info != nil && len(info.SignedFileID) > 0 {
-			return info.SignedFileID, token, true
+			return token, info.SignedFileID, []string{fmt.Sprintf("签名文件 ID：%s", info.SignedFileID)}, nil
 		}
 
 		if time.Since(beginTime) > AccessTokenExpiredDuration-time.Minute {
 			token, _ = CreateAuthorization(cfg)
 			beginTime = time.Now()
 		}
+		step.UpdateRunning(fmt.Sprintf("监听中，耗时：%s", FormatDuration(time.Since(beginTime))))
 	}
 
-	return "", token, false
+	return token, "", nil, fmt.Errorf("未知错误")
 }
 
 // ListenWHQLJob 监听任务结果。
-func ListenWHQLJob(cfg *Configuration, token, jobID string) (string, string, bool) {
+func ListenWHQLJob(cfg *Configuration, token, jobID string, step *StepRunner) (string, string, []string, error) {
 	beginTime := time.Now()
 	var info *bp.WindowsAPIGetWHQLJobInformationRsp
-	var ok bool
+	var err error
 	for range time.Tick(10 * time.Second) {
-		info, token, ok = getWHQLJob(cfg, token, jobID)
-		if !ok {
-			return "", token, false
+		info, token, err = getWHQLJob(cfg, token, jobID)
+		if err != nil {
+			return token, "", nil, err
 		}
 
 		if info != nil && len(info.SignedFileID) > 0 {
-			return info.SignedFileID, token, true
+			return token, info.SignedFileID, []string{fmt.Sprintf("签名文件 ID：%s", info.SignedFileID)}, nil
 		}
 
 		if time.Since(beginTime) > AccessTokenExpiredDuration-time.Minute {
 			token, _ = CreateAuthorization(cfg)
 			beginTime = time.Now()
 		}
+		step.UpdateRunning(fmt.Sprintf("监听中，耗时：%s", FormatDuration(time.Since(beginTime))))
 	}
 
-	return "", token, false
+	return token, "", nil, fmt.Errorf("未知错误")
 }
 
 // ListenAndroidJob 监听任务结果。
-func ListenAndroidJob(cfg *Configuration, token, jobID string) (string, string, bool) {
+func ListenAndroidJob(cfg *Configuration, token, jobID string, step *StepRunner) (string, string, []string, error) {
 	beginTime := time.Now()
 	var info *bp.AndroidAPIGetSigningJobInformationRsp
-	var ok bool
+	var err error
 	for range time.Tick(3 * time.Second) {
-		info, token, ok = getAndroidSigningJob(cfg, token, jobID)
-		if !ok {
-			return "", token, false
+		info, token, err = getAndroidSigningJob(cfg, token, jobID)
+		if err != nil {
+			return token, "", nil, err
 		}
 
 		if info != nil && len(info.SignedFileID) > 0 {
-			return info.SignedFileID, token, true
+			return token, info.SignedFileID, []string{fmt.Sprintf("签名文件 ID：%s", info.SignedFileID)}, nil
 		}
 
 		if time.Since(beginTime) > AccessTokenExpiredDuration-time.Minute {
 			token, _ = CreateAuthorization(cfg)
 			beginTime = time.Now()
 		}
+		step.UpdateRunning(fmt.Sprintf("监听中，耗时：%s", FormatDuration(time.Since(beginTime))))
 	}
 
-	return "", token, false
+	return token, "", nil, fmt.Errorf("未知错误")
 }
 
 // ListenAppleJob 监听任务结果。
-func ListenAppleJob(cfg *Configuration, token, jobID string) (string, string, bool) {
+func ListenAppleJob(cfg *Configuration, token, jobID string, step *StepRunner) (string, string, []string, error) {
 	beginTime := time.Now()
 	var info *bp.AppleAPIGetSigningJobInformationRsp
-	var ok bool
+	var err error
 	for range time.Tick(3 * time.Second) {
-		info, token, ok = getAppleSigningJob(cfg, token, jobID)
-		if !ok {
-			return "", token, false
+		info, token, err = getAppleSigningJob(cfg, token, jobID)
+		if err != nil {
+			return token, "", nil, err
 		}
 
 		if info != nil && len(info.SignedFileID) > 0 {
-			return info.SignedFileID, token, true
+			return token, info.SignedFileID, []string{fmt.Sprintf("签名文件 ID：%s", info.SignedFileID)}, nil
 		}
 
 		if time.Since(beginTime) > AccessTokenExpiredDuration-time.Minute {
 			token, _ = CreateAuthorization(cfg)
 			beginTime = time.Now()
 		}
+		step.UpdateRunning(fmt.Sprintf("监听中，耗时：%s", FormatDuration(time.Since(beginTime))))
 	}
 
-	return "", token, false
+	return token, "", nil, fmt.Errorf("未知错误")
 }
 
 func getWindowsSigningJob(cfg *Configuration, token, jobID string) (
-	*bp.WindowsAPIGetSigningJobInformationRsp, string, bool) {
+	*bp.WindowsAPIGetSigningJobInformationRsp, string, error) {
 
 	// 构建请求体。
 	query := util.EncodeStructToURLQuery(&bp.WindowsAPIGetSigningJobInformationReq{JobID: jobID})
-	reqURL := fmt.Sprintf("%s/%s?%s", strings.TrimRight(cfg.Base.ServerAddress, "/"),
+	reqURL := fmt.Sprintf("%s/%s?%s", strings.TrimRight(ServerAddress, "/"),
 		path.Join(cc.ServiceNameBackend, bp.HTTPPathWindowsAPIGetSigningJobInformation), query)
 	request, err := http.NewRequest(http.MethodGet, reqURL, nil)
 	if err != nil {
-		log.Println(cl.LevelError, "failed to create http request", err)
-		return nil, token, true
+		return nil, token, nil
 	}
 	request.Header.Set("Authorization", token)
 
 	// 发送请求。
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
-		log.Println(cl.LevelError, "failed to send http", err)
-		return nil, token, true
+		return nil, token, nil
 	}
 	if response == nil {
-		return nil, token, true
+		return nil, token, nil
 	}
 
 	// 处理结果。
 	switch response.StatusCode {
 	case http.StatusBadRequest, http.StatusInternalServerError, http.StatusForbidden:
 		result := ReadAndUnmarshal[util.Response[bp.WindowsAPIGetSigningJobInformationRsp]](response.Body)
-		log.Println(cl.LevelError, "failed to get windows signing job", result.Code, result.Message,
-			response.Header.Get(cc.HTTPHeaderRequestID))
-		return nil, token, false
+		return nil, token, fmt.Errorf("监听任务失败：%d %s %s",
+			result.Code, result.Message, response.Header.Get(cc.HTTPHeaderRequestID))
 	case http.StatusTooManyRequests:
 		CloseIO(response.Body)
-		log.Println(cl.LevelWarn, "rate limit reached, try getting windows signing job again")
 		time.Sleep(time.Second)
-		return nil, token, true
+		return nil, token, nil
 	case http.StatusNotFound:
 		CloseIO(response.Body)
-		log.Println(cl.LevelError, "windows signing job not found")
-		return nil, token, false
+		return nil, token, fmt.Errorf("监听任务失败，任务不存在：%s", response.Header.Get(cc.HTTPHeaderRequestID))
 	case http.StatusUnauthorized:
-		result := ReadAndUnmarshal[util.Response[bp.WindowsAPIGetSigningJobInformationRsp]](response.Body)
-		log.Println(cl.LevelWarn, "access token is invalid", result.Code, result.Message)
+		_ = ReadAndUnmarshal[util.Response[bp.WindowsAPIGetSigningJobInformationRsp]](response.Body)
 		token, _ = CreateAuthorization(cfg)
-		log.Println(cl.LevelWarn, "try getting windows signing job again")
 		time.Sleep(time.Second)
-		return nil, token, true
+		return nil, token, nil
 	case http.StatusOK:
 		result := ReadAndUnmarshal[util.Response[bp.WindowsAPIGetSigningJobInformationRsp]](response.Body)
-		return result.Data, token, true
+		return result.Data, token, nil
 	default:
-		log.Println(cl.LevelError, "invalid response status", response.Status, string(ReadAndClose(response.Body)))
-		log.Println(cl.LevelWarn, "try getting windows signing job again")
+		CloseIO(response.Body)
 		time.Sleep(time.Second)
-		return nil, token, true
+		return nil, token, fmt.Errorf("监听任务失败，响应信息：%s %s %s",
+			response.Status, response.Header.Get(cc.HTTPHeaderRequestID), string(ReadAndClose(response.Body)))
 	}
 }
 
-func getWHQLJob(cfg *Configuration, token, jobID string) (*bp.WindowsAPIGetWHQLJobInformationRsp, string, bool) {
+func getWHQLJob(cfg *Configuration, token, jobID string) (*bp.WindowsAPIGetWHQLJobInformationRsp, string, error) {
 	// 构建请求体。
 	query := util.EncodeStructToURLQuery(&bp.WindowsAPIGetWHQLJobInformationReq{JobID: jobID})
-	reqURL := fmt.Sprintf("%s/%s?%s", strings.TrimRight(cfg.Base.ServerAddress, "/"),
+	reqURL := fmt.Sprintf("%s/%s?%s", strings.TrimRight(ServerAddress, "/"),
 		path.Join(cc.ServiceNameBackend, bp.HTTPPathWindowsAPIGetWHQLJobInformation), query)
 	request, err := http.NewRequest(http.MethodGet, reqURL, nil)
 	if err != nil {
-		log.Println(cl.LevelError, "failed to create http request", err)
-		return nil, token, true
+		return nil, token, nil
 	}
 	request.Header.Set("Authorization", token)
 
 	// 发送请求。
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
-		log.Println(cl.LevelError, "failed to send http", err)
-		return nil, token, true
+		return nil, token, nil
 	}
 	if response == nil {
-		return nil, token, true
+		return nil, token, nil
 	}
 
 	// 处理结果。
 	switch response.StatusCode {
 	case http.StatusBadRequest, http.StatusInternalServerError, http.StatusForbidden:
 		result := ReadAndUnmarshal[util.Response[bp.WindowsAPIGetWHQLJobInformationRsp]](response.Body)
-		log.Println(cl.LevelError, "failed to get whql job", result.Code, result.Message,
-			response.Header.Get(cc.HTTPHeaderRequestID))
-		return nil, token, false
+		return nil, token, fmt.Errorf("监听任务失败：%d %s %s",
+			result.Code, result.Message, response.Header.Get(cc.HTTPHeaderRequestID))
 	case http.StatusTooManyRequests:
 		CloseIO(response.Body)
-		log.Println(cl.LevelWarn, "rate limit reached, try getting whql job again")
 		time.Sleep(time.Second)
-		return nil, token, true
+		return nil, token, nil
 	case http.StatusNotFound:
 		CloseIO(response.Body)
-		log.Println(cl.LevelError, "whql job not found")
-		return nil, token, false
+		return nil, token, fmt.Errorf("监听任务失败，任务不存在：%s", response.Header.Get(cc.HTTPHeaderRequestID))
 	case http.StatusUnauthorized:
-		result := ReadAndUnmarshal[util.Response[bp.WindowsAPIGetWHQLJobInformationRsp]](response.Body)
-		log.Println(cl.LevelWarn, "access token is invalid", result.Code, result.Message)
+		_ = ReadAndUnmarshal[util.Response[bp.WindowsAPIGetWHQLJobInformationRsp]](response.Body)
 		token, _ = CreateAuthorization(cfg)
-		log.Println(cl.LevelWarn, "try getting whql job again")
 		time.Sleep(time.Second)
-		return nil, token, true
+		return nil, token, nil
 	case http.StatusOK:
 		result := ReadAndUnmarshal[util.Response[bp.WindowsAPIGetWHQLJobInformationRsp]](response.Body)
-		return result.Data, token, true
+		return result.Data, token, nil
 	default:
-		log.Println(cl.LevelError, "invalid response status", response.Status, string(ReadAndClose(response.Body)))
-		log.Println(cl.LevelWarn, "try getting whql job again")
+		CloseIO(response.Body)
 		time.Sleep(time.Second)
-		return nil, token, true
+		return nil, token, fmt.Errorf("监听任务失败，响应信息：%s %s %s",
+			response.Status, response.Header.Get(cc.HTTPHeaderRequestID), string(ReadAndClose(response.Body)))
 	}
 }
 
 func getAndroidSigningJob(cfg *Configuration, token, jobID string) (
-	*bp.AndroidAPIGetSigningJobInformationRsp, string, bool) {
+	*bp.AndroidAPIGetSigningJobInformationRsp, string, error) {
 
 	// 构建请求体。
 	query := util.EncodeStructToURLQuery(&bp.AndroidAPIGetSigningJobInformationReq{JobID: jobID})
-	reqURL := fmt.Sprintf("%s/%s?%s", strings.TrimRight(cfg.Base.ServerAddress, "/"),
+	reqURL := fmt.Sprintf("%s/%s?%s", strings.TrimRight(ServerAddress, "/"),
 		path.Join(cc.ServiceNameBackend, bp.HTTPPathAndroidAPIGetSigningJobInformation), query)
 	request, err := http.NewRequest(http.MethodGet, reqURL, nil)
 	if err != nil {
-		log.Println(cl.LevelError, "failed to create http request", err)
-		return nil, token, true
+		return nil, token, nil
 	}
 	request.Header.Set("Authorization", token)
 
 	// 发送请求。
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
-		log.Println(cl.LevelError, "failed to send http", err)
-		return nil, token, true
+		return nil, token, nil
 	}
 	if response == nil {
-		return nil, token, true
+		return nil, token, nil
 	}
 
 	// 处理结果。
 	switch response.StatusCode {
 	case http.StatusBadRequest, http.StatusInternalServerError, http.StatusForbidden:
 		result := ReadAndUnmarshal[util.Response[bp.AndroidAPIGetSigningJobInformationRsp]](response.Body)
-		log.Println(cl.LevelError, "failed to get android signing job", result.Code, result.Message,
-			response.Header.Get(cc.HTTPHeaderRequestID))
-		return nil, token, false
+		return nil, token, fmt.Errorf("监听任务失败：%d %s %s",
+			result.Code, result.Message, response.Header.Get(cc.HTTPHeaderRequestID))
 	case http.StatusTooManyRequests:
 		CloseIO(response.Body)
-		log.Println(cl.LevelWarn, "rate limit reached, try getting android signing job again")
 		time.Sleep(time.Second)
-		return nil, token, true
+		return nil, token, nil
 	case http.StatusNotFound:
 		CloseIO(response.Body)
-		log.Println(cl.LevelError, "android signing job not found")
-		return nil, token, false
+		return nil, token, fmt.Errorf("监听任务失败，任务不存在：%s", response.Header.Get(cc.HTTPHeaderRequestID))
 	case http.StatusUnauthorized:
-		result := ReadAndUnmarshal[util.Response[bp.AndroidAPIGetSigningJobInformationRsp]](response.Body)
-		log.Println(cl.LevelWarn, "access token is invalid", result.Code, result.Message)
+		_ = ReadAndUnmarshal[util.Response[bp.AndroidAPIGetSigningJobInformationRsp]](response.Body)
 		token, _ = CreateAuthorization(cfg)
-		log.Println(cl.LevelWarn, "try getting android signing job again")
 		time.Sleep(time.Second)
-		return nil, token, true
+		return nil, token, nil
 	case http.StatusOK:
 		result := ReadAndUnmarshal[util.Response[bp.AndroidAPIGetSigningJobInformationRsp]](response.Body)
-		return result.Data, token, true
+		return result.Data, token, nil
 	default:
-		log.Println(cl.LevelError, "invalid response status", response.Status, string(ReadAndClose(response.Body)))
-		log.Println(cl.LevelWarn, "try getting android signing job again")
+		CloseIO(response.Body)
 		time.Sleep(time.Second)
-		return nil, token, true
+		return nil, token, fmt.Errorf("监听任务失败，响应信息：%s %s %s",
+			response.Status, response.Header.Get(cc.HTTPHeaderRequestID), string(ReadAndClose(response.Body)))
 	}
 }
 
 func getAppleSigningJob(cfg *Configuration, token, jobID string) (
-	*bp.AppleAPIGetSigningJobInformationRsp, string, bool) {
+	*bp.AppleAPIGetSigningJobInformationRsp, string, error) {
 
 	// 构建请求体。
 	query := util.EncodeStructToURLQuery(&bp.AppleAPIGetSigningJobInformationReq{JobID: jobID})
-	reqURL := fmt.Sprintf("%s/%s?%s", strings.TrimRight(cfg.Base.ServerAddress, "/"),
+	reqURL := fmt.Sprintf("%s/%s?%s", strings.TrimRight(ServerAddress, "/"),
 		path.Join(cc.ServiceNameBackend, bp.HTTPPathAppleAPIGetSigningJobInformation), query)
 	request, err := http.NewRequest(http.MethodGet, reqURL, nil)
 	if err != nil {
-		log.Println(cl.LevelError, "failed to create http request", err)
-		return nil, token, true
+		return nil, token, nil
 	}
 	request.Header.Set("Authorization", token)
 
 	// 发送请求。
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
-		log.Println(cl.LevelError, "failed to send http", err)
-		return nil, token, true
+		return nil, token, nil
 	}
 	if response == nil {
-		return nil, token, true
+		return nil, token, nil
 	}
 
 	// 处理结果。
 	switch response.StatusCode {
 	case http.StatusBadRequest, http.StatusInternalServerError, http.StatusForbidden:
 		result := ReadAndUnmarshal[util.Response[bp.AppleAPIGetSigningJobInformationRsp]](response.Body)
-		log.Println(cl.LevelError, "failed to get apple signing job", result.Code, result.Message,
-			response.Header.Get(cc.HTTPHeaderRequestID))
-		return nil, token, false
+		return nil, token, fmt.Errorf("监听任务失败：%d %s %s",
+			result.Code, result.Message, response.Header.Get(cc.HTTPHeaderRequestID))
 	case http.StatusTooManyRequests:
 		CloseIO(response.Body)
-		log.Println(cl.LevelWarn, "rate limit reached, try getting apple signing job again")
 		time.Sleep(time.Second)
-		return nil, token, true
+		return nil, token, nil
 	case http.StatusNotFound:
 		CloseIO(response.Body)
-		log.Println(cl.LevelError, "apple signing job not found")
-		return nil, token, false
+		return nil, token, fmt.Errorf("监听任务失败，任务不存在：%s", response.Header.Get(cc.HTTPHeaderRequestID))
 	case http.StatusUnauthorized:
-		result := ReadAndUnmarshal[util.Response[bp.AppleAPIGetSigningJobInformationRsp]](response.Body)
-		log.Println(cl.LevelWarn, "access token is invalid", result.Code, result.Message)
+		_ = ReadAndUnmarshal[util.Response[bp.AppleAPIGetSigningJobInformationRsp]](response.Body)
 		token, _ = CreateAuthorization(cfg)
-		log.Println(cl.LevelWarn, "try getting apple signing job again")
 		time.Sleep(time.Second)
-		return nil, token, true
+		return nil, token, nil
 	case http.StatusOK:
 		result := ReadAndUnmarshal[util.Response[bp.AppleAPIGetSigningJobInformationRsp]](response.Body)
-		return result.Data, token, true
+		return result.Data, token, nil
 	default:
-		log.Println(cl.LevelError, "invalid response status", response.Status, string(ReadAndClose(response.Body)))
-		log.Println(cl.LevelWarn, "try getting apple signing job again")
+		CloseIO(response.Body)
 		time.Sleep(time.Second)
-		return nil, token, true
+		return nil, token, fmt.Errorf("监听任务失败，响应信息：%s %s %s",
+			response.Status, response.Header.Get(cc.HTTPHeaderRequestID), string(ReadAndClose(response.Body)))
 	}
 }

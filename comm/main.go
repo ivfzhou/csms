@@ -397,6 +397,36 @@ func main() {
 		// group by `day`, `type`
 		// order by `day`
 		CostWithMonth(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select t.type `type`, date_format(t.created_time, '%Y%m%d') `day`, cast(round(sum(case t.status when 2 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end and status in (2, 3)
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`, `type`
+		// order by `day`
+		PassRateWithDay(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select t.type `type`, date_format(date_sub(t.created_time, INTERVAL (dayofweek(t.created_time)-2) DAY), '%Y%m%d') `day`, cast(round(sum(case t.status when 2 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end and status in (2, 3)
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`, `type`
+		// order by `day`
+		PassRateWithWeek(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select t.type `type`, date_format(t.created_time, '%Y%m') `day`, cast(round(sum(case t.status when 2 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end and status in (2, 3)
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`, `type`
+		// order by `day`
+		PassRateWithMonth(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
 	}
 	generator.ApplyInterface(func(AndroidSigningJobQuery) {}, generator.GenerateModel("t_android_signing_job"))
 
@@ -479,6 +509,36 @@ func main() {
 		// group by `day`
 		// order by `day`
 		CostWithMonth(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select date_format(t.created_time, '%Y%m%d') `day`, cast(round(sum(case t.status when 2 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end and status in (2, 3)
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`
+		// order by `day`
+		PassRateWithDay(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select date_format(date_sub(t.created_time, INTERVAL (dayofweek(t.created_time)-2) DAY), '%Y%m%d') `day`, cast(round(sum(case t.status when 2 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end and status in (2, 3)
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`
+		// order by `day`
+		PassRateWithWeek(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
+
+		// select date_format(t.created_time, '%Y%m') `day`, cast(round(sum(case t.status when 2 then 1 else 0 end) * 10000 / count(*), 0) as signed) `rate` from (
+		// {{ for i, t := range tables }}
+		//     select * from @@t where created_time between @begin and @end and status in (2, 3)
+		//     {{ if appID > 0 }} and app_id = @appID {{ end }}
+		//     {{ if len(tables) - 1 != i }} union all {{ end }}
+		// {{ end }} ) t
+		// group by `day`
+		// order by `day`
+		PassRateWithMonth(tables []string, appID int, begin, end time.Time) ([]gen.M, error)
 	}
 	generator.ApplyInterface(func(AppleSigningJobQuery) {}, generator.GenerateModel("t_apple_signing_job"))
 

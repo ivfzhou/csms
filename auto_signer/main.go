@@ -15,17 +15,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
-
-	cl "gitee.com/ivfzhou/csms/comm/log"
+	"time"
 )
 
 func init() {
-	// 设置日志格式。
-	log.SetFlags(log.LstdFlags)
-	log.SetOutput(os.Stdout)
-
 	// 处理命令参数。
 	AddVersionCommandFlag()
 	AddConfigCommandFlag()
@@ -41,82 +35,100 @@ func init() {
 func main() {
 	// 打印版本号。
 	if printVersion {
-		fmt.Printf("%s\n", Version())
+		fmt.Printf("%s", Version())
 		return
 	}
 
-	log.Println(cl.LevelInfo, "BEGIN SIGN")
+	startTime := time.Now()
 
-	// 解析命令行参数，读取 yaml 文件，解析配置数据。
-	log.Println(cl.LevelInfo, "parse config file")
-	cfg, ok := ParseConfig()
-	if !ok {
+	PrintHeader()
+	fmt.Println()
+
+	// 步骤 1：解析签名配置。
+	step1 := NewStepRunner(1, 5, "解析签名配置")
+	step1.Start()
+	cfg, token, fileSize, info, err := ParseConfig()
+	if err != nil {
+		step1.Fail(err.Error())
+		PrintErrorFooter(time.Since(startTime))
 		os.Exit(ExitCodeParseYamlError)
 	}
+	step1.Done(info...)
+	fmt.Println()
 
-	// 获取请求凭证。
-	log.Println(cl.LevelInfo, "create an access token")
-	token, ok := CreateAuthorization(cfg)
-	if !ok {
-		os.Exit(ExitCodeGetAccessTokenError)
-	}
-
-	// 上传待签名文件。
-	log.Println(cl.LevelInfo, "upload file")
-	fileID, token, ok := UploadFile(cfg, token)
-	if !ok {
+	// 步骤 2：上传待签名文件。
+	step2 := NewStepRunner(2, 5, "上传待签名文件")
+	step2.Start()
+	token, fileID, info, err := UploadFile(cfg, token, fileSize, step2)
+	if err != nil {
+		step2.Fail(err.Error())
+		PrintErrorFooter(time.Since(startTime))
 		os.Exit(ExitCodeUploadFileError)
 	}
-	log.Println(cl.LevelInfo, "file id is", fileID)
+	step2.Done(info...)
+	fmt.Println()
 
-	// 根据配置，提交签名任务。
-	log.Println(cl.LevelInfo, "submit job")
+	// 步骤 3：提交签名任务。
+	step3 := NewStepRunner(3, 5, "提交签名任务")
+	step3.Start()
 	var jobID string
 	switch cfg.Base.JobType {
 	case JobTypeWindows:
-		jobID, token, ok = SubmitWindowsSigningJob(cfg, token, fileID)
+		token, jobID, info, err = SubmitWindowsSigningJob(cfg, token, fileID)
 	case JobTypeWHQL:
-		jobID, token, ok = SubmitWHQLJob(cfg, token, fileID)
+		token, jobID, info, err = SubmitWHQLJob(cfg, token, fileID)
 	case JobTypeAndroid:
-		jobID, token, ok = SubmitAndroidSigningJob(cfg, token, fileID)
+		token, jobID, info, err = SubmitAndroidSigningJob(cfg, token, fileID)
 	case JobTypeApple:
-		jobID, token, ok = SubmitAppleSigningJob(cfg, token, fileID)
+		token, jobID, info, err = SubmitAppleSigningJob(cfg, token, fileID)
 	default:
-		log.Println(cl.LevelError, "invalid job type", cfg.Base.JobType)
+		step3.Fail(fmt.Sprintf("任务类型非法，请检查：%s", cfg.Base.JobType))
 		os.Exit(ExitCodeInvalidConfigError)
 	}
-	if !ok {
+	if err != nil {
+		step3.Fail(err.Error())
+		PrintErrorFooter(time.Since(startTime))
 		os.Exit(ExitCodeSubmitJobError)
 	}
-	log.Println(cl.LevelInfo, "job id is", jobID)
+	step3.Done(info...)
+	fmt.Println()
 
-	// 监听任务结果。
-	log.Println(cl.LevelInfo, "listen job")
+	// 步骤 4：监听签名结果。
+	step4 := NewStepRunner(4, 5, "监听签名结果")
+	step4.Start()
 	var signedFileID string
 	switch cfg.Base.JobType {
 	case JobTypeWindows:
-		signedFileID, token, ok = ListenWindowsJob(cfg, token, jobID)
+		token, signedFileID, info, err = ListenWindowsJob(cfg, token, jobID, step4)
 	case JobTypeWHQL:
-		signedFileID, token, ok = ListenWHQLJob(cfg, token, jobID)
+		token, signedFileID, info, err = ListenWHQLJob(cfg, token, jobID, step4)
 	case JobTypeAndroid:
-		signedFileID, token, ok = ListenAndroidJob(cfg, token, jobID)
+		token, signedFileID, info, err = ListenAndroidJob(cfg, token, jobID, step4)
 	case JobTypeApple:
-		signedFileID, token, ok = ListenAppleJob(cfg, token, jobID)
+		token, signedFileID, info, err = ListenAppleJob(cfg, token, jobID, step4)
 	default:
-		log.Println(cl.LevelError, "invalid job type", cfg.Base.JobType)
+		step4.Fail(fmt.Sprintf("非法的任务类型：%s", cfg.Base.JobType))
 		os.Exit(ExitCodeInvalidConfigError)
 	}
-	if !ok {
+	if err != nil {
+		step4.Fail(err.Error())
+		PrintErrorFooter(time.Since(startTime))
 		os.Exit(ExitCodeListenJobError)
 	}
-	log.Println(cl.LevelInfo, "result file id is", signedFileID)
+	step4.Done(info...)
+	fmt.Println()
 
-	// 下载签名结果文件。
-	log.Println(cl.LevelInfo, "download file")
-	ok = DownloadFile(cfg, token, signedFileID)
-	if !ok {
+	// 步骤 5：下载签名文件。
+	step5 := NewStepRunner(5, 5, "下载签名文件")
+	step5.Start()
+	info, err = DownloadFile(cfg, token, signedFileID, step5)
+	if err != nil {
+		step5.Fail(err.Error())
+		PrintErrorFooter(time.Since(startTime))
 		os.Exit(ExitCodeDownloadFileError)
 	}
+	step5.Done(info...)
+	fmt.Println()
 
-	log.Println(cl.LevelInfo, "END SIGN")
+	PrintSuccessFooter(time.Since(startTime))
 }

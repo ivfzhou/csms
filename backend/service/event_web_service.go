@@ -668,7 +668,7 @@ func filterEventTables(ctx context.Context, begin, end time.Time) ([]string, err
 		}
 	}
 	if !end.IsZero() {
-		for i := len(allEventTables) - 1; i >= 0; i-- {
+		for i := range slices.Backward(allEventTables) {
 			if allEventTables[i] <= endTable {
 				allEventTables = allEventTables[:i+1]
 				break

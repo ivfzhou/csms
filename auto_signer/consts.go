@@ -65,3 +65,5 @@ const (
 	AccessTokenExpiredDuration = 2 * time.Hour
 	HTTPRetryTimes             = 3
 )
+
+var ServerAddress = "localhost"

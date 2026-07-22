@@ -31,7 +31,7 @@ onBeforeMount(async () => {
 </script>
 
 <template>
-  <div class="csms-header-notify" :class="{ 'csms-header-notify-hidden': !isShow }">
+  <div :class="{ 'csms-header-notify-hidden': !isShow }" class="csms-header-notify">
     <span class="csms-header-notify-content" v-html="content"></span>
     <CloseOutlined class="csms-header-notify-close" @click="close"/>
   </div>

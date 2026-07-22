@@ -1708,3 +1708,91 @@ func TestAndroidWebStatisticSigningCost(t *testing.T) {
 		})
 	}
 }
+
+func TestAndroidWebStatisticSigningPassRate(t *testing.T) {
+	const reqPath = "/web/android/statisticSigningPassRate"
+
+	t.Run("正常测试", func(t *testing.T) {
+		ctx := context.Background()
+		appID := util.FastRandomAlphaNumberString(32)
+		beginTime := time.Now()
+		endTime := time.Now().AddDate(0, 10, 0)
+		timeStep := protocol.TimeStepDay
+		mockTableNames := []string{"t_android_signing_job"}                              // 模拟签名任务分表名列表。
+		mockStatisticData := []map[string]any{{"rate": 1, "type": 1, "day": "20260710"}} // 模拟按天统计的签名任务通过率数据。
+
+		redisMocker := MockRedis(ctx)
+		dbUserMocker := MockDBClient[model.User](ctx)
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		dbAppMocker := MockDBClient[model.App](ctx)
+		dbAndroidSigningJobMocker := MockDBClient[model.AndroidSigningJob](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)                                                 // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil)                                             // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                                                                   // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                                                                    // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                                                               // 查询数据库登录用户信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                                                              // 校验系统管理员权限。
+		dbAppMocker = dbAppMocker.ScanOnce(func(v any) { *v.(*int) = 1 }, nil)                                             // 查询数据库应用 ID。
+		dbAndroidSigningJobMocker = dbAndroidSigningJobMocker.AndroidSigningJobGetTablesOnce(mockTableNames, nil)          // 获取安卓签名任务表名。
+		dbAndroidSigningJobMocker = dbAndroidSigningJobMocker.AndroidSigningJobPassRateWithDayOnce(mockStatisticData, nil) // 按天统计各类签名任务通过率。
+		defer redisMocker.Reset()
+		defer dbUserMocker.Reset()
+		defer dbUserRoleMocker.Reset()
+		defer dbAppMocker.Reset()
+		defer dbAndroidSigningJobMocker.Reset()
+
+		CheckAndUnmarshalBody[protocol.AndroidWebStatisticSigningPassRateRsp](
+			t,
+			ServeHTTP(ctx, CreateGetRequest(ctx, reqPath, protocol.AndroidWebStatisticSigningPassRateReq{
+				AppID:     appID,
+				BeginTime: beginTime,
+				EndTime:   endTime,
+				TimeStep:  timeStep,
+			})),
+			0,
+		)
+	})
+
+	validateErrorRequest := func(t *testing.T, appID string, timeStep int, beginTime, endTime time.Time) {
+		ctx := context.Background()
+
+		redisMocker := MockRedis(ctx)
+		dbUserMocker := MockDBClient[model.User](ctx)
+		dbUserRoleMocker := MockDBClient[model.UserRole](ctx)
+		redisMocker = redisMocker.ScriptLoadOnce(RedisShakeScriptSha, nil)     // 加载 Redis 防抖脚本。
+		redisMocker = redisMocker.ScriptLoadOnce(RedisRateLimitScriptSha, nil) // 加载 Redis 限流脚本。
+		redisMocker = redisMocker.EvalshaOnce(true, nil)                       // 执行防抖过滤 Redis Lua 脚本。
+		redisMocker = redisMocker.GetOnce(Session, nil)                        // 获取 Redis 用户会话数据。
+		dbUserMocker = dbUserMocker.TakeOnce(LoginUser, nil)                   // 查询数据库登录用户信息。
+		dbUserRoleMocker = dbUserRoleMocker.CountOnce(1, nil)                  // 校验系统管理员权限。
+		defer redisMocker.Reset()
+		defer dbUserMocker.Reset()
+		defer dbUserRoleMocker.Reset()
+
+		CheckAndUnmarshalBody[protocol.AndroidWebStatisticSigningPassRateRsp](
+			t,
+			ServeHTTP(ctx, CreateGetRequest(ctx, reqPath, protocol.AndroidWebStatisticSigningPassRateReq{
+				AppID:     appID,
+				BeginTime: beginTime,
+				EndTime:   endTime,
+				TimeStep:  timeStep,
+			})),
+			errs.ErrInvalidRequestParameters,
+		)
+	}
+
+	for _, v := range []struct {
+		Name               string
+		appID              string
+		timeStep           int
+		beginTime, endTime time.Time
+	}{
+		{"应用 ID 非法", util.FastRandomAlphaNumberString(31), protocol.TimeStepWeek, time.Now(), time.Now().Add(time.Hour)},
+		{"结束时间小于开始时间", util.FastRandomAlphaNumberString(32), protocol.TimeStepWeek, time.Now(), time.Now().Add(-time.Hour)},
+		{"时间步长非法", util.FastRandomAlphaNumberString(32), 0, time.Now(), time.Now().Add(time.Hour)},
+	} {
+		t.Run("异常测试_"+v.Name, func(t *testing.T) {
+			validateErrorRequest(t, v.appID, v.timeStep, v.beginTime, v.endTime)
+		})
+	}
+}

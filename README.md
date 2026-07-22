@@ -49,7 +49,7 @@
     ```shell
     go build -o ./backend/backend ./backend
     go build -o ./fastlane_proxy/fastlane_proxy ./fastlane_proxy
-    go build -o ./auto_signer/auto_signer ./auto_signer
+    go build -ldflags "-X main.ServerAddress=https://127.0.0.1" -o ./auto_signer/auto_signer ./auto_signer
     go build -o ./hlk_manager/hlk_manager.exe ./hlk_manager
     go build -o ./sign_server/sign_server ./sign_server
     ```
@@ -70,12 +70,12 @@
 1. 启动主服务（本地测试可添加参数 -localTestMode -skipRateLimit），配置 [baclend/config.ini](./backend/config.ini)：
     ```shell
     cd ./backend
-    ./backend -config ./config.ini -messageFilesDirectory ./ -javaBinaryPath $JAVA_HOME/bin/java -javaBinaryPathForPepk $JAVA_HOME/bin/java -keytoolBinaryPath $JAVA_HOME/bin/keytool -localIP 127.0.0.1 -pepkJarPath ./pepk.jar -cabextractFilePath ./cabextract
+    ./backend -localIP 127.0.0.1 -config ./config.ini -messageFilesDirectory ./ -javaBinaryPath $JAVA_HOME/bin/java -javaBinaryPathForPepk $JAVA_HOME/bin/java -keytoolBinaryPath $JAVA_HOME/bin/keytool -pepkJarPath ./pepk.jar -cabextractFilePath ./cabextract
     ```
 1. 启动 fastlane_proxy 服务（本地测试可添加参数 -localTestMode），配置 [fastlane_proxy/config.ini](./fastlane_proxy/config.ini)：
     ```shell
     cd ./fastlane_proxy
-    ./fastlane_proxy -config ./config.ini -messageFilesDirectory ./ -localIP 127.0.0.1
+    ./fastlane_proxy -localIP 127.0.0.1 -config ./config.ini -messageFilesDirectory ./
     ```
 1. 启动 hlk_manager 服务：
     - Hyper-V 虚拟机中将 hlk_manager.exe 程序注册为系统服务，且设置开机自启，以 Administrator 用户运行。
@@ -90,33 +90,33 @@
     - 宿主机物理机运行：
         ```cmd
         cd .\hlk_manager
-        .\hlk_manager.exe -config .\config.ini -messageFilesDirectory .\ -localIP 192.168.137.1 -mode HostMachine
+        .\hlk_manager.exe -mode HostMachine -localIP 192.168.137.1 -config .\config.ini -messageFilesDirectory .\
         ```
     - 控制机器虚拟机运行：
         ```cmd
         cd .\hlk_manager
-        .\hlk_manager.exe -config .\config.ini -localIP 192.168.137.58 -mode ControllerMachine -systems "Windows 10 22H2_64,Windows Server 2019_64"
+        .\hlk_manager.exe -mode ControllerMachine -systems "Windows 10 22H2_64,Windows Server 2019_64" -localIP 192.168.137.58 -config .\config.ini
         ```
     - 测试机器虚拟机运行：
         ```cmd
         cd .\hlk_manager
-        .\hlk_manager.exe -config .\config.ini -localIP 192.168.137.106 -mode TestMachine -system "Windows 10 22H2_64"
+        .\hlk_manager.exe -mode TestMachine -system "Windows 10 22H2_64" -localIP 192.168.137.106 -config .\config.ini
         ```
 1. 启动 sign_server 服务，配置 [sign_server/config.ini](./sign_server/config.ini)：
     - Windows 签名服务。监听 Windows 证书表变动，自动刷新消费队列：
         ```cmd
         cd .\sign_server
-        .\sign_server.exe -config .\config.ini -localIP 127.0.0.1 -mode Windows -signtoolFilePath .\signtool.exe -winevsignerFilePath .\winevsigner.exe -inf2CatFilePath "C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x86\inf2cat.exe" -makecabFilePath .\makecab.exe
+        .\sign_server.exe -mode Windows -localIP 127.0.0.1 -config .\config.ini -signtoolFilePath .\signtool.exe -winevsignerFilePath .\winevsigner.exe -inf2CatFilePath "C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x86\inf2cat.exe" -makecabFilePath .\makecab.exe
         ```
     - Android 签名服务：
         ```shell
         cd ./sign_server
-        ./sign_server -config ./config.ini -localIP 127.0.0.1 -mode Android -apksignerFilePath $HOME/Android/Sdk/build-tools/36.1.0/apksigner -jarsignerFilePath $JAVA_HOME/bin/jarsigner -javaHomeFilePath $JAVA_HOME
+        ./sign_server -mode Android -localIP 127.0.0.1 -config ./config.ini -apksignerFilePath $HOME/Android/Sdk/build-tools/36.1.0/apksigner -jarsignerFilePath $JAVA_HOME/bin/jarsigner -javaHomeFilePath $JAVA_HOME
         ```
    - Apple 签名服务：
        ```shell
        cd ./sign_server
-       ./sign_server -config ./config.ini -localIP 127.0.0.1 -mode Apple -zsignFilePath ./zsign
+       ./sign_server -mode Apple -localIP 127.0.0.1 -config ./config.ini -zsignFilePath ./zsign
        ```
 
 # 五、服务 HTTP 接口测试
@@ -128,7 +128,7 @@
 1. 启动 fastlane_proxy 服务，启动参数添加 `-localTestMode`。
 1. 如果 Nginx 使用了自签名证书，须先将证书添加到 Java 证书信任库中：
     ```shell
-    keytool -import -alias csms_ca -keystore $JAVA_HOME/lib/security/cacerts -file ca.crt
+    keytool -import -alias csms_ca -keystore $JAVA_HOME/lib/security/cacerts -file cert_csms_rsa.x509.pem
     ```
 1. 然后运行 [ijhttp](https://www.jetbrains.com/ijhttp/download) 脚本：
     ```shell
