@@ -16,10 +16,12 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"gitee.com/ivfzhou/csms/fastlane_proxy/consts"
 )
 
 func executeFastlaneCommand(args ...string) (string, error) {
-	command := exec.Command("fastlane", args...)
+	command := exec.Command(consts.FastlaneBinaryPath, args...)
 	command.Env = append(command.Env, os.Environ()...)
 	command.Env = append(command.Env, "FASTLANE_HIDE_TIMESTAMP=1", "FASTLANE_DISABLE_COLORS=1",
 		"FASTLANE_SKIP_UPDATE_CHECK=1")

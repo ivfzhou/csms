@@ -156,7 +156,7 @@ func AddCommandFlag() {
 	flag.StringVar(&SigntoolFilePath, cc.CommandFlagSigntoolFilePath, defaultSigntoolFilePath, "signtool.exe file path")
 	flag.StringVar(&JavaHomeFilePath, cc.CommandFlagJavaHomeFilePath, "", "java home file path")
 	flag.StringVar(&ApksignerFilePath, cc.CommandFlagApksignerFilePath, "apksigner", "apksigner file path")
-	flag.StringVar(&Inf2CatFilePath, cc.CommandFlagInf2CatFilePath, "inf2Cat.exe", "inf2Cat.exe file path")
+	flag.StringVar(&Inf2CatFilePath, cc.CommandFlagInf2CatFilePath, ".\\inf2Cat.exe", "inf2Cat.exe file path")
 	flag.StringVar(&MakeecabFilePath, cc.CommandFlagMakecabFilePath, ".\\makecab.exe", "makecab.exe file path")
 	flag.StringVar(&JarsignerFilePath, cc.CommandFlagJarsignerFilePath, "jarsigner", "jarsigner file path")
 	flag.StringVar(&WinevsignerFilePath, cc.CommandFlagWinevsignerFilePath, ".\\winevsigner.exe",

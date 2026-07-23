@@ -8,22 +8,23 @@
 
 # 二、运行环境
 
-|      工具      |      版本号       |
-|:--------------:|:-----------------:|
-| Development OS |     Debian13      | 
-|     Golang     |       1.26        | 
-|      Java      | Temurin-25.0.2+10 | 
-|      Ruby      |       4.0.1       | 
-|     Python     |      3.13.5       | 
-|    fatlane     |      2.227.2      | 
-|      Vue       |      3.4.29       | 
-|   ant-design   |       4.2.3       | 
-|     MySQL      |       9.4.0       | 
-|     Redis      |       8.0.2       | 
-|    RabbitMQ    | 4.1.1-management  | 
-|      Tusd      |       v2.8        | 
-|     Nginx      |      1.25.2       | 
-|     ijhttp     |      2025.3       | 
+|          工具           |     版本号     |
+|:-----------------------:|:--------------:|
+|     Development OS      |    Debian13    | 
+|         Golang          |     1.26.5     | 
+|          Java           | Temurin-25.0.2 | 
+|          Ruby           |     4.0.1      | 
+|         Python          |     3.13.5     | 
+|         fatlane         |    2.227.2     | 
+|           Vue           |     3.4.29     | 
+|          MySQL          |     9.7.1      | 
+|          Redis          |     7.0.6      | 
+|        RabbitMQ         |     4.3.2      | 
+|          Tusd           |      v2.8      | 
+|          Nginx          |     1.28.2     | 
+|         ijhttp          |     2026.1     | 
+|   Windows Driver Kit    |       10       | 
+| Android SDK Build Tools |     36.0.0     | 
 
 # 三、编译代码
 
@@ -70,12 +71,12 @@
 1. 启动主服务（本地测试可添加参数 -localTestMode -skipRateLimit），配置 [baclend/config.ini](./backend/config.ini)：
     ```shell
     cd ./backend
-    ./backend -localIP 127.0.0.1 -config ./config.ini -messageFilesDirectory ./ -javaBinaryPath $JAVA_HOME/bin/java -javaBinaryPathForPepk $JAVA_HOME/bin/java -keytoolBinaryPath $JAVA_HOME/bin/keytool -pepkJarPath ./pepk.jar -cabextractFilePath ./cabextract
+    ./backend -localIP 127.0.0.1 -config ./config.ini -messageFilesDirectory ./ -javaBinaryPath java -javaBinaryPathForPepk java -keytoolBinaryPath keytool -pepkJarPath ./pepk.jar -cabextractFilePath ./cabextract
     ```
 1. 启动 fastlane_proxy 服务（本地测试可添加参数 -localTestMode），配置 [fastlane_proxy/config.ini](./fastlane_proxy/config.ini)：
     ```shell
     cd ./fastlane_proxy
-    ./fastlane_proxy -localIP 127.0.0.1 -config ./config.ini -messageFilesDirectory ./
+    ./fastlane_proxy -localIP 127.0.0.1 -config ./config.ini -messageFilesDirectory ./ -fastlaneBinaryPath fastlane
     ```
 1. 启动 hlk_manager 服务：
     - Hyper-V 虚拟机中将 hlk_manager.exe 程序注册为系统服务，且设置开机自启，以 Administrator 用户运行。
@@ -106,12 +107,12 @@
     - Windows 签名服务。监听 Windows 证书表变动，自动刷新消费队列：
         ```cmd
         cd .\sign_server
-        .\sign_server.exe -mode Windows -localIP 127.0.0.1 -config .\config.ini -signtoolFilePath .\signtool.exe -winevsignerFilePath .\winevsigner.exe -inf2CatFilePath "C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x86\inf2cat.exe" -makecabFilePath .\makecab.exe
+        .\sign_server.exe -mode Windows -localIP 127.0.0.1 -config .\config.ini -signtoolFilePath .\signtool.exe -winevsignerFilePath .\winevsigner.exe -inf2CatFilePath .\inf2cat.exe -makecabFilePath .\makecab.exe
         ```
     - Android 签名服务：
         ```shell
         cd ./sign_server
-        ./sign_server -mode Android -localIP 127.0.0.1 -config ./config.ini -apksignerFilePath $HOME/Android/Sdk/build-tools/36.1.0/apksigner -jarsignerFilePath $JAVA_HOME/bin/jarsigner -javaHomeFilePath $JAVA_HOME
+        ./sign_server -mode Android -localIP 127.0.0.1 -config ./config.ini -apksignerFilePath apksigner -jarsignerFilePath jarsigner -javaHomeFilePath $JAVA_HOME
         ```
    - Apple 签名服务：
        ```shell

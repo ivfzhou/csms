@@ -106,6 +106,8 @@ const (
 	CommandFlagMakecabFilePath = "makecabFilePath"
 	// cabextract 文件路径。
 	CommandFlagCabextractFilePath = "cabextractFilePath"
+	// fastlane 文件路径。
+	CommandFlagFastlaneBinaryPath = "fastlaneBinaryPath"
 )
 
 // HTTP。

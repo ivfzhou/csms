@@ -31,6 +31,7 @@ import (
 	"gitee.com/ivfzhou/csms/comm/log"
 	logImpl "gitee.com/ivfzhou/csms/comm/log/impl"
 	"gitee.com/ivfzhou/csms/comm/util"
+	"gitee.com/ivfzhou/csms/fastlane_proxy/consts"
 	"gitee.com/ivfzhou/csms/fastlane_proxy/protocol"
 	"gitee.com/ivfzhou/csms/fastlane_proxy/route"
 )
@@ -46,6 +47,7 @@ func init() {
 	iniCfg.AddCommandFlag()
 	propertiesI18n.AddCommandFlag()
 	util.AddIPCommandFlag()
+	consts.AddCommandFlag()
 	flag.Parse()
 
 	// 初始化配置和日志。
