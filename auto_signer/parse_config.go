@@ -13,11 +13,14 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
+	"gitee.com/ivfzhou/csms/comm/util"
 	"gopkg.in/yaml.v3"
 )
 
@@ -71,7 +74,7 @@ type Configuration struct {
 			// 证书 ID
 			CertificateID string `yaml:"certificateId"`
 			// Android API 版本
-			MinimumSDKVersion int `json:"minimumSDKVersion"`
+			MinimumSDKVersion int `yaml:"minimumSDKVersion"`
 		} `yaml:"android"`
 		// 苹果签名
 		Apple struct {
@@ -120,11 +123,41 @@ func ParseConfig() (*Configuration, string, int64, []string, error) {
 		return nil, "", 0, nil, fmt.Errorf("请检查输出文件路径：%v", err)
 	}
 
+	// 分析输出文件是否存在。
+	outFilePathExist := true
+	fileInfo, err = os.Stat(outFilePath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			outFilePathExist = false
+		} else if errors.Is(err, os.ErrExist) {
+			// noop
+		} else if errors.Is(err, os.ErrPermission) {
+			return nil, "", 0, nil, fmt.Errorf("输出文件路径无权限访问，请检查文件：%v", err)
+		} else {
+			return nil, "", 0, nil, fmt.Errorf("请检查输出文件路径：%v", err)
+		}
+	}
+	if fileInfo != nil && fileInfo.IsDir() {
+		return nil, "", 0, nil, fmt.Errorf("输出文件路径是文件夹")
+	}
+	outFilePathSize := int64(0)
+	if fileInfo != nil {
+		outFilePathSize = fileInfo.Size()
+	}
+
 	// WHQL 配置校验。
+	hlkTestConfigFilePath := ""
 	if cfgData.Base.JobType == JobTypeWHQL && len(cfgData.SignConfig.WHQL.TestConfigFilePath) > 0 {
-		_, err = filepath.Abs(cfgData.SignConfig.WHQL.TestConfigFilePath)
+		hlkTestConfigFilePath, err = filepath.Abs(cfgData.SignConfig.WHQL.TestConfigFilePath)
 		if err != nil {
 			return nil, "", 0, nil, fmt.Errorf("请检查 HLK 测试配置文件路径：%v", err)
+		}
+		fileInfo, err = os.Stat(hlkTestConfigFilePath)
+		if err != nil {
+			return nil, "", 0, nil, fmt.Errorf("请检查 HLK 测试配置文件路径是否存在：%v", err)
+		}
+		if fileInfo.IsDir() {
+			return nil, "", 0, nil, fmt.Errorf("HLK 测试配置文件路径是一个文件夹，请检查：%v", err)
 		}
 	}
 
@@ -139,7 +172,13 @@ func ParseConfig() (*Configuration, string, int64, []string, error) {
 	info = append(info, fmt.Sprintf("应用 ID: %s", cfgData.Base.AppID))
 	info = append(info, fmt.Sprintf("凭证 ID: %s", cfgData.Base.AccountID))
 	info = append(info, fmt.Sprintf("输入文件: %s (%s)", inFilePath, FormatSize(fileSize)))
-	info = append(info, fmt.Sprintf("输出文件: %s", outFilePath))
+	outFilePrintMsg := ""
+	if outFilePathExist {
+		outFilePrintMsg = fmt.Sprintf("(文件存在 %s)", FormatSize(outFilePathSize))
+	} else {
+		outFilePrintMsg = "(不存在)"
+	}
+	info = append(info, fmt.Sprintf("输出文件: %s %s", outFilePath, outFilePrintMsg))
 	info = append(info, fmt.Sprintf("任务类型: %s", cfgData.Base.JobType))
 	switch cfgData.Base.JobType {
 	case JobTypeWindows:
@@ -148,9 +187,24 @@ func ParseConfig() (*Configuration, string, int64, []string, error) {
 	case JobTypeWHQL:
 		info = append(info, fmt.Sprintf("签名类型: %s", cfgData.SignConfig.WHQL.Type))
 		info = append(info, fmt.Sprintf("测试系统: %s", cfgData.SignConfig.WHQL.TestSystem))
+		if len(cfgData.SignConfig.WHQL.ServiceName) > 0 {
+			info = append(info, fmt.Sprintf("服务名称: %s", cfgData.SignConfig.WHQL.ServiceName))
+		}
+		if len(cfgData.SignConfig.WHQL.TestTarget) > 0 {
+			info = append(info, fmt.Sprintf("测试目标: %s", cfgData.SignConfig.WHQL.TestTarget))
+		}
+		if len(hlkTestConfigFilePath) > 0 {
+			info = append(info, fmt.Sprintf("测试配置: %s", hlkTestConfigFilePath))
+		}
 	case JobTypeAndroid:
 		info = append(info, fmt.Sprintf("签名类型: %s", cfgData.SignConfig.Android.Type))
 		info = append(info, fmt.Sprintf("证书 ID: %s", cfgData.SignConfig.Android.CertificateID))
+		signatureSchema := strings.Join(util.ListTo(cfgData.SignConfig.Android.SignatureSchema,
+			func(e int) string { return fmt.Sprintf("v%d", e) }), ", ")
+		info = append(info, fmt.Sprintf("签名方案: %s", signatureSchema))
+		if cfgData.SignConfig.Android.MinimumSDKVersion != 0 {
+			info = append(info, fmt.Sprintf("SDK Version: %d", cfgData.SignConfig.Android.MinimumSDKVersion))
+		}
 	case JobTypeApple:
 		info = append(info, fmt.Sprintf("描述文件: %s", cfgData.SignConfig.Apple.ProvisionID))
 	}

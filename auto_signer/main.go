@@ -15,8 +15,13 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
+	"log"
 	"os"
+	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 func init() {
@@ -28,7 +33,6 @@ func init() {
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "CSMS 自动化签名程序 %s\n", Version())
 		usage()
 	}
-
 	flag.Parse()
 }
 
@@ -39,9 +43,21 @@ func main() {
 		return
 	}
 
+	// 初始化日志打印。
+	taskID := strings.ReplaceAll(uuid.NewString(), "-", "")
+	log.SetFlags(log.Lshortfile | log.Ldate | log.Ltime | log.Lmicroseconds | log.Lmsgprefix)
+	log.SetPrefix(taskID + " ")
+	logFile, _ := os.OpenFile(LogFilePath, os.O_CREATE|os.O_APPEND, 0666)
+	if logFile != nil {
+		log.SetOutput(logFile)
+		defer CloseIO(logFile)
+	} else {
+		log.SetOutput(io.Discard)
+	}
+
 	startTime := time.Now()
 
-	PrintHeader()
+	PrintHeader(taskID)
 	fmt.Println()
 
 	// 步骤 1：解析签名配置。

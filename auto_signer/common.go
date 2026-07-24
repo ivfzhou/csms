@@ -17,9 +17,8 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"strings"
 	"time"
-
-	cl "gitee.com/ivfzhou/csms/comm/log"
 )
 
 // ReadAndUnmarshal 序列化数据并关闭流。
@@ -28,11 +27,11 @@ func ReadAndUnmarshal[T any](reader io.ReadCloser) *T {
 	result := new(T)
 	bs, err := io.ReadAll(reader)
 	if err != nil {
-		log.Println(cl.LevelError, "read error", err)
+		log.Printf("read error: %v\n", err)
 	}
 	err = json.Unmarshal(bs, result)
 	if err != nil {
-		log.Println(cl.LevelError, "unmarshal error", err)
+		log.Printf("unmarshal error: %v\n", err)
 	}
 	return result
 }
@@ -42,7 +41,7 @@ func ReadAndClose(reader io.ReadCloser) []byte {
 	defer CloseIO(reader)
 	bs, err := io.ReadAll(reader)
 	if err != nil {
-		log.Println(cl.LevelError, "read error", err)
+		log.Printf("read error: %v\n", err)
 	}
 	return bs
 }
@@ -52,7 +51,7 @@ func CloseIO(closer io.Closer) {
 	if closer != nil {
 		err := closer.Close()
 		if err != nil {
-			log.Println(cl.LevelError, "failed to close io", err)
+			log.Printf("failed to close io: %v\n", err)
 		}
 	}
 }
@@ -89,4 +88,8 @@ func FormatDuration(d time.Duration) string {
 		return fmt.Sprintf("%dm%ds", m, s)
 	}
 	return fmt.Sprintf("%ds", s)
+}
+
+func FormatOneline(s string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(s, "\r\n", `\r\n`), "\n", `\n`)
 }

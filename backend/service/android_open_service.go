@@ -713,6 +713,7 @@ func AndroidAPIGetJobInformation(ctx context.Context, req *protocol.AndroidAPIGe
 			Log:              androidSigningJob.Log,
 			SignedFileID:     androidSigningJob.SignedFileID,
 			CertificateID:    certificateID,
+			Status:           androidSigningJob.Status,
 		}
 	}
 

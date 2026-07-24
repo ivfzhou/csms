@@ -17,7 +17,6 @@ import "time"
 // 程序退出码。
 const (
 	ExitCodeParseYamlError = 1 + iota
-	ExitCodeGetAccessTokenError
 	ExitCodeUploadFileError
 	ExitCodeInvalidConfigError
 	ExitCodeSubmitJobError
@@ -64,6 +63,7 @@ const (
 	UploadFilePartSize         = 8 * 1024 * 1024
 	AccessTokenExpiredDuration = 2 * time.Hour
 	HTTPRetryTimes             = 3
+	LogFilePath                = "auto_signer.log"
 )
 
 var ServerAddress = "localhost"

@@ -3209,7 +3209,7 @@ func filterWindowsSigningJobTables(ctx context.Context, begin, end time.Time) ([
 		}
 	}
 	if !end.IsZero() {
-		for i := len(allTables) - 1; i >= 0; i-- {
+		for i := range slices.Backward(allTables) {
 			if allTables[i] <= endTable {
 				allTables = allTables[:i+1]
 				break

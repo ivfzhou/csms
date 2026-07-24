@@ -355,7 +355,7 @@ create table if not exists t_file
     app_id         int unsigned comment '所属应用 ID',
     name           varchar(256) comment '文件名',
     md5            char(32) comment '文件摘要',
-    size           int unsigned comment '文件大小',
+    size           bigint unsigned comment '文件大小',
     type           tinyint unsigned not null comment '类型；1=用户头像、2=应用图标、3=Android 签名文件、4=Windows 签名文件、5=Apple 签名文件、6=HLK 日志文件、7=微软方的结果文件',
     created_time   timestamp        not null comment '上传时间',
     index idx_md5 (md5) using btree,

@@ -21,6 +21,7 @@ import (
 
 	bp "gitee.com/ivfzhou/csms/backend/protocol"
 	cc "gitee.com/ivfzhou/csms/comm/consts"
+	"gitee.com/ivfzhou/csms/comm/model"
 	"gitee.com/ivfzhou/csms/comm/util"
 )
 
@@ -35,8 +36,12 @@ func ListenWindowsJob(cfg *Configuration, token, jobID string, step *StepRunner)
 			return token, "", nil, err
 		}
 
-		if info != nil && len(info.SignedFileID) > 0 {
+		if info != nil && info.Status == model.WindowsSigningJobStatusSuccess {
 			return token, info.SignedFileID, []string{fmt.Sprintf("签名文件 ID：%s", info.SignedFileID)}, nil
+		}
+
+		if info != nil && info.Status == model.WindowsSigningJobStatusFailure {
+			return token, "", nil, fmt.Errorf("签名失败：%s", FormatOneline(info.Log))
 		}
 
 		if time.Since(beginTime) > AccessTokenExpiredDuration-time.Minute {
@@ -60,8 +65,12 @@ func ListenWHQLJob(cfg *Configuration, token, jobID string, step *StepRunner) (s
 			return token, "", nil, err
 		}
 
-		if info != nil && len(info.SignedFileID) > 0 {
+		if info != nil && info.Status == model.WHQLJobStatusSuccess {
 			return token, info.SignedFileID, []string{fmt.Sprintf("签名文件 ID：%s", info.SignedFileID)}, nil
+		}
+
+		if info != nil && info.Status == model.WHQLJobStatusFailure {
+			return token, "", nil, fmt.Errorf("签名失败：%s", FormatOneline(info.Log))
 		}
 
 		if time.Since(beginTime) > AccessTokenExpiredDuration-time.Minute {
@@ -85,8 +94,12 @@ func ListenAndroidJob(cfg *Configuration, token, jobID string, step *StepRunner)
 			return token, "", nil, err
 		}
 
-		if info != nil && len(info.SignedFileID) > 0 {
+		if info != nil && info.Status == model.AppleSigningJobStatusSuccess {
 			return token, info.SignedFileID, []string{fmt.Sprintf("签名文件 ID：%s", info.SignedFileID)}, nil
+		}
+
+		if info != nil && info.Status == model.AppleSigningJobStatusFailure {
+			return token, "", nil, fmt.Errorf("签名失败：%s", FormatOneline(info.Log))
 		}
 
 		if time.Since(beginTime) > AccessTokenExpiredDuration-time.Minute {
@@ -110,8 +123,12 @@ func ListenAppleJob(cfg *Configuration, token, jobID string, step *StepRunner) (
 			return token, "", nil, err
 		}
 
-		if info != nil && len(info.SignedFileID) > 0 {
+		if info != nil && info.Status == model.AppleSigningJobStatusSuccess {
 			return token, info.SignedFileID, []string{fmt.Sprintf("签名文件 ID：%s", info.SignedFileID)}, nil
+		}
+
+		if info != nil && info.Status == model.AppleSigningJobStatusFailure {
+			return token, "", nil, fmt.Errorf("签名失败：%s", FormatOneline(info.Log))
 		}
 
 		if time.Since(beginTime) > AccessTokenExpiredDuration-time.Minute {

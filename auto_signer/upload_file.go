@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -41,7 +42,7 @@ import (
 
 // UploadFile 上传文件。
 func UploadFile(cfg *Configuration, token string, fileSize int64, step *StepRunner) (string, string, []string, error) {
-	info := make([]string, 0, 3)
+	info := make([]string, 0, 5)
 	// 获取 MD5 值。
 	fileMD5, err := calculateFileMD5(cfg.Base.InFile, fileSize)
 	if err != nil {
@@ -52,7 +53,7 @@ func UploadFile(cfg *Configuration, token string, fileSize int64, step *StepRunn
 	// 初始化上传。
 	fileID, token, exist, err := initializeUploading(cfg, token, fileSize, fileMD5, filepath.Base(cfg.Base.InFile))
 	if err != nil {
-		return token, "", nil, nil
+		return token, "", nil, err
 	}
 	if exist {
 		info = append(info, fmt.Sprintf("文件已存在: %s", fileID))
@@ -60,16 +61,21 @@ func UploadFile(cfg *Configuration, token string, fileSize int64, step *StepRunn
 	}
 
 	// 上传文件分片。
-	token, err = uploadFileParts(cfg, token, fileID, fileSize, step)
+	startTime := time.Now()
+	token, fileChunksInfo, err := uploadFileParts(cfg, token, fileID, fileSize, step)
 	if err != nil {
 		return token, "", nil, err
 	}
+	info = append(info, fileChunksInfo)
+	cost := time.Since(startTime)
 
 	// 合并分片。
 	token, err = mergeFileParts(cfg, token, fileID)
 	if err != nil {
 		return token, "", nil, err
 	}
+	info = append(info, fmt.Sprintf("文件 ID: %s", fileID))
+	info = append(info, fmt.Sprintf("上传文件平均速度: %s/s", FormatSize(int64(float64(fileSize)/cost.Seconds()))))
 
 	return token, fileID, info, nil
 }
@@ -82,7 +88,7 @@ func calculateFileMD5(filePath string, fileSize int64) (string, error) {
 	}
 	defer func() {
 		if err = fileStream.Close(); err != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "failed to close file %s: %v\n", filePath, err)
+			log.Printf("failed to close file %s: %v\n", filePath, err)
 		}
 	}()
 
@@ -183,15 +189,15 @@ Do:
 	}
 }
 
-func uploadFileParts(cfg *Configuration, token string, fileID string, fileSize int64, step *StepRunner) (string, error) {
+func uploadFileParts(cfg *Configuration, token string, fileID string, fileSize int64, step *StepRunner) (string, string, error) {
 	// 处理请求数据。
 	fileStream, err := os.Open(cfg.Base.InFile)
 	if err != nil {
-		return token, fmt.Errorf("读取输入文件失败，请检查文件路径：%v", err)
+		return token, "", fmt.Errorf("读取输入文件失败，请检查文件路径：%v", err)
 	}
 	defer func() {
 		if err = fileStream.Close(); err != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "failed to close file %s: %v\n", cfg.Base.InFile, err)
+			log.Printf("failed to close file %s: %v\n", cfg.Base.InFile, err)
 		}
 	}()
 	ctx, cancel := context.WithCancel(context.Background())
@@ -221,7 +227,7 @@ func uploadFileParts(cfg *Configuration, token string, fileID string, fileSize i
 			} else if errors.Is(err2, io.EOF) {
 				break
 			} else {
-				return token, fmt.Errorf("读取输入文件失败，请检查文件路径：%v", err)
+				return token, "", fmt.Errorf("读取输入文件失败，请检查文件路径：%v", err)
 			}
 		}
 		totalReadBytes += int64(len(buf))
@@ -339,14 +345,14 @@ func uploadFileParts(cfg *Configuration, token string, fileID string, fileSize i
 	for i := range allParts {
 		if err2 := add(&allParts[i], true); err2 != nil {
 			close(progressDone)
-			return token, fmt.Errorf("上传文件失败：%v", err2)
+			return token, "", fmt.Errorf("上传文件失败：%v", err2)
 		}
 	}
 
 	// 等待上传完毕。
 	if err = wait(false); err != nil {
 		close(progressDone)
-		return token, fmt.Errorf("上传文件失败：%v", err)
+		return token, "", fmt.Errorf("上传文件失败：%v", err)
 	}
 	close(progressDone)
 
@@ -355,11 +361,11 @@ func uploadFileParts(cfg *Configuration, token string, fileID string, fileSize i
 
 	// 校验字节数。
 	if totalReadBytes != fileSize {
-		return token, fmt.Errorf("上传文件失败，上传字节数不相等：%v!=%v", fileSize, totalReadBytes)
+		return token, "", fmt.Errorf("上传文件失败，上传字节数不相等：%v!=%v", fileSize, totalReadBytes)
 	}
 
 	token, _ = CreateAuthorization(cfg)
-	return token, nil
+	return token, fmt.Sprintf("上传分片数量 %d，分片大小 %s", completedParts, FormatSize(UploadFilePartSize)), nil
 }
 
 func mergeFileParts(cfg *Configuration, token string, fileID string) (string, error) {

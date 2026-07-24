@@ -105,6 +105,8 @@ type AndroidAPIGetSigningJobInformationRsp struct {
 	FinishedTime string `json:"finishedTime,omitempty" example:"2020-01-01 01:01:01"`
 	// 日志
 	Log string `json:"log,omitempty"`
+	// 状态
+	Status int `json:"status,omitempty" example:"1"`
 }
 
 // AndroidAPIListCertificatesRsp 获取安卓证书列表响应体。

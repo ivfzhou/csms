@@ -20,7 +20,7 @@ type File struct {
 	AppID        int       `gorm:"column:app_id;type:int(11) unsigned;comment:所属应用 ID" json:"app_id"`                                                                                   // 所属应用 ID
 	Name         string    `gorm:"column:name;type:varchar(256);comment:文件名" json:"name"`                                                                                               // 文件名
 	Md5          string    `gorm:"column:md5;type:char(32);index:idx_md5,priority:1;comment:文件摘要" json:"md5"`                                                                           // 文件摘要
-	Size         int       `gorm:"column:size;type:int(11) unsigned;comment:文件大小" json:"size"`                                                                                          // 文件大小
+	Size         int       `gorm:"column:size;type:bigint(20) unsigned;comment:文件大小" json:"size"`                                                                                       // 文件大小
 	Type         int       `gorm:"column:type;type:tinyint(4) unsigned;not null;comment:类型；1=用户头像、2=应用图标、3=Android 签名文件、4=Windows 签名文件、5=Apple 签名文件、6=HLK 日志文件、7=微软方的结果文件" json:"type"` // 类型；1=用户头像、2=应用图标、3=Android 签名文件、4=Windows 签名文件、5=Apple 签名文件、6=HLK 日志文件、7=微软方的结果文件
 	CreatedTime  time.Time `gorm:"column:created_time;type:timestamp;not null;comment:上传时间" json:"created_time"`                                                                        // 上传时间
 }

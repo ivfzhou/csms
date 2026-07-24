@@ -13,6 +13,8 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
@@ -108,11 +110,14 @@ func copyDataToDestination(reader io.ReadCloser, filePath string, fileSize int64
 	}
 	defer CloseIO(fileStream)
 
+	// 计算文件 MD5。
+	hash := md5.New()
+
 	// 写入文件，使用进度回调。
 	progressReader := NewProgressReader(reader, fileSize, 200*time.Millisecond, func(s string) {
 		step.UpdateRunning(s)
 	})
-	written, err := io.Copy(fileStream, progressReader)
+	written, err := io.Copy(io.MultiWriter(fileStream, hash), progressReader)
 	if err != nil {
 		return nil, fmt.Errorf("写入硬盘文件失败：%v", err)
 	}
@@ -121,5 +126,13 @@ func copyDataToDestination(reader io.ReadCloser, filePath string, fileSize int64
 		return nil, fmt.Errorf("写入硬盘文件字节数不符合预期：%d!=%d", written, fileSize)
 	}
 
-	return []string{fmt.Sprintf("下载平均速度 %s/s", FormatSize(progressReader.GetSpeed()))}, nil
+	// 计算文件 MD5。
+	md5Sum := hash.Sum(nil)
+	fileMD5 := hex.EncodeToString(md5Sum)
+
+	return []string{
+		fmt.Sprintf("下载平均速度 %s/s", FormatSize(progressReader.GetSpeed())),
+		fmt.Sprintf("文件大小：%s", FormatSize(fileSize)),
+		fmt.Sprintf("文件 MD5：%s", fileMD5),
+	}, nil
 }

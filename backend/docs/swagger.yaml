@@ -50,6 +50,10 @@ definitions:
         description: 来源
         example: 1
         type: integer
+      status:
+        description: 状态
+        example: 1
+        type: integer
       type:
         description: 类型
         example: 1

@@ -1,14 +1,14 @@
 base:
   # 应用 ID，必填。
-  appId: 3f3e426d48fc480e9a543d39bc1c2411
+  appId: 16d87e3944a0435db55ac67cbf809d9f
   # 请求凭证 ID，必填。
   accountId: windows_api_account
   # 请求凭证密钥，必填。
-  secret: p02YboFVdQ"]^1OF\N5iX(;,'D?wv}-wg:'q5RY|w>`q!Ns#34^J"'-6].Id}xL2}c2mz9M^PWi&8AkV8X'4,#DD}rcxM$09q:`s3!r=R^.e5z!m8AdBYtv]l>/y6I@k
+  secret: Pb?2Y>OUNWfftJjsOjq(.kRb\S(tcS_QfS.>22=+[>L;n#{_c85:gNZ~<&W0R"QX3Lu3`FGcyMDsmz@SUv;ekbv+</*:%E>B6]\$i3TUG5!Vd2AR,Y[D_Im;v5QdevhP
   # 待签名文件，必填。
-  inFile: /home/ivfzhou/文档/Win11_25H2_China_GGK_Chinese_Simplified_x64_v2.iso
+  inFile: /home/ivfzhou/下载/test_file.exe
   # 签名结果文件，必填。
-  outFile: /home/ivfzhou/文档/Win11_25H2_China_GGK_Chinese_Simplified_x64_v2.iso.1
+  outFile: /home/ivfzhou/下载/test_file.exe
   # 任务类型，必填。windows、whql、android、apple。
   jobType: windows
 
@@ -18,7 +18,7 @@ signConfig:
     # 任务类型，必填。pe、attestation、peAndAttestation。
     type: pe
     # 证书 ID，必填。
-    certificateId: 933b9d84bbcb4a0596a454a903324446
+    certificateId: 4603348c70934d1bbe3689449284791a
   # WHQL 认证。
   whql:
     # 任务类型，必填。hlk、testAndHlk。
@@ -30,7 +30,7 @@ signConfig:
     # 测试标的。
     testTarget: KMDFDriver.sys
     # 测试配置文件路径。配置文件中，0 为默认值，1 为 关闭，2 为开启。
-    testConfigFilePath: ./default_hlk_test_config.json
+    testConfigFilePath: ./auto_signer/default_hlk_test_config.json
   # 安卓签名。
   android:
     # 类型，必填。apk、aab、patch。
@@ -48,4 +48,4 @@ signConfig:
   # Apple 签名配置。
   apple:
     # 描述文件 ID，必填。
-    provisionId: 6e80885e077647c7a84b0ab72ba30ea8
+    provisionId: 2430461a19504dbebe7d473edc676573

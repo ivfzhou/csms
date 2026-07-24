@@ -31,9 +31,9 @@ func NewStepRunner(number, total int, name string) *StepRunner {
 }
 
 // PrintHeader 打印程序头部。
-func PrintHeader() {
+func PrintHeader(taskID string) {
 	fmt.Println("══════════════════════════════════════════════════════════════")
-	fmt.Printf("  CSMS 自动化签名程序  %s\n", Version())
+	fmt.Printf("  CSMS 自动化签名程序  %s %s\n", Version(), taskID)
 	fmt.Println("══════════════════════════════════════════════════════════════")
 }
 
@@ -70,7 +70,8 @@ func (s *StepRunner) Done(subLines ...string) {
 
 // Fail 打印步骤失败行。
 func (s *StepRunner) Fail(errMsg string) {
-	fmt.Printf("\r✗ 步骤 %d/%d  %-30s [失败]\n", s.number, s.total, s.name)
+	duration := time.Since(s.startTime)
+	fmt.Printf("\r✗ 步骤 %d/%d  %-30s [失败]  耗时 %-100s\n", s.number, s.total, s.name, FormatDuration(duration))
 	if errMsg != "" {
 		fmt.Printf("    错误: %s\n", errMsg)
 	}

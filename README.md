@@ -14,15 +14,16 @@
 |         Golang          |     1.26.5     | 
 |          Java           | Temurin-25.0.2 | 
 |          Ruby           |     4.0.1      | 
+|         Node.js         |    v24.18.0    | 
 |         Python          |     3.13.5     | 
+|           Vue           |     3.5.32     | 
 |         fatlane         |    2.227.2     | 
-|           Vue           |     3.4.29     | 
 |          MySQL          |     9.7.1      | 
 |          Redis          |     7.0.6      | 
 |        RabbitMQ         |     4.3.2      | 
 |          Tusd           |      v2.8      | 
 |          Nginx          |     1.28.2     | 
-|         ijhttp          |     2026.1     | 
+|         ijhttp          |     2025.3     | 
 |   Windows Driver Kit    |       10       | 
 | Android SDK Build Tools |     36.0.0     | 
 
@@ -142,6 +143,11 @@
 ```shell
 ./auto_signer -config ./config.yml
 ```
+示例效果图：
+![auto_signer 示例 1](./auto_signer_1.png)
+![auto_signer 示例 2](./auto_signer_2.png)
+![auto_signer 示例 3](./auto_signer_3.png)
+![auto_signer 示例 4](./auto_signer_4.png)
 
 # 七、发展展望
 

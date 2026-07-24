@@ -6912,6 +6912,11 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 1
                 },
+                "status": {
+                    "description": "状态",
+                    "type": "integer",
+                    "example": 1
+                },
                 "type": {
                     "description": "类型",
                     "type": "integer",
