@@ -12,7 +12,13 @@
  * See the Mulan PSL v2 for more details.
  */
 
-/* 引入 ant 的重置样式 */
+/*
+ * ant-design-vue/reset.css 作用：
+ * 1. CSS Reset - 统一不同浏览器的默认样式（如 margin、padding、box-sizing 等），消除浏览器之间的样式差异。
+ * 2. 全局基准样式 - 设置 antd 组件所需的基础样式（如字体系列、标题/段落 margin、链接颜色等）。
+ * 3. 配合 v4+ 的 CSS-in-JS 方案 - 提供 CSS-in-JS 无法处理的全局样式重置。
+ * 注：v3 及以前该文件名为 antd.css，v4 起更名为 reset.css。
+ */
 @import "ant-design-vue/dist/reset.css";
 
 :root {

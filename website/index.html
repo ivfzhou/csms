@@ -15,12 +15,18 @@ See the Mulan PSL v2 for more details.
 
 <head>
     <meta charset="UTF-8">
+    <!-- 视口设置：宽度适配设备宽度，初始缩放 1:1，用于响应式布局。 -->
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <!-- 强制 IE 浏览器使用最新的 Edge 渲染引擎，避免进入兼容模式。 -->
     <meta content="ie=edge" http-equiv="X-UA-Compatible">
+    <!-- HTTP/1.0 缓存控制：兼容旧浏览器，禁止缓存页面。 -->
     <meta content="no-cache" http-equiv="Pragma">
+    <!-- HTTP/1.1 缓存控制：no-cache 每次需验证，no-store 不存储副本，must-revalidate 过期后必须重新请求。 -->
     <meta content="no-cache, no-store, must-revalidate" http-equiv="Cache-Control">
+    <!-- 设置页面过期时间为 0，立即过期，确保每次都从服务器获取最新内容。 -->
     <meta content="0" http-equiv="Expires">
     <link href="/favicon.ico" rel="icon">
+    <!-- Vite 构建时会处理此 CSS 引用：读取 src/main.css，经压缩/前缀处理后输出为带 hash 的文件名（如 /assets/main-a1b2c3.css），并自动重写此 href。 -->
     <link href="/src/main.css" rel="stylesheet">
     <title>数字证书签名及管理系统</title>
 </head>
@@ -32,6 +38,7 @@ See the Mulan PSL v2 for more details.
         We're sorry, but website doesn't work properly without JavaScript enabled. Please enable it to continue.
     </strong>
 </noscript>
+<!-- Vite 构建时会将此 JS 入口模块及其所有依赖（.vue/.js/.css）打包，tree-shaking 后输出带 hash 的文件名，并自动重写此 src。 -->
 <script src="/src/main.js" type="module"></script>
 </body>
 

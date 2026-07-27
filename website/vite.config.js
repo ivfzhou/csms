@@ -24,15 +24,17 @@ export default defineConfig({
     ],
     resolve: {
         alias: {
+            // 将 @ 映射到 src 目录的绝对路径，方便用 @/components/xxx 代替相对路径导入。
             '@': fileURLToPath(new URL('./src', import.meta.url))
         },
     },
     server: {
+        // 开发环境代理：将以 /backend 开头的请求转发到后端服务，解决跨域问题。
         proxy: {
             '/backend': {
-                target: 'https://127.0.0.1',
-                changeOrigin: true,
-                secure: false,
+                target: 'https://127.0.0.1',   // 后端目标地址。
+                changeOrigin: true,             // 修改请求头中的 Host 为目标地址。
+                secure: false,                  // 不验证 HTTPS 证书（允许自签名证书）。
             }
         }
     }

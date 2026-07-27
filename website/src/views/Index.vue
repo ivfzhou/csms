@@ -48,17 +48,26 @@ onBeforeMount(async () => {
 
 <style scoped>
 .csms-header {
+  /* 设置头部背景色为白色 */
   background-color: #fff;
 }
 
 .csms-header-inner {
+  /* 为子元素的绝对定位提供定位上下文 */
   position: relative;
+  /* 使用弹性布局 */
   display: flex;
+  /* 子元素沿垂直方向排列 */
   flex-direction: column;
+  /* 子元素在垂直方向上居中 */
   justify-content: center;
+  /* 子元素在水平方向上居中 */
   align-items: center;
+  /* 头部高度由 CSS 变量 --header-height 控制 */
   height: var(--header-height);
+  /* 内容最大宽度由 CSS 变量 --content-width 控制 */
   max-width: var(--content-width);
+  /* 水平居中 */
   margin: 0 auto;
 }
 
