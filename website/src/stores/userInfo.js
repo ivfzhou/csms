@@ -14,7 +14,7 @@ import {ref} from 'vue'
 import {defineStore} from 'pinia'
 
 export const useUserInfoStore = defineStore('userInfo', () => {
-    const userInfo = ref({})
+    const userInfo = ref()
 
     return {userInfo}
 })

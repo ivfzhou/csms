@@ -13,7 +13,7 @@
 import {ref} from 'vue'
 import {defineStore} from 'pinia'
 
-export const useLocalStore = defineStore('locale', () => {
+export const useLocaleStore = defineStore('locale', () => {
     const toggleLocale = ref()
 
     return {toggleLocale}

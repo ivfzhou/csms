@@ -16,7 +16,7 @@ import {computed, ref} from 'vue'
 import zhCN from 'ant-design-vue/es/locale/zh_CN'
 import enUS from 'ant-design-vue/es/locale/en_US'
 import dayjs from 'dayjs'
-import {useLocalStore} from "@/stores/locale.js"
+import {useLocaleStore} from "@/stores/locale.js"
 import {useThemeStore} from "@/stores/theme.js"
 
 // ant 组件本地化。
@@ -25,7 +25,7 @@ const toggleLocale = () => {
   locale.value = locale.value === zhCN ? enUS : zhCN
   dayjs.locale(locale.value)
 }
-const localStore = useLocalStore()
+const localStore = useLocaleStore()
 localStore.$patch({toggleLocale})
 
 // ant 组件主题。

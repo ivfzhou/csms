@@ -17,7 +17,6 @@
  * 1. CSS Reset - 统一不同浏览器的默认样式（如 margin、padding、box-sizing 等），消除浏览器之间的样式差异。
  * 2. 全局基准样式 - 设置 antd 组件所需的基础样式（如字体系列、标题/段落 margin、链接颜色等）。
  * 3. 配合 v4+ 的 CSS-in-JS 方案 - 提供 CSS-in-JS 无法处理的全局样式重置。
- * 注：v3 及以前该文件名为 antd.css，v4 起更名为 reset.css。
  */
 @import "ant-design-vue/dist/reset.css";
 
@@ -31,8 +30,11 @@
 }
 
 body {
+    /* 告诉浏览器优先考虑文本的清晰度和可读性，适用于小字号时自动启用字距调整和连字。 */
     text-rendering: optimizeLegibility;
+    /* Chrome/Safari/Edge 字体抗锯齿：关闭亚像素渲染，使用整体像素级灰度平滑，让字体边缘更柔和清晰。 */
     -webkit-font-smoothing: antialiased;
+    /* Firefox on macOS 字体抗锯齿：使用灰度平滑渲染，避免深色背景下字体显得过粗。 */
     -moz-osx-font-smoothing: grayscale;
     background-color: #f5f7f9;
     font-family: "PingFangSC-Regular", "Microsoft YaHei", "微软雅黑", "Helvetica", "Arial", sans-serif;

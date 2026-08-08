@@ -280,8 +280,9 @@ const handlePreview = async file => {
           autocomplete="on" class="csms-body-loginandregister-form" validateFirst @finish="finishForm">
       <Transition @beforeEnter="onBeforeEnter" @enter="onEnter" @leave="onLeave">
         <FormItem v-if="!isLogin" label="头像" name="avatar" required>
-          <Upload :beforeUpload="avatarBeforeUpload" :fileList="formState.avatar" accept="image/png,image/jpeg,image/jpg"
-                  listType="picture-card" @preview="handlePreview" @remove="removeAvatar">
+          <Upload :beforeUpload="avatarBeforeUpload" :fileList="formState.avatar"
+                  accept="image/png,image/jpeg,image/jpg" listType="picture-card" @preview="handlePreview"
+                  @remove="removeAvatar">
             <div v-if="formState.avatar.length <= 0">
               <LoadingOutlined v-if="isAvatarLoading"/>
               <PlusOutlined v-else/>
