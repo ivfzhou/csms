@@ -20,15 +20,15 @@ import {useUserInfoStore} from "@/stores/userInfo.js"
 import {useMessageStore} from "@/stores/message.js"
 
 // 保存消息提示变量。
-const {message} = App.useApp()
+const {message, modal, notification} = App.useApp()
 const messageStore = useMessageStore()
-messageStore.$patch({message})
+messageStore.$patch({message, modal, notification})
 
 // 获取用户信息与登陆。
 const userInfoStore = useUserInfoStore()
 onBeforeMount(async () => {
   const {ok, data} = await getUserInformation()
-  if (ok) userInfoStore.$patch(data)
+  if (ok) userInfoStore.$patch({userInfo: data})
 })
 </script>
 
@@ -48,31 +48,32 @@ onBeforeMount(async () => {
 
 <style scoped>
 .csms-header {
-  /* 设置头部背景色为白色 */
+  /* 设置头部背景色为白色。 */
   background-color: #fff;
 }
 
 .csms-header-inner {
-  /* 为子元素的绝对定位提供定位上下文 */
+  /* 为子元素的绝对定位提供定位上下文。 */
   position: relative;
-  /* 使用弹性布局 */
+  /* 使用弹性布局。 */
   display: flex;
-  /* 子元素沿垂直方向排列 */
+  /* 子元素沿垂直方向排列。 */
   flex-direction: column;
-  /* 子元素在垂直方向上居中 */
+  /* 子元素在垂直方向上居中。 */
   justify-content: center;
-  /* 子元素在水平方向上居中 */
+  /* 子元素在水平方向上居中。 */
   align-items: center;
-  /* 头部高度由 CSS 变量 --header-height 控制 */
+  /* 头部高度由 CSS 变量 --header-height 控制。 */
   height: var(--header-height);
-  /* 内容最大宽度由 CSS 变量 --content-width 控制 */
+  /* 内容最大宽度由 CSS 变量 --content-width 控制。 */
   max-width: var(--content-width);
-  /* 水平居中 */
+  /* 水平居中。 */
   margin: 0 auto;
 }
 
 .csms-body {
   max-width: var(--content-width);
+  /* 顶部间距10px，水平居中，底部无边距。 */
   margin: 10px auto 0;
   background-color: #fff;
 }

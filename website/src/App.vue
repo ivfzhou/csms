@@ -12,25 +12,22 @@ See the Mulan PSL v2 for more details.
 
 <script setup>
 import {App, ConfigProvider, StyleProvider, theme} from "ant-design-vue"
-import {computed, ref} from 'vue'
+import {computed, provide, ref} from 'vue'
 import zhCN from 'ant-design-vue/es/locale/zh_CN'
 import enUS from 'ant-design-vue/es/locale/en_US'
 import dayjs from 'dayjs'
-import {useLocaleStore} from "@/stores/locale.js"
-import {useThemeStore} from "@/stores/theme.js"
+import constants from '@/utils/constants.js'
 
 // ant 组件本地化。
-const locale = ref(zhCN)
-const toggleLocale = () => {
-  locale.value = locale.value === zhCN ? enUS : zhCN
-  dayjs.locale(locale.value)
+const antLocale = ref(zhCN)
+const toggleAntLocale = () => {
+  antLocale.value = antLocale.value === zhCN ? enUS : zhCN
+  dayjs.locale(antLocale.value)
 }
-const localStore = useLocaleStore()
-localStore.$patch({toggleLocale})
 
 // ant 组件主题。
 const isDark = ref(false)
-const themeConfig = computed(() => ({
+const antTheme = computed(() => ({
   algorithm: isDark.value ? theme.darkAlgorithm : theme.defaultAlgorithm,
   components: {
     Layout: {
@@ -38,14 +35,40 @@ const themeConfig = computed(() => ({
     }
   }
 }))
-const toggleTheme = () => isDark.value = !isDark.value
-const themeStore = useThemeStore()
-themeStore.$patch({toggleTheme, isDark})
+const toggleAntTheme = () => isDark.value = !isDark.value
+
+// ant 组件尺寸。
+const antComponentSize = ref('middle');
+const toggleAntComponentSize = () => {
+  switch (antComponentSize.value) {
+    case 'small':
+      antComponentSize.value = 'middle'
+      break
+    case 'meddle':
+      antComponentSize.value = 'large'
+      break
+    case 'large':
+      antComponentSize.value = 'small'
+      break
+    default:
+      antComponentSize.value = 'middle'
+      break
+  }
+}
+
+// ant 组件方向。
+const antComponentDirection = ref('ltr')
+const toggleAntComponentDirection = () => {
+  antComponentDirection.value = antComponentDirection.value === 'ltr' ? 'rtl' : 'ltr'
+}
+
+provide(constants.keyAntConfig, {toggleAntLocale, toggleAntTheme, toggleAntComponentSize, toggleAntComponentDirection})
 </script>
 
 <template>
   <StyleProvider hash-priority="low">
-    <ConfigProvider :locale="locale" :theme="themeConfig">
+    <ConfigProvider :locale="antLocale" :theme="antTheme" :component-size="antComponentSize"
+                    :direction="antComponentDirection">
       <App>
         <RouterView/>
       </App>

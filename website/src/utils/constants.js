@@ -12,6 +12,9 @@
 
 const errCodeNeedLogin = 200006
 
+const keyAntConfig = Symbol('keyAntConfig')
+
 export default {
-    errCodeNeedLogin
+    errCodeNeedLogin,
+    keyAntConfig
 }

@@ -10,11 +10,12 @@
  * See the Mulan PSL v2 for more details.
  */
 
-import {ref} from 'vue'
 import {defineStore} from 'pinia'
 
 export const useMessageStore = defineStore('message', () => {
-    const message = ref()
+    const message = undefined
+    const modal = undefined
+    const notification = undefined
 
-    return {message}
+    return {message, modal, notification}
 })

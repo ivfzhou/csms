@@ -23,7 +23,7 @@ import {isNavigationFailure, NavigationFailureType, useRouter} from "vue-router"
 // 控制展示已登陆的信息。
 const isShowUserInfo = ref(true)
 const userInfoStore = useUserInfoStore()
-isShowUserInfo.value = userInfoStore.userInfo.nameEn !== undefined
+isShowUserInfo.value = userInfoStore.userInfo?.nameEn !== undefined
 userInfoStore.$subscribe((_, state) => isShowUserInfo.value = state && state.nameEn)
 
 // 退出登陆。

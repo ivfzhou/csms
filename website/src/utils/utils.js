@@ -15,6 +15,8 @@ export function isSuccessHttpCode(code) {
     return code >= 200 && code < 300
 }
 
+// 将 File 对象转换为 Base64 编码字符串。
+// 返回一个 Promise，解析结果为 Base64 编码的数据 URI。
 export function getBase64(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader()

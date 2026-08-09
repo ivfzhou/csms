@@ -10,11 +10,10 @@
  * See the Mulan PSL v2 for more details.
  */
 
-import {ref} from 'vue'
 import {defineStore} from 'pinia'
 
 export const useLanguageStore = defineStore('language', () => {
-    const language = ref()
+    const language = undefined
 
     return {language}
 })
