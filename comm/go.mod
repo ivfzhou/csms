@@ -13,8 +13,8 @@ module gitee.com/ivfzhou/csms/comm
 go 1.26
 
 require (
-	gitee.com/ivfzhou/goroutine-util v1.0.7
-	gitee.com/ivfzhou/tus_client/v2 v2.1.2
+	gitee.com/ivfzhou/goroutine-util v1.0.8-0.20260815142127-4c8d68068ef1
+	gitee.com/ivfzhou/tus_client/v2 v2.1.3-0.20260815162709-d7256c7d236d
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/gin-gonic/gin v1.12.0
 	github.com/go-playground/locales v0.14.1
