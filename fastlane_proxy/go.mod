@@ -13,7 +13,7 @@ module gitee.com/ivfzhou/csms/fastlane_proxy
 go 1.26
 
 require (
-	gitee.com/ivfzhou/csms/comm v0.0.0-20260724153849-3dba7244bac8
+	gitee.com/ivfzhou/csms/comm v0.0.0-20260815163044-0c8adf1dc646
 	github.com/gin-gonic/gin v1.12.0
 	github.com/go-playground/validator/v10 v10.30.3
 	github.com/google/uuid v1.6.0
@@ -22,8 +22,8 @@ require (
 
 require (
 	filippo.io/edwards25519 v1.2.0 // indirect
-	gitee.com/ivfzhou/goroutine-util v1.0.7 // indirect
-	gitee.com/ivfzhou/tus_client/v2 v2.1.2 // indirect
+	gitee.com/ivfzhou/goroutine-util v1.0.8-0.20260815142127-4c8d68068ef1 // indirect
+	gitee.com/ivfzhou/tus_client/v2 v2.1.3-0.20260815162709-d7256c7d236d // indirect
 	github.com/bytedance/gopkg v0.1.3 // indirect
 	github.com/bytedance/sonic v1.15.0 // indirect
 	github.com/bytedance/sonic/loader v0.5.0 // indirect
