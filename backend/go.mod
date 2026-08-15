@@ -13,10 +13,10 @@ module gitee.com/ivfzhou/csms/backend
 go 1.26
 
 require (
-	gitee.com/ivfzhou/csms/comm v0.0.0-20260724153849-3dba7244bac8
-	gitee.com/ivfzhou/csms/fastlane_proxy v0.0.0-20260724155039-6c404ebb9069
-	gitee.com/ivfzhou/modify-variables-temporarily/v3 v3.0.1
-	gitee.com/ivfzhou/tus_client/v2 v2.1.2
+	gitee.com/ivfzhou/csms/comm v0.0.0-20260815163044-0c8adf1dc646
+	gitee.com/ivfzhou/csms/fastlane_proxy v0.0.0-20260815163225-06ce64d3678c
+	gitee.com/ivfzhou/modify-variables-temporarily/v3 v3.0.2-0.20260815151307-d193ec068dab
+	gitee.com/ivfzhou/tus_client/v2 v2.1.3-0.20260815162709-d7256c7d236d
 	github.com/gin-gonic/gin v1.12.0
 	github.com/go-playground/validator/v10 v10.30.3
 	github.com/golang-jwt/jwt/v5 v5.3.1
@@ -36,7 +36,7 @@ require (
 
 require (
 	filippo.io/edwards25519 v1.2.0 // indirect
-	gitee.com/ivfzhou/goroutine-util v1.0.7 // indirect
+	gitee.com/ivfzhou/goroutine-util v1.0.8-0.20260815142127-4c8d68068ef1 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
